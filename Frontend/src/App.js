@@ -14,7 +14,6 @@ function App() {
         <Route path="/login" component={Login} />
         <Route path="/dashboard" component={Dashboard} />
         <Route path="/admin" component={AdminPanel} />
-        
       </Switch>
     </Router>
   );
