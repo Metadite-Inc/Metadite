@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import { ThemeContext } from './context/ThemeContext';
 
 import Home from './pages/Home';
 import Login from './pages/Login';
@@ -13,9 +14,11 @@ import ModeratorLogin from './pages/ModeratorLogin';
 import ModeratorDashboard from './pages/ModeratorDashboard';
 
 function App() {
+  const { themeStyles } =useContext(ThemeContext);
+
   return (
-    <Router>
-      <div>
+    <div style={themeStyles}>
+      <Router>
         <Navbar />
         <div style={{ minHeight: '80vh', padding: '20px' }}>
           <Routes>
@@ -30,8 +33,8 @@ function App() {
           </Routes>
         </div>
         <Footer />
-      </div>
-    </Router>
+      </Router>
+    </div>
   );
 }
 
