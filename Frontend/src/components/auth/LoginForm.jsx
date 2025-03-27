@@ -157,17 +157,6 @@ const LoginForm = () => {
           </button>
         </div>
         
-        <div className="mt-4 text-center">
-          {isLogin && (
-            <Link 
-              to="/upgrade"
-              className="inline-block text-sm font-medium text-white bg-gradient-to-r from-metadite-primary to-metadite-secondary px-4 py-2 rounded-md hover:opacity-90 transition-opacity"
-            >
-              Upgrade your membership
-            </Link>
-          )}
-        </div>
-        
         <div className="mt-8 text-xs text-center text-gray-500">
           By continuing, you agree to Metadite's <Link to="/terms" className="text-metadite-primary">Terms of Service</Link> and <Link to="/privacy" className="text-metadite-primary">Privacy Policy</Link>.
         </div>
