@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import ModelCard from '../components/ModelCard';
+import { useAuth } from '../context/AuthContext';
 import { Search, Filter, Bookmark, Grid, Tag } from 'lucide-react';
 
 // Mock data for model listings with categories
@@ -63,6 +64,7 @@ const Models = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [priceFilter, setPriceFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
+  const { user } = useAuth();
   
   useEffect(() => {
     // Simulate fetching models from an API

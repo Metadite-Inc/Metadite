@@ -60,7 +60,7 @@ const Dashboard = () => {
                   </span>
                 ) : (
                   <Link to="/upgrade" className="bg-white text-metadite-primary px-3 py-1 rounded-full font-medium hover:bg-opacity-90 transition-opacity">
-                    {user?.vip ? 'VIP Member' : 'Upgrade to VIP'}
+                    Upgrade to VIP
                   </Link>
                 )}
               </div>
