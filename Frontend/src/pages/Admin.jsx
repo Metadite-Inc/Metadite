@@ -28,7 +28,7 @@ const subscriptions = [
 const payments = [
   { id: 'PAY-12345', user: 'john@example.com', amount: 129.99, date: '2023-08-15', method: 'Credit Card', status: 'Completed' },
   { id: 'PAY-12346', user: 'emma@example.com', amount: 259.98, date: '2023-08-14', method: 'Stripe', status: 'Completed' },
-  { id: 'PAY-12347', user: 'michael@example.com', amount: 99.99, date: '2023-08-13', method: 'M-Pesa', status: 'Processing' },
+  { id: 'PAY-12347', user: 'michael@example.com', amount: 99.99, date: '2023-08-13', method: 'Crypto', status: 'Processing' },
   { id: 'PAY-12348', user: 'sarah@example.com', amount: 159.99, date: '2023-08-12', method: 'Credit Card', status: 'Failed' }
 ];
 

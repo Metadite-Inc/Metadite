@@ -137,6 +137,11 @@ const VipContent = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredVideos, setFilteredVideos] = useState(vipVideos);
   const [isLoaded, setIsLoaded] = useState(false);
+
+  //check if user is a moderator and redirects to dashboard
+  if (user?.role === 'moderator') {
+    navigate('/dashboard');
+  }
   
   useEffect(() => {
     // Redirect non-VIP users

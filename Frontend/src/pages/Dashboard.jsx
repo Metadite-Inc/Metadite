@@ -60,7 +60,7 @@ const Dashboard = () => {
                   </span>
                 ) : (
                   <Link to="/upgrade" className="bg-white text-metadite-primary px-3 py-1 rounded-full font-medium hover:bg-opacity-90 transition-opacity">
-                    Upgrade to VIP
+                    {user?.vip ? 'VIP Member' : 'Upgrade to VIP'}
                   </Link>
                 )}
               </div>
@@ -206,7 +206,7 @@ const Dashboard = () => {
                         <Calendar className="h-5 w-5 text-gray-500 mr-3" />
                         <div>
                           <p className="text-sm text-gray-500">Member Since</p>
-                          <p className="font-medium">August 2023</p>
+                          <p className="font-medium">August 2025</p>
                         </div>
                       </div>
                       <div className="flex items-center p-3 bg-gray-50 rounded-lg">

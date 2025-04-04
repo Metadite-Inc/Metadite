@@ -90,6 +90,10 @@ const Models = () => {
   // Get available categories from model data
   const categories = ['all', ...new Set(models.map(model => model.category))];
 
+  if (user?.role === 'moderator') {
+    navigate('/moderator');
+  }
+  
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
