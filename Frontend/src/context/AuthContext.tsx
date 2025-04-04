@@ -28,8 +28,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Sample user data for demo purposes
 const sampleUsers: User[] = [
-  { id: 'admin-1', email: 'admin@metadite.com', password: 'admin123', name: 'Admin User', role: 'admin', membershipLevel: 'vvip', region: 'north_america' },
-  { id: 'mod-1', email: 'anita.moderator@metadite.com', password: 'mod123', name: 'Anita Jones', role: 'moderator', membershipLevel: 'vip', region: 'europe' },
+  { id: 'admin-1', email: 'admin@metadite.com', password: 'admin123', name: 'Admin User', role: 'admin', membershipLevel: 'vvip', region: 'usa' },
+  { id: 'mod-1', email: 'anita.moderator@metadite.com', password: 'anita123', name: 'Anita Jones', role: 'moderator', membershipLevel: 'vip', region: 'uk' },
   { id: 'user-1', email: 'john@example.com', password: 'user123', name: 'John Doe', role: 'user', vip: true, membershipLevel: 'vip', region: 'asia' }
 ];
 

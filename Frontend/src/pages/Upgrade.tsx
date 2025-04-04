@@ -83,6 +83,7 @@ const Upgrade: React.FC = () => {
     <div className="flex flex-col min-h-screen">
       <Navbar />
       
+      <br /> <br /><br /> <br /><br /> <br />
       <main className="flex-1 container mx-auto px-4 py-12">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-metadite-primary to-metadite-secondary text-transparent bg-clip-text">
@@ -179,6 +180,7 @@ const Upgrade: React.FC = () => {
             All plans include a 14-day money-back guarantee. You can cancel or change your subscription at any time.
             Need help choosing the right plan? <a href="/contact" className="text-metadite-primary hover:underline">Contact our team</a>.
           </p>
+          <br />
         </div>
       </main>
       

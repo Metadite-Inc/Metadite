@@ -34,7 +34,7 @@ const getModelData = (id) => {
         { name: 'Material', value: 'Porcelain, Fabric' },
         { name: 'Age Range', value: 'Adult Collectors' },
         { name: 'Origin', value: 'Handcrafted in Europe' },
-        { name: 'Release Date', value: 'January 2023' },
+        { name: 'Release Date', value: 'January 2025' },
         { name: 'Limited Edition', value: 'No' },
         { name: 'Articulation', value: 'Fixed pose' },
         { name: 'Hair Type', value: 'Human hair blend' }
@@ -45,16 +45,16 @@ const getModelData = (id) => {
         weight: "3.5 lbs",
         handlingTime: "3-5 business days",
         shippingOptions: [
-          { method: "Standard", time: "7-10 business days", price: 9.99 },
-          { method: "Express", time: "2-3 business days", price: 24.99 },
-          { method: "International", time: "10-14 business days", price: 49.99 }
+          { method: "Standard", time: "7-10 business days", price: "Free" },
+          { method: "Express", time: "2-3 business days", price: "Free" },
+          { method: "International", time: "10-14 business days", price: "Free" }
         ],
         specialNotes: "Packaged in a custom protective box with acid-free tissue paper. Certificate of authenticity included."
       },
       customerReviews: [
-        { user: "Elizabeth T.", rating: 5, date: "March 12, 2023", comment: "Absolutely stunning craftsmanship. The attention to detail is remarkable, especially in the facial features and costume." },
-        { user: "Robert M.", rating: 4, date: "February 18, 2023", comment: "Beautiful addition to my collection. The quality is excellent, though I wish there were more accessory options." },
-        { user: "Catherine W.", rating: 5, date: "January 30, 2023", comment: "Sophia exceeded my expectations. The porcelain has a wonderful translucency and the costume is historically accurate." }
+        { rating: 5, date: "March 12, 2025", comment: "Absolutely stunning craftsmanship. The attention to detail is remarkable, especially in the facial features and costume." },
+        { rating: 4, date: "February 18, 2025", comment: "Beautiful addition to my collection. The quality is excellent, though I wish there were more accessory options." },
+        { rating: 5, date: "January 30, 2025", comment: "Sophia exceeded my expectations. The porcelain has a wonderful translucency and the costume is historically accurate." }
       ]
     },
     {
@@ -89,16 +89,16 @@ const getModelData = (id) => {
         weight: "4.2 lbs",
         handlingTime: "5-7 business days",
         shippingOptions: [
-          { method: "Standard", time: "7-10 business days", price: 9.99 },
-          { method: "Express", time: "2-3 business days", price: 24.99 },
-          { method: "International", time: "10-14 business days", price: 49.99 }
+          { method: "Standard", time: "7-10 business days", price: "Free" },
+          { method: "Express", time: "2-3 business days", price: "Free" },
+          { method: "International", time: "10-14 business days", price: "Free" }
         ],
         specialNotes: "Includes display stand and glass dome cover. Ships in reinforced packaging with insurance."
       },
       customerReviews: [
-        { user: "Margaret H.", rating: 5, date: "April 2, 2023", comment: "As a historian specializing in Victorian fashion, I can attest to the incredible accuracy of this piece. Truly museum quality." },
-        { user: "James P.", rating: 5, date: "March 15, 2023", comment: "The craftsmanship is extraordinary. Victoria is the centerpiece of my collection now." },
-        { user: "Susan L.", rating: 4, date: "February 27, 2023", comment: "Beautiful doll with amazing details. Shipping took longer than expected, but worth the wait." }
+        { rating: 5, date: "April 2, 2025", comment: "As a historian specializing in Victorian fashion, I can attest to the incredible accuracy of this piece. Truly museum quality." },
+        { rating: 5, date: "March 15, 2025", comment: "The craftsmanship is extraordinary. Victoria is the centerpiece of my collection now." },
+        { rating: 4, date: "February 27, 2025", comment: "Beautiful doll with amazing details. Shipping took longer than expected, but worth the wait." }
       ]
     },
     {
@@ -122,7 +122,7 @@ const getModelData = (id) => {
         { name: 'Material', value: 'Vinyl, Synthetic Fabric' },
         { name: 'Age Range', value: 'Teen and Adult Collectors' },
         { name: 'Origin', value: 'Designed in USA, Made in Japan' },
-        { name: 'Release Date', value: 'March 2023' },
+        { name: 'Release Date', value: 'March 2025' },
         { name: 'Limited Edition', value: 'No' },
         { name: 'Articulation', value: 'Fully posable (11 points)' },
         { name: 'Hair Type', value: 'Changeable wigs (2 included)' }
@@ -133,16 +133,16 @@ const getModelData = (id) => {
         weight: "2.8 lbs",
         handlingTime: "1-3 business days",
         shippingOptions: [
-          { method: "Standard", time: "5-7 business days", price: 9.99 },
-          { method: "Express", time: "2-3 business days", price: 19.99 },
-          { method: "International", time: "7-14 business days", price: 39.99 }
+          { method: "Standard", time: "7-10 business days", price: "Free" },
+          { method: "Express", time: "2-3 business days", price: "Free" },
+          { method: "International", time: "10-14 business days", price: "Free" }
         ],
         specialNotes: "Comes with display stand and fashion lookbook. Additional outfit sets available separately."
       },
       customerReviews: [
-        { user: "Zoe K.", rating: 5, date: "April 10, 2023", comment: "Love the contemporary vibe of this doll! The changeable wigs and posability make her super versatile for photography." },
-        { user: "Tyler R.", rating: 4, date: "March 25, 2023", comment: "Really cool design and concept. Would love to see more outfit options in the future." },
-        { user: "Aisha M.", rating: 5, date: "March 18, 2023", comment: "The attention to detail on the miniature clothing is incredible! Each piece is perfectly scaled and on-trend." }
+        { rating: 5, date: "April 10, 2025", comment: "Love the contemporary vibe of this doll! The changeable wigs and posability make her super versatile for photography." },
+        { rating: 4, date: "March 25, 2025", comment: "Really cool design and concept. Would love to see more outfit options in the future." },
+        { rating: 5, date: "March 18, 2025", comment: "The attention to detail on the miniature clothing is incredible! Each piece is perfectly scaled and on-trend." }
       ]
     }
     // Add more models as needed
@@ -569,7 +569,7 @@ const ModelDetail = () => {
                           <tr key={index}>
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">{option.method}</td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{option.time}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${option.price.toFixed(2)}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${option.price}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -610,7 +610,6 @@ const ModelDetail = () => {
                             <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center mr-3">
                               <User className="h-4 w-4 text-gray-500" />
                             </div>
-                            <span className="font-medium">{review.user}</span>
                           </div>
                           <span className="text-sm text-gray-500">{review.date}</span>
                         </div>

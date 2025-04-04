@@ -9,12 +9,14 @@ interface RegionSelectProps {
 }
 
 const regions = [
-  { value: 'north_america', label: 'North America' },
-  { value: 'south_america', label: 'South America' },
-  { value: 'europe', label: 'Europe' },
+  { value: 'usa', label: 'USA' },
+  { value: 'canada', label: 'Canada' },
+  { value: 'mexico', label: 'Mexico' },
+  { value: 'uk', label: 'UK' },
+  { value: 'eu', lable: 'EU' },
   { value: 'asia', label: 'Asia' },
   { value: 'africa', label: 'Africa' },
-  { value: 'oceania', label: 'Oceania' }
+  { value: 'australia', label: 'Australia' },
 ];
 
 const RegionSelect: React.FC<RegionSelectProps> = ({ region, setRegion }) => {

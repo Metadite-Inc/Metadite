@@ -30,7 +30,7 @@ const mockMessages = [
     id: 2, 
     modelId: 1,
     senderId: 'moderator-1', 
-    senderName: 'Anita (Moderator)', 
+    senderName: 'Anita', 
     content: 'Yes, Sophia Elegance comes with a display stand and three outfit accessories.', 
     timestamp: '2023-08-15T10:35:00', 
     flagged: false 
@@ -101,7 +101,7 @@ const Moderator = () => {
       id: messages.length + 1,
       modelId: selectedModel.id,
       senderId: 'moderator-1',
-      senderName: `${user?.name || 'Moderator'} (Moderator)`,
+      senderName: `${user?.name || 'Moderator'}`,
       content: newMessage,
       timestamp: new Date().toISOString(),
       flagged: false
@@ -289,7 +289,7 @@ const Moderator = () => {
                         {newMessage.toLowerCase().includes('inappropriate') && (
                           <div className="absolute -top-8 left-0 right-0 bg-yellow-100 text-yellow-700 text-xs p-1 rounded flex items-center">
                             <AlertTriangle className="h-3 w-3 mr-1" />
-                            This message may be flagged by the AI system.
+                            This message may be flagged by the Our system.
                           </div>
                         )}
                       </div>
@@ -302,10 +302,6 @@ const Moderator = () => {
                       </button>
                     </form>
                     <div className="mt-2 text-xs text-gray-500">
-                      <span className="flex items-center">
-                        <AlertTriangle className="h-3 w-3 mr-1" />
-                        Messages are monitored by an AI system to ensure appropriate content.
-                      </span>
                     </div>
                   </div>
                 </div>

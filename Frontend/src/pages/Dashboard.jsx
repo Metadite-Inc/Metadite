@@ -206,7 +206,7 @@ const Dashboard = () => {
                         <Calendar className="h-5 w-5 text-gray-500 mr-3" />
                         <div>
                           <p className="text-sm text-gray-500">Member Since</p>
-                          <p className="font-medium">August 2023</p>
+                          <p className="font-medium">August 2025</p>
                         </div>
                       </div>
                       <div className="flex items-center p-3 bg-gray-50 rounded-lg">

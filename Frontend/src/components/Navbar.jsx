@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -36,37 +35,57 @@ const Navbar = () => {
         
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center space-x-8">
-          <Link to="/" className="text-gray-800 hover:text-metadite-primary transition-colors">Home</Link>
-          <Link to="/models" className="text-gray-800 hover:text-metadite-primary transition-colors">Models</Link>
-          {user?.role === 'admin' && (
-            <Link to="/admin" className="text-gray-800 hover:text-metadite-primary transition-colors">Admin</Link>
-          )}
-          {user?.role === 'moderator' && (
-            <Link to="/moderator" className="text-gray-800 hover:text-metadite-primary transition-colors">Moderator</Link>
-          )}
-          {hasVipAccess && (
-            <Link to="/vip-content" className="text-gray-800 hover:text-metadite-primary transition-colors">VIP Content</Link>
+          {user?.role === 'moderator' ? (
+            <>
+              <Link to="/moderator" className="text-gray-800 hover:text-metadite-primary transition-colors">Moderator</Link>
+              <Link to="/dashboard" className="text-gray-800 hover:text-metadite-primary transition-colors">Dashboard</Link>
+            </>
+          ) : (
+            <>
+              <Link to="/" className="text-gray-800 hover:text-metadite-primary transition-colors">Home</Link>
+              <Link to="/models" className="text-gray-800 hover:text-metadite-primary transition-colors">Models</Link>
+              {user?.role === 'admin' && (
+                <Link to="/admin" className="text-gray-800 hover:text-metadite-primary transition-colors">Admin</Link>
+              )}
+              {hasVipAccess && (
+                <Link to="/vip-content" className="text-gray-800 hover:text-metadite-primary transition-colors">VIP Content</Link>
+              )}
+            </>
           )}
         </div>
         
         {/* User Actions */}
         <div className="hidden md:flex items-center space-x-4">
           {user ? (
-            <>
-              <Link to="/cart" className="relative p-2 text-gray-700 hover:text-metadite-primary transition-colors">
-                <ShoppingCart className="h-5 w-5" />
-                <span className="absolute -top-1 -right-1 bg-metadite-accent text-white text-xs rounded-full h-4 w-4 flex items-center justify-center animate-pulse-soft">2</span>
-              </Link>
-              <Link to="/dashboard" className="p-2 text-gray-700 hover:text-metadite-primary transition-colors">
-                <User className="h-5 w-5" />
-              </Link>
-              <button
-                onClick={logout}
-                className="bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white px-4 py-2 rounded-md hover:opacity-90 transition-opacity"
-              >
-                Logout
-              </button>
-            </>
+            user?.role === 'moderator' ? (
+              <>
+                <Link to="/dashboard" className="p-2 text-gray-700 hover:text-metadite-primary transition-colors">
+                  <User className="h-5 w-5" />
+                </Link>
+                <button
+                  onClick={logout}
+                  className="bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white px-4 py-2 rounded-md hover:opacity-90 transition-opacity"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <Link to="/cart" className="relative p-2 text-gray-700 hover:text-metadite-primary transition-colors">
+                  <ShoppingCart className="h-5 w-5" />
+                  <span className="absolute -top-1 -right-1 bg-metadite-accent text-white text-xs rounded-full h-4 w-4 flex items-center justify-center animate-pulse-soft">2</span>
+                </Link>
+                <Link to="/dashboard" className="p-2 text-gray-700 hover:text-metadite-primary transition-colors">
+                  <User className="h-5 w-5" />
+                </Link>
+                <button
+                  onClick={logout}
+                  className="bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white px-4 py-2 rounded-md hover:opacity-90 transition-opacity"
+                >
+                  Logout
+                </button>
+              </>
+            )
           ) : (
             <Link
               to="/login"
@@ -87,20 +106,9 @@ const Navbar = () => {
       {/* Mobile Menu */}
       {mobileMenuOpen && (
         <div className="md:hidden glass-card animate-slide-down absolute top-16 left-0 w-full py-4 px-6 flex flex-col space-y-4 bg-white">
-          <Link to="/" className="text-gray-800 hover:text-metadite-primary transition-colors py-2" onClick={toggleMobileMenu}>Home</Link>
-          <Link to="/models" className="text-gray-800 hover:text-metadite-primary transition-colors py-2" onClick={toggleMobileMenu}>Models</Link>
-          {user?.role === 'admin' && (
-            <Link to="/admin" className="text-gray-800 hover:text-metadite-primary transition-colors py-2" onClick={toggleMobileMenu}>Admin</Link>
-          )}
-          {user?.role === 'moderator' && (
-            <Link to="/moderator" className="text-gray-800 hover:text-metadite-primary transition-colors py-2" onClick={toggleMobileMenu}>Moderator</Link>
-          )}
-          {hasVipAccess && (
-            <Link to="/vip-content" className="text-gray-800 hover:text-metadite-primary transition-colors py-2" onClick={toggleMobileMenu}>VIP Content</Link>
-          )}
-          {user ? (
+          {user?.role === 'moderator' ? (
             <>
-              <Link to="/cart" className="text-gray-800 hover:text-metadite-primary transition-colors py-2" onClick={toggleMobileMenu}>Cart</Link>
+              <Link to="/moderator" className="text-gray-800 hover:text-metadite-primary transition-colors py-2" onClick={toggleMobileMenu}>Moderator</Link>
               <Link to="/dashboard" className="text-gray-800 hover:text-metadite-primary transition-colors py-2" onClick={toggleMobileMenu}>Dashboard</Link>
               <button
                 onClick={() => {
@@ -113,14 +121,27 @@ const Navbar = () => {
               </button>
             </>
           ) : (
-            <Link
-              to="/login"
-              className="flex items-center bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white px-4 py-2 rounded-md hover:opacity-90 transition-opacity"
-              onClick={toggleMobileMenu}
-            >
-              <LogIn className="h-4 w-4 mr-2" />
-              Login
-            </Link>
+            <>
+              <Link to="/" className="text-gray-800 hover:text-metadite-primary transition-colors py-2" onClick={toggleMobileMenu}>Home</Link>
+              <Link to="/models" className="text-gray-800 hover:text-metadite-primary transition-colors py-2" onClick={toggleMobileMenu}>Models</Link>
+              {user?.role === 'admin' && (
+                <Link to="/admin" className="text-gray-800 hover:text-metadite-primary transition-colors py-2" onClick={toggleMobileMenu}>Admin</Link>
+              )}
+              {hasVipAccess && (
+                <Link to="/vip-content" className="text-gray-800 hover:text-metadite-primary transition-colors py-2" onClick={toggleMobileMenu}>VIP Content</Link>
+              )}
+              <Link to="/cart" className="text-gray-800 hover:text-metadite-primary transition-colors py-2" onClick={toggleMobileMenu}>Cart</Link>
+              <Link to="/dashboard" className="text-gray-800 hover:text-metadite-primary transition-colors py-2" onClick={toggleMobileMenu}>Dashboard</Link>
+              <button
+                onClick={() => {
+                  logout();
+                  toggleMobileMenu();
+                }}
+                className="bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white px-4 py-2 rounded-md hover:opacity-90 transition-opacity"
+              >
+                Logout
+              </button>
+            </>
           )}
         </div>
       )}

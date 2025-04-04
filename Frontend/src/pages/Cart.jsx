@@ -72,7 +72,7 @@ const Cart = () => {
                       
                       <div className="flex justify-between">
                         <span className="text-gray-600">Shipping</span>
-                        <span className="font-medium">$9.99</span>
+                        <span className="font-medium">Free</span>
                       </div>
                       
                       <div className="flex justify-between">
@@ -83,7 +83,7 @@ const Cart = () => {
                       <div className="border-t border-gray-200 pt-3 mt-3">
                         <div className="flex justify-between font-semibold">
                           <span>Total</span>
-                          <span>${(totalAmount + 9.99 + (totalAmount * 0.08)).toFixed(2)}</span>
+                          <span>${(totalAmount + (totalAmount * 0.08)).toFixed(2)}</span>
                         </div>
                       </div>
                     </div>
@@ -109,7 +109,7 @@ const Cart = () => {
                   <h3 className="font-medium mb-2">Accepted Payment Methods</h3>
                   <div className="flex flex-wrap gap-2">
                     <div className="bg-gray-100 rounded-md px-3 py-2 text-sm">Stripe</div>
-                    <div className="bg-gray-100 rounded-md px-3 py-2 text-sm">M-Pesa</div>
+                    <div className="bg-gray-100 rounded-md px-3 py-2 text-sm">Crypto Wallet</div>
                     <div className="bg-gray-100 rounded-md px-3 py-2 text-sm">Credit Card</div>
                     <div className="bg-gray-100 rounded-md px-3 py-2 text-sm">Debit Card</div>
                   </div>
