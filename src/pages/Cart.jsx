@@ -5,11 +5,13 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import CartItem from '../components/CartItem';
 import { useCart } from '../context/CartContext';
+import { useTheme } from '../context/ThemeContext';
 import { ShoppingBag, CreditCard, ArrowRight } from 'lucide-react';
 
 const Cart = () => {
   const { items, clearCart, totalAmount, totalItems } = useCart();
   const [isLoaded, setIsLoaded] = useState(false);
+  const { theme } = useTheme();
   
   useEffect(() => {
     setIsLoaded(true);
@@ -23,10 +25,10 @@ const Cart = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       
-      <div className="flex-1 pt-24 pb-12 px-4 bg-gradient-to-br from-white via-metadite-light to-white">
+      <div className={`flex-1 pt-24 pb-12 px-4 ${theme === 'dark' ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' : 'bg-gradient-to-br from-white via-metadite-light to-white'}`}>
         <div className="container mx-auto max-w-6xl">
-          <h1 className="text-3xl font-bold mb-2">Your Shopping Cart</h1>
-          <p className="text-gray-600 mb-8">
+          <h1 className={`text-3xl font-bold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Your Shopping Cart</h1>
+          <p className={`mb-8 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
             {totalItems > 0 
               ? `You have ${totalItems} item${totalItems === 1 ? '' : 's'} in your cart` 
               : 'Your cart is empty'}
@@ -62,28 +64,25 @@ const Cart = () => {
                   <div className="bg-gradient-to-r from-metadite-primary to-metadite-secondary p-4 text-white">
                     <h2 className="text-lg font-semibold">Order Summary</h2>
                   </div>
-                  
+
                   <div className="p-4">
                     <div className="space-y-3">
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Subtotal ({totalItems} items)</span>
-                        <span className="font-medium">${totalAmount.toFixed(2)}</span>
+                        <span className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>Subtotal ({totalItems} items)</span>
+                        <span className="font-medium">
+                          ${totalAmount.toFixed(2)}
+                        </span>
                       </div>
                       
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Shipping</span>
-                        <span className="font-medium">Free</span>
-                      </div>
-                      
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Tax</span>
-                        <span className="font-medium">${(totalAmount * 0.08).toFixed(2)}</span>
+                        <span className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>Shipping</span>
+                        <span className="font-medium">$Free</span>
                       </div>
                       
                       <div className="border-t border-gray-200 pt-3 mt-3">
                         <div className="flex justify-between font-semibold">
                           <span>Total</span>
-                          <span>${(totalAmount + (totalAmount * 0.08)).toFixed(2)}</span>
+                          <span>${(totalAmount).toFixed(2)}</span>
                         </div>
                       </div>
                     </div>
@@ -106,21 +105,21 @@ const Cart = () => {
                 </div>
                 
                 <div className="glass-card rounded-xl overflow-hidden mt-6 p-4">
-                  <h3 className="font-medium mb-2">Accepted Payment Methods</h3>
+                  <h3 className={`font-medium mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>Accepted Payment Methods</h3>
                   <div className="flex flex-wrap gap-2">
-                    <div className="bg-gray-100 rounded-md px-3 py-2 text-sm">Stripe</div>
-                    <div className="bg-gray-100 rounded-md px-3 py-2 text-sm">Crypto Wallet</div>
-                    <div className="bg-gray-100 rounded-md px-3 py-2 text-sm">Credit Card</div>
-                    <div className="bg-gray-100 rounded-md px-3 py-2 text-sm">Debit Card</div>
+                    <div className={`${theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-800'} rounded-md px-3 py-2 text-sm`}>Stripe</div>
+                    <div className={`${theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-800'} rounded-md px-3 py-2 text-sm`}>M-Pesa</div>
+                    <div className={`${theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-800'} rounded-md px-3 py-2 text-sm`}>Credit Card</div>
+                    <div className={`${theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-800'} rounded-md px-3 py-2 text-sm`}>Debit Card</div>
                   </div>
                 </div>
               </div>
             </div>
           ) : (
             <div className={`glass-card rounded-xl p-10 text-center transition-all duration-500 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-              <ShoppingBag className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-              <h2 className="text-2xl font-medium mb-2">Your cart is empty</h2>
-              <p className="text-gray-500 mb-6">
+              <ShoppingBag className={`h-16 w-16 mx-auto mb-4 ${theme === 'dark' ? 'text-gray-600' : 'text-gray-300'}`} />
+              <h2 className={`text-2xl font-medium mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>Your cart is empty</h2>
+              <p className={`mb-6 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                 Looks like you haven't added any items to your cart yet.
               </p>
               <Link 
