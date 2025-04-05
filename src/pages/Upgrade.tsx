@@ -84,7 +84,8 @@ const Upgrade: React.FC = () => {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
-      
+
+      <br /> <br /><br /> <br /><br /> <br />
       <main className={`flex-1 container mx-auto px-4 py-12 ${
         theme === 'dark' ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' : ''
       }`}>
@@ -183,6 +184,7 @@ const Upgrade: React.FC = () => {
             All plans include a 14-day money-back guarantee. You can cancel or change your subscription at any time.
             Need help choosing the right plan? <a href="/contact" className="text-metadite-primary hover:underline">Contact our team</a>.
           </p>
+          <br />
         </div>
       </main>
       
