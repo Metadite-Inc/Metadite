@@ -35,6 +35,36 @@
 
     --radius: 0.75rem;
   }
+  
+  .dark {
+    --background: 215 28% 7%; /* #0d1117 */
+    --foreground: 0 0% 98%;
+
+    --card: 215 28% 9%; /* Slightly lighter than background */
+    --card-foreground: 0 0% 98%;
+
+    --popover: 215 28% 9%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 262 83.3% 57.8%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 291.5 95.8% 60.6%;
+    --secondary-foreground: 240 5.9% 10%;
+
+    --muted: 215 28% 15%;
+    --muted-foreground: 240 5% 64.9%;
+
+    --accent: 24 94.5% 53.1%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 215 28% 15%;
+    --input: 215 28% 15%;
+    --ring: 262 83.3% 57.8%;
+  }
 }
 
 @layer base {
@@ -71,15 +101,55 @@
 
 /* Glass morphism effects */
 .glass-card {
-  @apply bg-white/80 backdrop-blur-md;
+  @apply bg-white/80 backdrop-blur-md dark:bg-gray-800/70 dark:backdrop-blur-md;
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
+.dark .glass-card {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+  @apply bg-gray-900/70; /* Darker in dark mode */
+}
+
 .glass-nav {
-  @apply bg-white/70 backdrop-blur-md;
+  @apply bg-white/70 backdrop-blur-md dark:bg-gray-900/70 dark:backdrop-blur-md;
   box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.dark .glass-nav {
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Dark mode text color improvements */
+.dark {
+  color-scheme: dark;
+}
+
+.dark p {
+  @apply text-gray-300;
+}
+
+.dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
+  @apply text-white;
+}
+
+.dark .text-gray-600 {
+  @apply text-gray-300;
+}
+
+.dark .text-gray-700 {
+  @apply text-gray-200;
+}
+
+.dark .text-gray-800 {
+  @apply text-gray-100;
+}
+
+.dark .text-gray-900 {
+  @apply text-white;
 }
 
 /* Page transitions */
@@ -121,6 +191,10 @@
   background-size: 1000px 100%;
 }
 
+.dark .shimmer {
+  background: linear-gradient(to right, rgba(255,255,255,0.05) 8%, rgba(255,255,255,0.01) 18%, rgba(255,255,255,0.05) 33%);
+}
+
 /* Image loading blur effect */
 .image-fade-in {
   opacity: 0;
@@ -129,4 +203,13 @@
 
 .image-fade-in.loaded {
   opacity: 1;
+}
+
+/* Dark mode specific card colors */
+.dark .bg-white {
+  @apply bg-gray-800;
+}
+
+.dark .bg-gray-100 {
+  @apply bg-gray-700;
 }
