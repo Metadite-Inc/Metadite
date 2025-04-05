@@ -3,8 +3,8 @@ import { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import ModelCard from '../components/ModelCard';
-import { useAuth } from '../context/AuthContext';
 import { Search, Filter, Bookmark, Grid, Tag } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 
 // Mock data for model listings with categories
 const modelData = [
@@ -64,7 +64,7 @@ const Models = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [priceFilter, setPriceFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
-  const { user } = useAuth();
+  const { theme } = useTheme();
   
   useEffect(() => {
     // Simulate fetching models from an API
@@ -92,18 +92,14 @@ const Models = () => {
   // Get available categories from model data
   const categories = ['all', ...new Set(models.map(model => model.category))];
 
-  if (user?.role === 'moderator') {
-    navigate('/moderator');
-  }
-  
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
       
-      <div className="flex-1 pt-24 pb-12 px-4 bg-gradient-to-br from-white via-metadite-light to-white">
+      <div className={`flex-1 pt-24 pb-12 px-4 ${theme === 'dark' ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' : 'bg-gradient-to-br from-white via-metadite-light to-white'}`}>
         <div className="container mx-auto max-w-6xl">
-          <h1 className="text-3xl font-bold mb-2">Our Model Collection</h1>
-          <p className="text-gray-600 mb-8">
+          <h1 className={`text-3xl font-bold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Our Model Collection</h1>
+          <p className={`mb-8 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
             Explore our premium selection of beautifully crafted model dolls
           </p>
           
@@ -114,11 +110,11 @@ const Models = () => {
                   <input
                     type="text"
                     placeholder="Search models..."
-                    className="w-full py-2 pl-10 pr-4 rounded-md border border-gray-200 focus:outline-none focus:ring-2 focus:ring-metadite-primary"
+                    className={`w-full py-2 pl-10 pr-4 rounded-md border ${theme === 'dark' ? 'border-gray-700 bg-gray-800 text-white placeholder-gray-400' : 'border-gray-200 bg-white text-gray-800'} focus:outline-none focus:ring-2 focus:ring-metadite-primary`}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
-                  <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                  <Search className={`absolute left-3 top-2.5 h-5 w-5 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-400'}`} />
                 </div>
               </div>
               
@@ -126,7 +122,7 @@ const Models = () => {
                 <div className="flex items-center gap-2 mr-4">
                   <Filter className="h-5 w-5 text-metadite-primary" />
                   <select
-                    className="py-2 px-4 rounded-md border border-gray-200 focus:outline-none focus:ring-2 focus:ring-metadite-primary bg-white"
+                    className={`py-2 px-4 rounded-md border ${theme === 'dark' ? 'border-gray-700 bg-gray-800 text-white' : 'border-gray-200 bg-white text-gray-800'} focus:outline-none focus:ring-2 focus:ring-metadite-primary`}
                     value={priceFilter}
                     onChange={(e) => setPriceFilter(e.target.value)}
                   >
@@ -140,7 +136,7 @@ const Models = () => {
                 <div className="flex items-center gap-2">
                   <Tag className="h-5 w-5 text-metadite-primary" />
                   <select
-                    className="py-2 px-4 rounded-md border border-gray-200 focus:outline-none focus:ring-2 focus:ring-metadite-primary bg-white"
+                    className={`py-2 px-4 rounded-md border ${theme === 'dark' ? 'border-gray-700 bg-gray-800 text-white' : 'border-gray-200 bg-white text-gray-800'} focus:outline-none focus:ring-2 focus:ring-metadite-primary`}
                     value={categoryFilter}
                     onChange={(e) => setCategoryFilter(e.target.value)}
                   >
@@ -156,7 +152,7 @@ const Models = () => {
             {/* Active Filters Display */}
             {(categoryFilter !== 'all' || priceFilter !== 'all') && (
               <div className="flex items-center flex-wrap mt-4 ml-2">
-                <span className="text-sm text-gray-500 mr-2">Active filters:</span>
+                <span className={`text-sm mr-2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Active filters:</span>
                 
                 {categoryFilter !== 'all' && (
                   <span className="inline-flex items-center bg-metadite-primary/10 text-metadite-primary text-xs px-2 py-1 rounded-full mr-2">
@@ -202,7 +198,9 @@ const Models = () => {
               className={`flex items-center px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                 categoryFilter === 'all'
                   ? 'bg-metadite-primary text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-100'
+                  : theme === 'dark' 
+                    ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                    : 'bg-white text-gray-700 hover:bg-gray-100'
               }`}
             >
               <Grid className="h-4 w-4 mr-2" />
@@ -216,7 +214,9 @@ const Models = () => {
                 className={`flex items-center px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                   categoryFilter === category
                     ? 'bg-metadite-primary text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-100'
+                    : theme === 'dark' 
+                      ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                      : 'bg-white text-gray-700 hover:bg-gray-100'
                 }`}
               >
                 {category === 'Premium' && <Bookmark className="h-4 w-4 mr-2" />}
@@ -236,7 +236,7 @@ const Models = () => {
               </div>
             ) : (
               <div className="text-center py-16">
-                <p className="text-gray-500 text-lg">No models found matching your criteria.</p>
+                <p className={`text-lg ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>No models found matching your criteria.</p>
                 <button 
                   onClick={() => {
                     setSearchTerm('');

@@ -7,6 +7,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 
 const tiers = [
@@ -56,6 +57,7 @@ const Upgrade: React.FC = () => {
   const [loading, setLoading] = useState<Record<string, boolean>>({});
   const { user, updateMembership } = useAuth();
   const navigate = useNavigate();
+  const { theme } = useTheme();
 
   const handleUpgrade = (tierLevel: 'standard' | 'vip' | 'vvip', price: number) => {
     setLoading({ ...loading, [tierLevel]: true });
@@ -82,18 +84,20 @@ const Upgrade: React.FC = () => {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
-      
+
       <br /> <br /><br /> <br /><br /> <br />
-      <main className="flex-1 container mx-auto px-4 py-12">
+      <main className={`flex-1 container mx-auto px-4 py-12 ${
+        theme === 'dark' ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' : ''
+      }`}>
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-metadite-primary to-metadite-secondary text-transparent bg-clip-text">
             Upgrade Your Experience
           </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
             Choose the perfect plan to enhance your Metadite collection and unlock exclusive features.
           </p>
           {currentPlan && (
-            <div className="mt-4 inline-block bg-gray-100 px-4 py-2 rounded-full text-sm font-medium">
+            <div className="mt-4 inline-block bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-full text-sm font-medium dark:text-gray-200">
               Your current plan: <span className="font-bold capitalize">{currentPlan}</span>
             </div>
           )}
@@ -103,9 +107,9 @@ const Upgrade: React.FC = () => {
           {tiers.map((tier) => (
             <Card 
               key={tier.name} 
-              className={`relative overflow-hidden transition-all duration-300 hover:shadow-lg ${
+              className={`relative overflow-hidden transition-all duration-300 hover:shadow-lg dark:bg-gray-800 dark:border-gray-700 ${
                 tier.recommended ? 'border-metadite-primary ring-2 ring-metadite-primary/20' : ''
-              } ${currentPlan === tier.level ? 'bg-gray-50 border-blue-400' : ''}`}
+              } ${currentPlan === tier.level ? 'bg-gray-50 dark:bg-gray-700/70 border-blue-400' : ''}`}
             >
               {tier.recommended && (
                 <div className="absolute top-0 right-0 bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white px-4 py-1 rounded-bl-lg text-sm font-medium">
@@ -120,24 +124,24 @@ const Upgrade: React.FC = () => {
               )}
               
               <CardHeader>
-                <CardTitle className="text-2xl flex items-center gap-2">
+                <CardTitle className="text-2xl flex items-center gap-2 dark:text-white">
                   {tier.level === 'vvip' && <StarIcon className="h-5 w-5 text-yellow-500 fill-yellow-500" />}
                   {tier.name}
                 </CardTitle>
-                <CardDescription>{tier.description}</CardDescription>
+                <CardDescription className="dark:text-gray-300">{tier.description}</CardDescription>
               </CardHeader>
               
               <CardContent>
                 <div className="flex items-baseline mb-6">
-                  <span className="text-4xl font-bold">${tier.price}</span>
-                  <span className="text-gray-500 ml-2">/month</span>
+                  <span className="text-4xl font-bold dark:text-white">${tier.price}</span>
+                  <span className="text-gray-500 dark:text-gray-400 ml-2">/month</span>
                 </div>
                 
                 <ul className="space-y-3">
                   {tier.features.map((feature) => (
                     <li key={feature} className="flex items-start gap-2">
                       <CheckIcon className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
-                      <span className="text-gray-600">{feature}</span>
+                      <span className="text-gray-600 dark:text-gray-300">{feature}</span>
                     </li>
                   ))}
                 </ul>
@@ -176,7 +180,7 @@ const Upgrade: React.FC = () => {
         </div>
         
         <div className="mt-12 text-center">
-          <p className="text-gray-500 text-sm max-w-xl mx-auto">
+          <p className="text-gray-500 dark:text-gray-400 text-sm max-w-xl mx-auto">
             All plans include a 14-day money-back guarantee. You can cancel or change your subscription at any time.
             Need help choosing the right plan? <a href="/contact" className="text-metadite-primary hover:underline">Contact our team</a>.
           </p>
