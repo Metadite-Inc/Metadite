@@ -30,7 +30,7 @@ const DashboardMenu = ({ activeTab, setActiveTab, logout, userVip, user }) => {
             <span>Account Overview</span>
           </button>
         </li>
-        {!user?.role !== 'moderator' && (
+        {user?.role !== 'moderator' && (
           <li>
             <button 
               onClick={() => setActiveTab('orders')}
