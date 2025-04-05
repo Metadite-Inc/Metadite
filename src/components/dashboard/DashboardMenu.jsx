@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { 
   User, ShoppingBag, Video, Heart, CreditCard, 
@@ -6,7 +5,7 @@ import {
 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 
-const DashboardMenu = ({ activeTab, setActiveTab, logout, userVip }) => {
+const DashboardMenu = ({ activeTab, setActiveTab, logout, userVip, user }) => {
   const { theme } = useTheme();
 
   return (
@@ -31,21 +30,23 @@ const DashboardMenu = ({ activeTab, setActiveTab, logout, userVip }) => {
             <span>Account Overview</span>
           </button>
         </li>
-        <li>
-          <button 
-            onClick={() => setActiveTab('orders')}
-            className={`flex items-center w-full px-4 py-3 rounded-lg transition-colors ${
-              activeTab === 'orders' 
-                ? 'bg-metadite-primary/10 text-metadite-primary' 
-                : theme === 'dark' 
-                  ? 'text-gray-300 hover:bg-gray-700/50' 
-                  : 'text-gray-700 hover:bg-gray-100'
-            }`}
-          >
-            <ShoppingBag className="h-5 w-5 mr-3" />
-            <span>Orders</span>
-          </button>
-        </li>
+        {!user?.role !== 'moderator' && (
+          <li>
+            <button 
+              onClick={() => setActiveTab('orders')}
+              className={`flex items-center w-full px-4 py-3 rounded-lg transition-colors ${
+                activeTab === 'orders' 
+                  ? 'bg-metadite-primary/10 text-metadite-primary' 
+                  : theme === 'dark' 
+                    ? 'text-gray-300 hover:bg-gray-700/50' 
+                    : 'text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              <ShoppingBag className="h-5 w-5 mr-3" />
+              <span>Orders</span>
+            </button>
+          </li>
+        )}
         {userVip && (
           <li>
             <button 
@@ -63,36 +64,40 @@ const DashboardMenu = ({ activeTab, setActiveTab, logout, userVip }) => {
             </button>
           </li>
         )}
-        <li>
-          <button 
-            onClick={() => setActiveTab('favorites')}
-            className={`flex items-center w-full px-4 py-3 rounded-lg transition-colors ${
-              activeTab === 'favorites' 
-                ? 'bg-metadite-primary/10 text-metadite-primary' 
-                : theme === 'dark' 
-                  ? 'text-gray-300 hover:bg-gray-700/50' 
-                  : 'text-gray-700 hover:bg-gray-100'
-            }`}
-          >
-            <Heart className="h-5 w-5 mr-3" />
-            <span>Favorites</span>
-          </button>
-        </li>
-        <li>
-          <button 
-            onClick={() => setActiveTab('payment')}
-            className={`flex items-center w-full px-4 py-3 rounded-lg transition-colors ${
-              activeTab === 'payment' 
-                ? 'bg-metadite-primary/10 text-metadite-primary' 
-                : theme === 'dark' 
-                  ? 'text-gray-300 hover:bg-gray-700/50' 
-                  : 'text-gray-700 hover:bg-gray-100'
-            }`}
-          >
-            <CreditCard className="h-5 w-5 mr-3" />
-            <span>Payment Methods</span>
-          </button>
-        </li>
+        {user?.role !== 'moderator' && (
+          <li>
+            <button 
+              onClick={() => setActiveTab('favorites')}
+              className={`flex items-center w-full px-4 py-3 rounded-lg transition-colors ${
+                activeTab === 'favorites' 
+                  ? 'bg-metadite-primary/10 text-metadite-primary' 
+                  : theme === 'dark' 
+                    ? 'text-gray-300 hover:bg-gray-700/50' 
+                    : 'text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              <Heart className="h-5 w-5 mr-3" />
+              <span>Favorites</span>
+            </button>
+          </li>
+        )}
+        {user?.role !== 'moderator' && (
+          <li>
+            <button 
+              onClick={() => setActiveTab('payment')}
+              className={`flex items-center w-full px-4 py-3 rounded-lg transition-colors ${
+                activeTab === 'payment' 
+                  ? 'bg-metadite-primary/10 text-metadite-primary' 
+                  : theme === 'dark' 
+                    ? 'text-gray-300 hover:bg-gray-700/50' 
+                    : 'text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              <CreditCard className="h-5 w-5 mr-3" />
+              <span>Payment Methods</span>
+            </button>
+          </li>
+        )}
         <li>
           <button 
             onClick={() => setActiveTab('notifications')}

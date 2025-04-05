@@ -566,6 +566,7 @@ const Checkout = () => {
                     <div className="flex justify-between">
                       <span className={theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>Shipping</span>
                       <span className={`font-medium ${theme === 'dark' ? 'text-white' : ''}`}>$Free</span>
+                    </div>
                     
                     <div className={`border-t pt-3 mt-3 ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
                       <div className="flex justify-between font-bold">
