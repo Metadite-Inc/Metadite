@@ -26,13 +26,7 @@ const TestimonialCard = ({ testimonial }) => {
   return (
     <div className="glass-card p-6 rounded-xl hover:shadow-lg transition-all">
       <div className="flex items-center mb-4">
-        <img 
-          src={testimonial.avatar} 
-          alt={testimonial.name} 
-          className="w-12 h-12 rounded-full object-cover mr-4"
-        />
         <div>
-          <h4 className="font-semibold">{testimonial.name}</h4>
           <div className="flex">
             {[...Array(5)].map((_, i) => (
               <Star 
