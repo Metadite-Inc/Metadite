@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import { useTheme } from '../context/ThemeContext';
 
 interface FormData {
   name: string;
@@ -17,6 +18,7 @@ interface FormData {
 }
 
 const Contact = () => {
+  const { theme } = useTheme();
   const [formData, setFormData] = useState<FormData>({
     name: '',
     email: '',
@@ -52,49 +54,53 @@ const Contact = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       
-      <div className="flex-1 pt-20 pb-20 bg-gradient-to-br from-white via-metadite-light to-white">
+      <div className={`flex-1 pt-20 pb-20 ${
+        theme === 'dark' 
+          ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' 
+          : 'bg-gradient-to-br from-white via-metadite-light to-white'
+      }`}>
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">Contact Us</h1>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <h1 className={`text-4xl font-bold mb-4 ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>Contact Us</h1>
+            <p className={`text-xl max-w-2xl mx-auto ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
               Have questions or need assistance? We're here to help. Reach out to us using any of the methods below.
             </p>
           </div>
           
           <div className="grid md:grid-cols-3 gap-8 mb-16">
-            <Card className="hover:shadow-lg transition-shadow">
+            <Card className={`hover:shadow-lg transition-shadow ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : ''}`}>
               <CardContent className="flex flex-col items-center text-center p-6">
-                <div className="bg-metadite-light p-4 rounded-full mb-4">
+                <div className={`${theme === 'dark' ? 'bg-gray-700' : 'bg-metadite-light'} p-4 rounded-full mb-4`}>
                   <Mail className="h-8 w-8 text-metadite-primary" />
                 </div>
-                <h2 className="text-xl font-semibold mb-2">Email Us</h2>
-                <p className="text-gray-500 mb-4">Our friendly team is here to help.</p>
+                <h2 className={`text-xl font-semibold mb-2 ${theme === 'dark' ? 'text-white' : ''}`}>Email Us</h2>
+                <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} mb-4`}>Our friendly team is here to help.</p>
                 <a href="mailto:support@metadite.com" className="text-metadite-primary hover:underline">
                   support@metadite.com
                 </a>
               </CardContent>
             </Card>
             
-            <Card className="hover:shadow-lg transition-shadow">
+            <Card className={`hover:shadow-lg transition-shadow ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : ''}`}>
               <CardContent className="flex flex-col items-center text-center p-6">
-                <div className="bg-metadite-light p-4 rounded-full mb-4">
+                <div className={`${theme === 'dark' ? 'bg-gray-700' : 'bg-metadite-light'} p-4 rounded-full mb-4`}>
                   <Phone className="h-8 w-8 text-metadite-primary" />
                 </div>
-                <h2 className="text-xl font-semibold mb-2">Call Us</h2>
-                <p className="text-gray-500 mb-4">Mon-Fri from 8am to 5pm.</p>
+                <h2 className={`text-xl font-semibold mb-2 ${theme === 'dark' ? 'text-white' : ''}`}>Call Us</h2>
+                <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} mb-4`}>Mon-Fri from 8am to 5pm.</p>
                 <a href="tel:+1-555-123-4567" className="text-metadite-primary hover:underline">
                   +1 (555) 123-4567
                 </a>
               </CardContent>
             </Card>
             
-            <Card className="hover:shadow-lg transition-shadow">
+            <Card className={`hover:shadow-lg transition-shadow ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : ''}`}>
               <CardContent className="flex flex-col items-center text-center p-6">
-                <div className="bg-metadite-light p-4 rounded-full mb-4">
+                <div className={`${theme === 'dark' ? 'bg-gray-700' : 'bg-metadite-light'} p-4 rounded-full mb-4`}>
                   <MapPin className="h-8 w-8 text-metadite-primary" />
                 </div>
-                <h2 className="text-xl font-semibold mb-2">Visit Us</h2>
-                <p className="text-gray-500 mb-4">Come say hello at our office.</p>
+                <h2 className={`text-xl font-semibold mb-2 ${theme === 'dark' ? 'text-white' : ''}`}>Visit Us</h2>
+                <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} mb-4`}>Come say hello at our office.</p>
                 <address className="not-italic text-metadite-primary">
                   123 Metadite Way<br />
                   San Francisco, CA 94103
@@ -102,8 +108,10 @@ const Contact = () => {
               </CardContent>
             </Card>
           </div>
+
+          <br /><br />
           
-          <div className="glass-card rounded-2xl overflow-hidden shadow-xl max-w-3xl mx-auto">
+          <div className={`glass-card rounded-2xl overflow-hidden shadow-xl max-w-3xl mx-auto ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : ''}`}>
             <div className="bg-gradient-to-r from-metadite-primary to-metadite-secondary p-6 text-white">
               <h2 className="text-2xl font-bold mb-1">Send us a Message</h2>
               <p className="opacity-80">Fill out the form below to get in touch with us</p>
@@ -113,7 +121,7 @@ const Contact = () => {
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="grid md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700">Full Name</label>
+                    <label htmlFor="name" className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Full Name</label>
                     <Input
                       id="name"
                       name="name"
@@ -122,11 +130,12 @@ const Contact = () => {
                       onChange={handleChange}
                       placeholder="John Doe"
                       required
+                      className={theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : ''}
                     />
                   </div>
                   
                   <div className="space-y-2">
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email Address</label>
+                    <label htmlFor="email" className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Email Address</label>
                     <Input
                       id="email"
                       name="email"
@@ -135,12 +144,13 @@ const Contact = () => {
                       onChange={handleChange}
                       placeholder="john@example.com"
                       required
+                      className={theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : ''}
                     />
                   </div>
                 </div>
                 
                 <div className="space-y-2">
-                  <label htmlFor="subject" className="block text-sm font-medium text-gray-700">Subject</label>
+                  <label htmlFor="subject" className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Subject</label>
                   <Input
                     id="subject"
                     name="subject"
@@ -149,11 +159,12 @@ const Contact = () => {
                     onChange={handleChange}
                     placeholder="How can we help you?"
                     required
+                    className={theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : ''}
                   />
                 </div>
                 
                 <div className="space-y-2">
-                  <label htmlFor="message" className="block text-sm font-medium text-gray-700">Message</label>
+                  <label htmlFor="message" className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Message</label>
                   <Textarea
                     id="message"
                     name="message"
@@ -162,6 +173,7 @@ const Contact = () => {
                     onChange={handleChange}
                     placeholder="Your message here..."
                     required
+                    className={theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : ''}
                   />
                 </div>
                 
@@ -177,23 +189,23 @@ const Contact = () => {
           </div>
           
           <div className="mt-16">
-            <Separator className="mb-8" />
-            <h2 className="text-2xl font-bold text-center mb-8">Frequently Asked Questions</h2>
+            <Separator className={`mb-8 ${theme === 'dark' ? 'bg-gray-700' : ''}`} />
+            <h2 className={`text-2xl font-bold text-center mb-8 ${theme === 'dark' ? 'text-white' : ''}`}>Frequently Asked Questions</h2>
             
             <div className="max-w-3xl mx-auto space-y-6">
-              <div className="glass-card p-6 rounded-lg">
-                <h3 className="text-lg font-semibold mb-2">What are your business hours?</h3>
-                <p className="text-gray-600">Our customer support team is available Monday through Friday, from 8am to 5pm Pacific Time.</p>
+              <div className={`glass-card p-6 rounded-lg ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : ''}`}>
+                <h3 className={`text-lg font-semibold mb-2 ${theme === 'dark' ? 'text-white' : ''}`}>What are your business hours?</h3>
+                <p className={theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>Our customer support team is available Monday through Friday, from 8am to 5pm Pacific Time.</p>
               </div>
               
-              <div className="glass-card p-6 rounded-lg">
-                <h3 className="text-lg font-semibold mb-2">How quickly can I expect a response?</h3>
-                <p className="text-gray-600">We typically respond to all inquiries within 24 hours during business days.</p>
+              <div className={`glass-card p-6 rounded-lg ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : ''}`}>
+                <h3 className={`text-lg font-semibold mb-2 ${theme === 'dark' ? 'text-white' : ''}`}>How quickly can I expect a response?</h3>
+                <p className={theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>We typically respond to all inquiries within 24 hours during business days.</p>
               </div>
               
-              <div className="glass-card p-6 rounded-lg">
-                <h3 className="text-lg font-semibold mb-2">Do you offer technical support?</h3>
-                <p className="text-gray-600">Yes, our technical support team is available to help with any issues you may encounter while using our services.</p>
+              <div className={`glass-card p-6 rounded-lg ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : ''}`}>
+                <h3 className={`text-lg font-semibold mb-2 ${theme === 'dark' ? 'text-white' : ''}`}>Do you offer technical support?</h3>
+                <p className={theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>Yes, our technical support team is available to help with any issues you may encounter while using our services.</p>
               </div>
             </div>
           </div>

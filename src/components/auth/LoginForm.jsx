@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, User, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import FormInput from './FormInput';
 import RoleSelector from './RoleSelector';
 import SocialLoginButtons from './SocialLoginButtons';
@@ -18,6 +19,7 @@ const LoginForm = () => {
   const [region, setRegion] = useState('north_america');
   const [showPassword, setShowPassword] = useState(false);
   const { login, register } = useAuth();
+  const { theme } = useTheme();
   const navigate = useNavigate();
   
   const handleToggleView = () => {
@@ -65,7 +67,7 @@ const LoginForm = () => {
   };
 
   return (
-    <div className="glass-card rounded-2xl overflow-hidden shadow-xl">
+    <div className={`glass-card rounded-2xl overflow-hidden shadow-xl ${theme === 'dark' ? 'bg-gray-800/70' : ''}`}>
       <div className="bg-gradient-to-r from-metadite-primary to-metadite-secondary p-6 text-white">
         <h2 className="text-2xl font-bold mb-1">{isLogin ? 'Welcome Back' : 'Create Account'}</h2>
         <p className="opacity-80">{isLogin ? 'Sign in to your account' : 'Join our community today'}</p>
@@ -122,9 +124,9 @@ const LoginForm = () => {
                   id="remember"
                   name="remember"
                   type="checkbox"
-                  className="h-4 w-4 text-metadite-primary focus:ring-metadite-primary border-gray-300 rounded"
+                  className={`h-4 w-4 text-metadite-primary focus:ring-metadite-primary ${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'border-gray-300'} rounded`}
                 />
-                <label htmlFor="remember" className="ml-2 block text-sm text-gray-700">
+                <label htmlFor="remember" className={`ml-2 block text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                   Remember me
                 </label>
               </div>
@@ -157,7 +159,18 @@ const LoginForm = () => {
           </button>
         </div>
         
-        <div className="mt-8 text-xs text-center text-gray-500">
+        <div className="mt-4 text-center">
+          {isLogin && (
+            <Link 
+              to="/upgrade"
+              className="inline-block text-sm font-medium text-white bg-gradient-to-r from-metadite-primary to-metadite-secondary px-4 py-2 rounded-md hover:opacity-90 transition-opacity"
+            >
+              Upgrade your membership
+            </Link>
+          )}
+        </div>
+        
+        <div className={`mt-8 text-xs text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
           By continuing, you agree to Metadite's <Link to="/terms" className="text-metadite-primary">Terms of Service</Link> and <Link to="/privacy" className="text-metadite-primary">Privacy Policy</Link>.
         </div>
       </div>

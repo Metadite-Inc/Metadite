@@ -5,6 +5,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import VideoCard from '../components/VideoCard';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { Video, Filter, Search } from 'lucide-react';
 
 // Mock data for VIP videos
@@ -137,11 +138,7 @@ const VipContent = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredVideos, setFilteredVideos] = useState(vipVideos);
   const [isLoaded, setIsLoaded] = useState(false);
-
-  //check if user is a moderator and redirects to dashboard
-  if (user?.role === 'moderator') {
-    navigate('/dashboard');
-  }
+  const { theme } = useTheme();
   
   useEffect(() => {
     // Redirect non-VIP users
@@ -177,7 +174,11 @@ const VipContent = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       
-      <div className="flex-1 pt-20 pb-12 px-4 bg-gradient-to-br from-white via-metadite-light to-white">
+      <div className={`flex-1 pt-20 pb-12 px-4 ${
+        theme === 'dark' 
+          ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' 
+          : 'bg-gradient-to-br from-white via-metadite-light to-white'
+      }`}>
         <div className="container mx-auto max-w-6xl">
           <div className="bg-gradient-to-r from-metadite-primary to-metadite-secondary rounded-xl p-6 mb-8 text-white">
             <div className="flex flex-col md:flex-row items-center justify-between">
@@ -211,13 +212,13 @@ const VipContent = () => {
                     placeholder="Search videos..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary"
+                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
                   />
                 </div>
                 
                 <div className="flex space-x-2">
-                  <button className="flex items-center space-x-1 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
-                    <Filter className="h-4 w-4 text-gray-500" />
+                  <button className="flex items-center space-x-1 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700">
+                    <Filter className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                     <span>Filters</span>
                   </button>
                   <button className="flex items-center space-x-1 px-4 py-2 bg-metadite-primary text-white rounded-md hover:opacity-90 transition-opacity">
@@ -248,8 +249,8 @@ const VipContent = () => {
           ) : (
             <div className="glass-card rounded-xl p-10 text-center">
               <Video className="h-10 w-10 text-gray-300 mx-auto mb-2" />
-              <h3 className="text-xl font-medium mb-2">No videos found</h3>
-              <p className="text-gray-500">
+              <h3 className="text-xl font-medium mb-2 dark:text-gray-100">No videos found</h3>
+              <p className="text-gray-500 dark:text-gray-400">
                 We couldn't find any videos matching "{searchTerm}". Try a different search term.
               </p>
             </div>

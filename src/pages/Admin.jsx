@@ -11,6 +11,7 @@ import {
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useTheme } from '../context/ThemeContext';
 
 // Mock data for admin dashboard
 const moderators = [
@@ -88,7 +89,7 @@ const adminTypes = [
     id: 'super', 
     name: 'Super Admin', 
     description: 'Complete access to all admin features',
-    icon: <UserCog className="h-5 w-5 text-purple-500" />
+    icon: <UserCog className="h-5 w-5 text-purple-500 dark:text-purple-200" />
   },
   { 
     id: 'content', 
@@ -106,8 +107,10 @@ const adminTypes = [
 
 const Admin = () => {
   const { user } = useAuth();
+  const { theme } = useTheme();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('dashboard');
+  // const [isAuthorized, setIsAuthorized] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [expandedSection, setExpandedSection] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -269,12 +272,37 @@ const Admin = () => {
       type: 'content'
     });
   };
+
+  /*
+  if (!isAuthorized) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        
+        <div className={`flex-1 flex items-center justify-center pt-16 ${
+          theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-gray-100'
+        }`}>
+          <div className="text-center px-4">
+            <br /><br /><br /><br /><br /><br />
+            <h1 className="text-3xl font-bold mb-4">Access Denied</h1>
+            <p className="mb-6">You do not have permission to access this page.</p>
+            <br /><br /><br /><br /><br /><br />
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  } */
   
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
       
-      <div className="flex-1 pt-20 pb-12 px-4 bg-gradient-to-br from-white via-metadite-light to-white">
+      <div className={`flex-1 pt-20 pb-12 px-4 ${
+        theme === 'dark' 
+          ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white' 
+          : 'bg-gradient-to-br from-white via-gray-100 to-white'
+        }`}>
         <div className="container mx-auto max-w-7xl">
           <div className="bg-gradient-to-r from-metadite-primary to-metadite-secondary rounded-xl p-6 mb-8 text-white">
             <div className="flex flex-col md:flex-row items-center justify-between">
@@ -309,9 +337,11 @@ const Admin = () => {
                       onClick={() => setActiveTab('dashboard')}
                       className={`flex items-center w-full px-4 py-3 rounded-lg transition-colors ${
                         activeTab === 'dashboard' 
-                          ? 'bg-metadite-primary/10 text-metadite-primary' 
+                        ? 'bg-metadite-primary/10 text-metadite-primary' 
+                        : theme === 'dark' 
+                          ? 'text-gray-300 hover:bg-gray-700/50' 
                           : 'text-gray-700 hover:bg-gray-100'
-                      }`}
+                    }`}
                     >
                       <Settings className="h-5 w-5 mr-3" />
                       <span>Dashboard</span>
@@ -322,9 +352,11 @@ const Admin = () => {
                       onClick={() => setActiveTab('models')}
                       className={`flex items-center w-full px-4 py-3 rounded-lg transition-colors ${
                         activeTab === 'models' 
-                          ? 'bg-metadite-primary/10 text-metadite-primary' 
+                        ? 'bg-metadite-primary/10 text-metadite-primary' 
+                        : theme === 'dark' 
+                          ? 'text-gray-300 hover:bg-gray-700/50' 
                           : 'text-gray-700 hover:bg-gray-100'
-                      }`}
+                    }`}
                     >
                       <PackagePlus className="h-5 w-5 mr-3" />
                       <span>Models</span>
@@ -335,9 +367,11 @@ const Admin = () => {
                       onClick={() => setActiveTab('admins')}
                       className={`flex items-center w-full px-4 py-3 rounded-lg transition-colors ${
                         activeTab === 'admins' 
-                          ? 'bg-metadite-primary/10 text-metadite-primary' 
+                        ? 'bg-metadite-primary/10 text-metadite-primary' 
+                        : theme === 'dark' 
+                          ? 'text-gray-300 hover:bg-gray-700/50' 
                           : 'text-gray-700 hover:bg-gray-100'
-                      }`}
+                    }`}
                     >
                       <UserCog className="h-5 w-5 mr-3" />
                       <span>Admins</span>
@@ -348,9 +382,11 @@ const Admin = () => {
                       onClick={() => setActiveTab('moderators')}
                       className={`flex items-center w-full px-4 py-3 rounded-lg transition-colors ${
                         activeTab === 'moderators' 
-                          ? 'bg-metadite-primary/10 text-metadite-primary' 
+                        ? 'bg-metadite-primary/10 text-metadite-primary' 
+                        : theme === 'dark' 
+                          ? 'text-gray-300 hover:bg-gray-700/50' 
                           : 'text-gray-700 hover:bg-gray-100'
-                      }`}
+                    }`}
                     >
                       <Users className="h-5 w-5 mr-3" />
                       <span>Moderators</span>
@@ -361,9 +397,11 @@ const Admin = () => {
                       onClick={() => setActiveTab('subscriptions')}
                       className={`flex items-center w-full px-4 py-3 rounded-lg transition-colors ${
                         activeTab === 'subscriptions' 
-                          ? 'bg-metadite-primary/10 text-metadite-primary' 
+                        ? 'bg-metadite-primary/10 text-metadite-primary' 
+                        : theme === 'dark' 
+                          ? 'text-gray-300 hover:bg-gray-700/50' 
                           : 'text-gray-700 hover:bg-gray-100'
-                      }`}
+                    }`}
                     >
                       <CreditCard className="h-5 w-5 mr-3" />
                       <span>Subscriptions</span>
@@ -374,9 +412,11 @@ const Admin = () => {
                       onClick={() => setActiveTab('payments')}
                       className={`flex items-center w-full px-4 py-3 rounded-lg transition-colors ${
                         activeTab === 'payments' 
-                          ? 'bg-metadite-primary/10 text-metadite-primary' 
+                        ? 'bg-metadite-primary/10 text-metadite-primary' 
+                        : theme === 'dark' 
+                          ? 'text-gray-300 hover:bg-gray-700/50' 
                           : 'text-gray-700 hover:bg-gray-100'
-                      }`}
+                    }`}
                     >
                       <ShoppingBag className="h-5 w-5 mr-3" />
                       <span>Payments</span>
@@ -387,9 +427,11 @@ const Admin = () => {
                       onClick={() => setActiveTab('flagged')}
                       className={`flex items-center w-full px-4 py-3 rounded-lg transition-colors ${
                         activeTab === 'flagged' 
-                          ? 'bg-metadite-primary/10 text-metadite-primary' 
+                        ? 'bg-metadite-primary/10 text-metadite-primary' 
+                        : theme === 'dark' 
+                          ? 'text-gray-300 hover:bg-gray-700/50' 
                           : 'text-gray-700 hover:bg-gray-100'
-                      }`}
+                    }`}
                     >
                       <AlertTriangle className="h-5 w-5 mr-3" />
                       <span>Flagged Messages</span>
@@ -403,9 +445,11 @@ const Admin = () => {
                       onClick={() => setActiveTab('settings')}
                       className={`flex items-center w-full px-4 py-3 rounded-lg transition-colors ${
                         activeTab === 'settings' 
-                          ? 'bg-metadite-primary/10 text-metadite-primary' 
+                        ? 'bg-metadite-primary/10 text-metadite-primary' 
+                        : theme === 'dark' 
+                          ? 'text-gray-300 hover:bg-gray-700/50' 
                           : 'text-gray-700 hover:bg-gray-100'
-                      }`}
+                    }`}
                     >
                       <Settings className="h-5 w-5 mr-3" />
                       <span>Settings</span>
@@ -452,15 +496,15 @@ const Admin = () => {
                     
                     <div className="glass-card rounded-xl p-6">
                       <div className="flex items-center">
-                        <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center mr-4">
-                          <ShoppingBag className="h-6 w-6 text-purple-500" />
+                        <div className="w-12 h-12 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center mr-4">
+                          <ShoppingBag className="h-6 w-6 text-purple-500 dark:text-purple-200" />
                         </div>
                         <div>
                           <p className="text-gray-500 text-sm">Monthly Revenue</p>
                           <h3 className="text-2xl font-bold">$24,389</h3>
                         </div>
                       </div>
-                      <div className="mt-4 text-sm text-purple-500">
+                      <div className="mt-4 text-sm text-purple-500 dark:text-purple-200">
                         +15% from last month
                       </div>
                     </div>
@@ -503,7 +547,7 @@ const Admin = () => {
                         </div>
                         <div>
                           <p className="font-medium">Message flagged</p>
-                          <p className="text-sm text-gray-500">AI system flagged a potentially inappropriate message</p>
+                          <p className="text-sm text-gray-500">The system flagged a potentially inappropriate message</p>
                           <p className="text-xs text-gray-400 mt-1">5 hours ago</p>
                         </div>
                       </div>
@@ -535,7 +579,8 @@ const Admin = () => {
                       <form onSubmit={handleAddModel}>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className={`block text-sm font-medium mb-1 
+                              ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
                               Model Name*
                             </label>
                             <input
@@ -548,7 +593,8 @@ const Admin = () => {
                           </div>
                           
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className={`block text-sm font-medium mb-1 
+                              ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
                               Price*
                             </label>
                             <input
@@ -562,7 +608,8 @@ const Admin = () => {
                           </div>
                           
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className={`block text-sm font-medium mb-1 
+                              ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
                               Category
                             </label>
                             <Select
@@ -581,7 +628,8 @@ const Admin = () => {
                           </div>
                           
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className={`block text-sm font-medium mb-1 
+                              ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
                               Assign Moderator
                             </label>
                             <Select
@@ -602,7 +650,8 @@ const Admin = () => {
                           </div>
                           
                           <div className="md:col-span-2">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className={`block text-sm font-medium mb-1 
+                              ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
                               Image URL*
                             </label>
                             <input
@@ -616,7 +665,8 @@ const Admin = () => {
                           </div>
                           
                           <div className="md:col-span-2">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className={`block text-sm font-medium mb-1 
+                              ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
                               Description*
                             </label>
                             <Textarea
@@ -659,7 +709,8 @@ const Admin = () => {
                     <div className="overflow-x-auto">
                       <table className="min-w-full">
                         <thead>
-                          <tr className="text-left text-gray-500 text-sm bg-gray-50">
+                          <tr className={`text-left text-gray-500 text-sm 
+                            ${theme === 'dark' ? 'bg-gray-100' : 'bg-gray-50'}`}>
                             <th className="px-6 py-3">Image</th>
                             <th className="px-6 py-3">Name</th>
                             <th className="px-6 py-3">Price</th>
@@ -675,7 +726,9 @@ const Admin = () => {
                               model.description.toLowerCase().includes(searchTerm.toLowerCase())
                             )
                             .map((model) => (
-                            <tr key={model.id} className="border-t border-gray-100 hover:bg-gray-50 transition-colors">
+                            <tr key={model.id} className={`border-t border-gray-100 transition-colors 
+                              ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}
+                              >
                               <td className="px-6 py-4">
                                 <img 
                                   src={model.image} 
@@ -696,7 +749,7 @@ const Admin = () => {
                                   {model.category}
                                 </span>
                               </td>
-                              <td className="px-6 py-4 text-gray-600">
+                              <td className={`px-6 py-4 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
                                 {model.assignedModerator ? model.assignedModerator : 'None assigned'}
                               </td>
                               <td className="px-6 py-4">
@@ -737,7 +790,8 @@ const Admin = () => {
                       <form onSubmit={handleAddAdmin}>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className={`block text-sm font-medium mb-1 
+                              ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
                               Full Name
                             </label>
                             <input
@@ -749,7 +803,8 @@ const Admin = () => {
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className={`block text-sm font-medium mb-1 
+                              ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
                               Email Address
                             </label>
                             <input
@@ -761,7 +816,8 @@ const Admin = () => {
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className={`block text-sm font-medium mb-1 
+                              ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
                               Password
                             </label>
                             <input
@@ -773,7 +829,8 @@ const Admin = () => {
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className={`block text-sm font-medium mb-1 
+                              ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
                               Admin Type
                             </label>
                             <Select
@@ -826,7 +883,8 @@ const Admin = () => {
                     <div className="overflow-x-auto">
                       <table className="min-w-full">
                         <thead>
-                          <tr className="text-left text-gray-500 text-sm bg-gray-50">
+                          <tr className={`text-left text-gray-500 text-sm 
+                            ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}`}>
                             <th className="px-6 py-3">Name</th>
                             <th className="px-6 py-3">Email</th>
                             <th className="px-6 py-3">Type</th>
@@ -841,7 +899,9 @@ const Admin = () => {
                               admin.email.toLowerCase().includes(searchTerm.toLowerCase())
                             )
                             .map((admin) => (
-                            <tr key={admin.id} className="border-t border-gray-100 hover:bg-gray-50 transition-colors">
+                            <tr key={admin.id} className={`border-t border-gray-100 transition-colors 
+                              ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}
+                              >
                               <td className="px-6 py-4 font-medium">{admin.name}</td>
                               <td className="px-6 py-4">{admin.email}</td>
                               <td className="px-6 py-4">
@@ -894,7 +954,8 @@ const Admin = () => {
                       <form onSubmit={handleAddModerator}>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className={`block text-sm font-medium mb-1 
+                              ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
                               Full Name
                             </label>
                             <input
@@ -906,7 +967,8 @@ const Admin = () => {
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className={`block text-sm font-medium mb-1 
+                              ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
                               Email Address
                             </label>
                             <input
@@ -918,7 +980,8 @@ const Admin = () => {
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className={`block text-sm font-medium mb-1 
+                              ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
                               Password
                             </label>
                             <input
@@ -962,7 +1025,8 @@ const Admin = () => {
                     <div className="overflow-x-auto">
                       <table className="min-w-full">
                         <thead>
-                          <tr className="text-left text-gray-500 text-sm bg-gray-50">
+                          <tr className={`text-left text-gray-500 text-sm 
+                            ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}`}>
                             <th className="px-6 py-3">Name</th>
                             <th className="px-6 py-3">Email</th>
                             <th className="px-6 py-3">Assigned Models</th>
@@ -976,7 +1040,9 @@ const Admin = () => {
                               mod.email.toLowerCase().includes(searchTerm.toLowerCase())
                             )
                             .map((mod) => (
-                            <tr key={mod.id} className="border-t border-gray-100 hover:bg-gray-50 transition-colors">
+                            <tr key={mod.id} className={`border-t border-gray-100 transition-colors 
+                              ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}
+                              >
                               <td className="px-6 py-4 font-medium">{mod.name}</td>
                               <td className="px-6 py-4">{mod.email}</td>
                               <td className="px-6 py-4">
@@ -1024,7 +1090,8 @@ const Admin = () => {
                     <div className="overflow-x-auto">
                       <table className="min-w-full">
                         <thead>
-                          <tr className="text-left text-gray-500 text-sm bg-gray-50">
+                          <tr className={`text-left text-gray-500 text-sm 
+                            ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}`}>
                             <th className="px-6 py-3">User</th>
                             <th className="px-6 py-3">Plan</th>
                             <th className="px-6 py-3">Start Date</th>
@@ -1036,16 +1103,21 @@ const Admin = () => {
                         </thead>
                         <tbody>
                           {subscriptions.map((subscription) => (
-                            <tr key={subscription.id} className="border-t border-gray-100 hover:bg-gray-50 transition-colors">
+                            <tr key={subscription.id} className={`border-t border-gray-100 transition-colors 
+                              ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}
+                              >
                               <td className="px-6 py-4 font-medium">{subscription.user}</td>
                               <td className="px-6 py-4">
                                 <span className="bg-metadite-primary/10 text-metadite-primary px-2 py-1 rounded-full text-xs font-medium">
                                   {subscription.plan}
                                 </span>
                               </td>
-                              <td className="px-6 py-4 text-gray-600">{subscription.startDate}</td>
-                              <td className="px-6 py-4 text-gray-600">{subscription.endDate}</td>
-                              <td className="px-6 py-4 font-medium">${subscription.amount}</td>
+                              <td className={`px-6 py-4 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                                {subscription.startDate}</td>
+                              <td className={`px-6 py-4 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                                {subscription.endDate}</td>
+                              <td className={`px-6 py-4 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                                ${subscription.amount}</td>
                               <td className="px-6 py-4">
                                 <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
                                   subscription.status === 'Active' 
@@ -1093,7 +1165,8 @@ const Admin = () => {
                     <div className="overflow-x-auto">
                       <table className="min-w-full">
                         <thead>
-                          <tr className="text-left text-gray-500 text-sm bg-gray-50">
+                          <tr className={`text-left text-gray-500 text-sm 
+                            ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}`}>
                             <th className="px-6 py-3">Payment ID</th>
                             <th className="px-6 py-3">User</th>
                             <th className="px-6 py-3">Amount</th>
@@ -1105,11 +1178,15 @@ const Admin = () => {
                         </thead>
                         <tbody>
                           {payments.map((payment) => (
-                            <tr key={payment.id} className="border-t border-gray-100 hover:bg-gray-50 transition-colors">
+                            <tr key={payment.id} className={`border-t border-gray-100 transition-colors 
+                              ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}
+                              >
                               <td className="px-6 py-4 font-medium">{payment.id}</td>
-                              <td className="px-6 py-4 text-gray-600">{payment.user}</td>
+                              <td className={`px-6 py-4 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                                {payment.user}</td>
                               <td className="px-6 py-4 font-medium">${payment.amount}</td>
-                              <td className="px-6 py-4 text-gray-600">{payment.date}</td>
+                              <td className={`px-6 py-4 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                                {payment.date}</td>
                               <td className="px-6 py-4">{payment.method}</td>
                               <td className="px-6 py-4">
                                 <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
@@ -1154,7 +1231,8 @@ const Admin = () => {
                       {flaggedMessages.map((message) => (
                         <div key={message.id} className="border-b border-gray-100 last:border-b-0">
                           <button 
-                            className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+                            className={`w-full px-6 py-4 flex items-center justify-between transition-colors 
+                            ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}
                             onClick={() => toggleSection(message.id)}
                           >
                             <div className="flex items-start">
@@ -1165,7 +1243,8 @@ const Admin = () => {
                                 <div className="flex items-center">
                                   <p className="font-medium">User: {message.user}</p>
                                   <span className="mx-2 text-gray-300">|</span>
-                                  <p className="text-gray-600">Moderator: {message.moderator}</p>
+                                  <p className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                                    Moderator: {message.moderator}</p>
                                 </div>
                                 <p className="text-sm text-gray-500 mt-1 line-clamp-1">{message.content}</p>
                               </div>
@@ -1179,7 +1258,8 @@ const Admin = () => {
                           </button>
                           
                           {expandedSection === message.id && (
-                            <div className="px-6 py-4 bg-gray-50 animate-slide-down">
+                            <div className={`px-6 py-4 animate-slide-down 
+                            ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}`}>
                               <div className="mb-4">
                                 <h3 className="font-medium mb-2">Message Content:</h3>
                                 <p className="p-3 bg-white rounded-md border border-gray-200">{message.content}</p>

@@ -4,6 +4,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import MessageItem from '../components/MessageItem';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { 
   MessageSquare, Send, User, Clock, Filter, Search,
   AlertTriangle
@@ -66,6 +67,7 @@ const mockMessages = [
 
 const Moderator = () => {
   const { user } = useAuth();
+  const { theme } = useTheme();
   const navigate = useNavigate();
   const [isLoaded, setIsLoaded] = useState(false);
   const [selectedModel, setSelectedModel] = useState(null);
@@ -75,7 +77,7 @@ const Moderator = () => {
   
   useEffect(() => {
     // Redirect non-moderator users
-    if (!user?.role === 'moderator') {
+    if (user?.role !== 'moderator') {
       navigate('/login');
     }
     
@@ -145,7 +147,11 @@ const Moderator = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       
-      <div className="flex-1 pt-20 pb-12 px-4 bg-gradient-to-br from-white via-metadite-light to-white">
+      <div className={`flex-1 pt-20 pb-12 px-4 ${
+        theme === 'dark' 
+          ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-200' 
+          : 'bg-gradient-to-br from-white via-metadite-light to-white'
+      }`}>
         <div className="container mx-auto max-w-6xl">
           <div className="bg-gradient-to-r from-metadite-primary to-metadite-secondary rounded-xl p-6 mb-8 text-white">
             <div className="flex flex-col md:flex-row items-center justify-between">
@@ -169,22 +175,28 @@ const Moderator = () => {
           
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
             <div className="lg:col-span-1">
-              <div className="glass-card rounded-xl overflow-hidden sticky top-24">
-                <div className="p-4 border-b border-gray-100">
-                  <h3 className="font-medium text-gray-800">Assigned Models</h3>
+              <div className={`glass-card rounded-xl overflow-hidden sticky top-24 ${
+                theme === 'dark' ? 'bg-gray-800/70 border-gray-700' : ''
+              }`}>
+                <div className={`p-4 border-b ${theme === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
+                  <h3 className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>Assigned Models</h3>
                 </div>
                 
                 <div className="p-2">
                   <div className="relative mb-4">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Search className="h-4 w-4 text-gray-400" />
+                      <Search className={`h-4 w-4 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-400'}`} />
                     </div>
                     <input
                       type="text"
                       placeholder="Search models..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="block w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary text-sm"
+                      className={`block w-full pl-9 pr-3 py-2 border rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary text-sm ${
+                        theme === 'dark' 
+                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                          : 'border-gray-300 text-gray-900'
+                      }`}
                     />
                   </div>
                   
@@ -196,7 +208,9 @@ const Moderator = () => {
                           className={`flex items-center w-full p-3 rounded-lg transition-colors ${
                             selectedModel?.id === model.id 
                               ? 'bg-metadite-primary/10 text-metadite-primary' 
-                              : 'text-gray-700 hover:bg-gray-100'
+                              : theme === 'dark'
+                                ? 'text-gray-200 hover:bg-gray-700'
+                                : 'text-gray-700 hover:bg-gray-100'
                           }`}
                         >
                           <div className="w-10 h-10 rounded-full overflow-hidden mr-3">
@@ -208,7 +222,7 @@ const Moderator = () => {
                           </div>
                           <div className="text-left">
                             <p className="font-medium">{model.name}</p>
-                            <p className="text-xs text-gray-500">Assigned to you</p>
+                            <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Assigned to you</p>
                           </div>
                         </button>
                       </li>
@@ -217,7 +231,7 @@ const Moderator = () => {
                   
                   {assignedModels.length === 0 && (
                     <div className="text-center py-6">
-                      <p className="text-gray-500 text-sm">No models assigned yet.</p>
+                      <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>No models assigned yet.</p>
                     </div>
                   )}
                 </div>
@@ -226,8 +240,10 @@ const Moderator = () => {
             
             <div className="lg:col-span-3">
               {selectedModel ? (
-                <div className={`glass-card rounded-xl overflow-hidden h-[600px] flex flex-col transition-opacity duration-300 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>
-                  <div className="p-4 border-b border-gray-100 flex items-center">
+                <div className={`glass-card rounded-xl overflow-hidden h-[600px] flex flex-col transition-opacity duration-300 ${
+                  theme === 'dark' ? 'bg-gray-800/70 border-gray-700' : ''
+                } ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>
+                  <div className={`p-4 border-b flex items-center ${theme === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
                     <div className="w-10 h-10 rounded-full overflow-hidden mr-3">
                       <img
                         src={selectedModel.image}
@@ -236,16 +252,16 @@ const Moderator = () => {
                       />
                     </div>
                     <div className="flex-1">
-                      <h2 className="font-medium">{selectedModel.name} Conversations</h2>
+                      <h2 className={`font-medium ${theme === 'dark' ? 'text-white' : ''}`}>{selectedModel.name} Conversations</h2>
                     </div>
                     <div className="flex space-x-2">
-                      <button className="p-2 text-gray-500 hover:text-gray-700 transition-colors">
+                      <button className={`p-2 transition-colors ${theme === 'dark' ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'}`}>
                         <Filter className="h-5 w-5" />
                       </button>
-                      <button className="p-2 text-gray-500 hover:text-gray-700 transition-colors">
+                      <button className={`p-2 transition-colors ${theme === 'dark' ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'}`}>
                         <Clock className="h-5 w-5" />
                       </button>
-                      <button className="p-2 text-gray-500 hover:text-gray-700 transition-colors">
+                      <button className={`p-2 transition-colors ${theme === 'dark' ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'}`}>
                         <User className="h-5 w-5" />
                       </button>
                     </div>
@@ -265,9 +281,9 @@ const Moderator = () => {
                     ) : (
                       <div className="h-full flex items-center justify-center">
                         <div className="text-center p-6">
-                          <MessageSquare className="h-10 w-10 text-gray-300 mx-auto mb-2" />
-                          <h3 className="font-medium text-gray-800 mb-1">No messages yet</h3>
-                          <p className="text-sm text-gray-500">
+                          <MessageSquare className={`h-10 w-10 mx-auto mb-2 ${theme === 'dark' ? 'text-gray-600' : 'text-gray-300'}`} />
+                          <h3 className={`font-medium mb-1 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>No messages yet</h3>
+                          <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                             Start the conversation by sending a message.
                           </p>
                         </div>
@@ -275,21 +291,25 @@ const Moderator = () => {
                     )}
                   </div>
                   
-                  <div className="p-4 border-t border-gray-100">
+                  <div className={`p-4 border-t ${theme === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
                     <form onSubmit={handleSendMessage} className="flex space-x-2">
                       <div className="relative flex-1">
                         <textarea
                           placeholder={`Send a message as ${selectedModel.name}...`}
                           value={newMessage}
                           onChange={(e) => setNewMessage(e.target.value)}
-                          className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary resize-none h-12 min-h-[3rem] max-h-[8rem]"
+                          className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary resize-none h-12 min-h-[3rem] max-h-[8rem] ${
+                            theme === 'dark' 
+                              ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                              : 'border-gray-300 text-gray-900'
+                          }`}
                           rows={1}
                         ></textarea>
                         
                         {newMessage.toLowerCase().includes('inappropriate') && (
                           <div className="absolute -top-8 left-0 right-0 bg-yellow-100 text-yellow-700 text-xs p-1 rounded flex items-center">
                             <AlertTriangle className="h-3 w-3 mr-1" />
-                            This message may be flagged by the Our system.
+                            This message may be flagged by our system.
                           </div>
                         )}
                       </div>
@@ -302,15 +322,20 @@ const Moderator = () => {
                       </button>
                     </form>
                     <div className="mt-2 text-xs text-gray-500">
+                      <span className="flex items-center">
+                        <AlertTriangle className="h-3 w-3 mr-1" />
+                      </span>
                     </div>
                   </div>
                 </div>
               ) : (
-                <div className="glass-card rounded-xl p-10 text-center h-[600px] flex items-center justify-center">
+                <div className={`glass-card rounded-xl p-10 text-center h-[600px] flex items-center justify-center ${
+                  theme === 'dark' ? 'bg-gray-800/70 border-gray-700' : ''
+                }`}>
                   <div>
-                    <MessageSquare className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                    <h2 className="text-2xl font-medium mb-2">Select a Model</h2>
-                    <p className="text-gray-500 mb-6 max-w-md mx-auto">
+                    <MessageSquare className={`h-16 w-16 mx-auto mb-4 ${theme === 'dark' ? 'text-gray-600' : 'text-gray-300'}`} />
+                    <h2 className={`text-2xl font-medium mb-2 ${theme === 'dark' ? 'text-white' : ''}`}>Select a Model</h2>
+                    <p className={`mb-6 max-w-md mx-auto ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                       Choose a model from the list to view and respond to conversations from users interested in that model.
                     </p>
                   </div>
