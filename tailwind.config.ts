@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -69,7 +68,7 @@ export default {
 					secondary: '#D946EF',
 					accent: '#F97316',
 					light: '#F1F0FB',
-					dark: '#1A1F2C'
+					dark: '#0d1117'
 				}
 			},
 			borderRadius: {
