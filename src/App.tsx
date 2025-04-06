@@ -17,6 +17,7 @@ import Admin from "./pages/Admin";
 import Moderator from "./pages/Moderator";
 import Models from "./pages/Models";
 import ModelDetail from "./pages/ModelDetail";
+import ModelChat from "./pages/ModelChat";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
 import Upgrade from "./pages/Upgrade";
@@ -45,6 +46,7 @@ const App = () => {
                 <Route path="/moderator" element={<Moderator />} />
                 <Route path="/models" element={<Models />} />
                 <Route path="/model/:id" element={<ModelDetail />} />
+                <Route path="/model-chat/:id" element={<ModelChat />} />
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/upgrade" element={<Upgrade />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
