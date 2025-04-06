@@ -4,9 +4,10 @@ import { useParams, Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { useCart } from '../context/CartContext';
+import { useTheme } from '../context/ThemeContext';
 import { 
   ShoppingCart, Heart, ChevronLeft, Star, Share2, Info, 
-  Truck, Package, Clock, ShieldCheck, User, FileText, Grid, Gift 
+  Truck, Package, Clock, ShieldCheck, User, FileText, Grid, Gift, MessageCircle 
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -212,6 +213,7 @@ const getRelatedModels = (currentModelId, category) => {
 const ModelDetail = () => {
   const { id } = useParams();
   const { addToCart } = useCart();
+  const { theme } = useTheme();
   const [model, setModel] = useState(null);
   const [relatedModels, setRelatedModels] = useState([]);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -272,9 +274,9 @@ const ModelDetail = () => {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
-        <div className="flex-1 pt-24 pb-12 px-4 bg-gradient-to-br from-white via-metadite-light to-white">
+        <div className={`flex-1 pt-24 pb-12 px-4 ${isDark ? 'bg-gray-900' : 'bg-gradient-to-br from-white via-metadite-light to-white'}`}>
           <div className="container mx-auto max-w-6xl">
-            <div className="glass-card rounded-xl overflow-hidden p-8 shimmer h-96"></div>
+            <div className={`glass-card rounded-xl overflow-hidden p-8 shimmer h-96 ${isDark ? 'bg-gray-800/70' : ''}`}></div>
           </div>
         </div>
         <Footer />
@@ -286,10 +288,10 @@ const ModelDetail = () => {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
-        <div className="flex-1 pt-24 pb-12 px-4 bg-gradient-to-br from-white via-metadite-light to-white">
+        <div className={`flex-1 pt-24 pb-12 px-4 ${isDark ? 'bg-gray-900' : 'bg-gradient-to-br from-white via-metadite-light to-white'}`}>
           <div className="container mx-auto max-w-6xl text-center py-16">
             <h1 className="text-3xl font-bold mb-4">Model Not Found</h1>
-            <p className="text-gray-600 mb-8">The model you're looking for doesn't exist or has been removed.</p>
+            <p className={`${isDark ? 'text-gray-300' : 'text-gray-600'} mb-8`}>The model you're looking for doesn't exist or has been removed.</p>
             <Link 
               to="/models"
               className="bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white px-6 py-3 rounded-lg hover:opacity-90 transition-opacity"
@@ -307,7 +309,9 @@ const ModelDetail = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       
-      <div className="flex-1 pt-24 pb-12 px-4 bg-gradient-to-br from-white via-metadite-light to-white">
+      <div className={`flex-1 pt-24 pb-12 px-4 
+        ${isDark ? 'bg-gray-900' : 'bg-gradient-to-br from-white via-metadite-light to-white'}`}
+        >
         <div className="container mx-auto max-w-6xl">
           <div className="mb-6">
             <Link to="/models" className="flex items-center text-metadite-primary hover:underline">
@@ -353,15 +357,15 @@ const ModelDetail = () => {
                   <div className="flex gap-2">
                     <button 
                       onClick={handleLike}
-                      className="p-2 bg-white rounded-full hover:bg-gray-100 transition-colors"
+                      className={`p-2 ${isDark ? 'bg-gray-700' : 'bg-white'} rounded-full ${isDark ? 'hover:bg-gray-600' : 'hover:bg-gray-100'} transition-colors`}
                     >
-                      <Heart className={`h-5 w-5 ${isLiked ? 'fill-red-500 text-red-500' : 'text-gray-500'}`} />
+                      <Heart className={`h-5 w-5 ${isLiked ? 'fill-red-500 text-red-500' : isDark ? 'text-gray-300' : 'text-gray-500'}`} />
                     </button>
                     <button 
                       onClick={handleShare}
-                      className="p-2 bg-white rounded-full hover:bg-gray-100 transition-colors"
+                      className={`p-2 ${isDark ? 'bg-gray-700' : 'bg-white'} rounded-full ${isDark ? 'hover:bg-gray-600' : 'hover:bg-gray-100'} transition-colors`}
                     >
-                      <Share2 className="h-5 w-5 text-gray-500" />
+                      <Share2 className={`h-5 w-5 ${isDark ? 'text-gray-300' : 'text-gray-500'}`} />
                     </button>
                   </div>
                 </div>
@@ -371,11 +375,11 @@ const ModelDetail = () => {
                     {[...Array(5)].map((_, i) => (
                       <Star 
                         key={i} 
-                        className={`h-4 w-4 ${i < Math.floor(model.rating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
+                        className={`h-4 w-4 ${i < Math.floor(model.rating) ? 'text-yellow-400 fill-yellow-400' : isDark ? 'text-gray-600' : 'text-gray-300'}`}
                       />
                     ))}
                   </div>
-                  <span className="text-gray-600 text-sm ml-2">{model.rating} ({model.reviews} reviews)</span>
+                  <span className={`${isDark ? 'text-gray-300' : 'text-gray-600'} text-sm ml-2`}>{model.rating} ({model.reviews} reviews)</span>
                 </div>
                 
                 <div className="inline-block bg-blue-100 text-blue-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded mb-4">
@@ -386,24 +390,24 @@ const ModelDetail = () => {
                   ${model.price}
                 </div>
                 
-                <p className="text-gray-700 mb-6">
+                <p className={`${isDark ? 'text-gray-300' : 'text-gray-700'} mb-6`}>
                   {model.description}
                 </p>
                 
-                <div className="border-t border-gray-200 pt-6 mb-6"></div>
+                <div className={`border-t ${isDark ? 'border-gray-700' : 'border-gray-200'} pt-6 mb-6`}></div>
                 
                 <div className="flex items-center space-x-6 mb-6">
                   <div className="flex items-center space-x-3">
                     <button 
                       onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                      className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-300 hover:bg-gray-100"
+                      className={`w-8 h-8 flex items-center justify-center rounded-full ${isDark ? 'border-gray-600 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-100'} border`}
                     >
                       -
                     </button>
                     <span className="w-8 text-center">{quantity}</span>
                     <button 
                       onClick={() => setQuantity(quantity + 1)}
-                      className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-300 hover:bg-gray-100"
+                      className={`w-8 h-8 flex items-center justify-center rounded-full ${isDark ? 'border-gray-600 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-100'} border`}
                     >
                       +
                     </button>
@@ -430,10 +434,53 @@ const ModelDetail = () => {
                   
                   <Link
                     to="/checkout"
-                    className="flex-1 border-2 border-metadite-primary text-metadite-primary px-6 py-3 rounded-lg hover:bg-metadite-primary/5 transition-colors text-center"
+                    className={`flex-1 border-2 border-metadite-primary text-metadite-primary px-6 py-3 rounded-lg ${isDark ? 'hover:bg-metadite-primary/10' : 'hover:bg-metadite-primary/5'} transition-colors text-center`}
                   >
                     Buy Now
                   </Link>
+                </div>
+
+                <div className="mt-6">
+                  <Dialog open={chatOpen} onOpenChange={setChatOpen}>
+                    <DialogTrigger asChild>
+                      <Button 
+                        variant="outline" 
+                        className={`w-full flex items-center justify-center ${isDark ? 'bg-gray-700 border-gray-600 hover:bg-gray-600' : ''}`}
+                      >
+                        <MessageCircle className="mr-2 h-5 w-5" />
+                        Chat to Us About This Model
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className={isDark ? "bg-gray-800 border-gray-700" : ""}>
+                      <DialogHeader>
+                        <DialogTitle className={isDark ? "text-white" : ""}>Chat with a Moderator</DialogTitle>
+                        <DialogDescription className={isDark ? "text-gray-300" : ""}>
+                          Send a message about {model.name} to our team
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 py-4">
+                        <Textarea
+                          value={chatMessage}
+                          onChange={(e) => setChatMessage(e.target.value)}
+                          placeholder="Type your message here..."
+                          className={isDark ? "bg-gray-700 border-gray-600 placeholder:text-gray-400 text-white" : ""}
+                          rows={5}
+                        />
+                        <div className="flex justify-end space-x-2">
+                          <Button 
+                            variant="ghost" 
+                            onClick={() => setChatOpen(false)}
+                            className={isDark ? "text-gray-300 hover:bg-gray-700 hover:text-white" : ""}
+                          >
+                            Cancel
+                          </Button>
+                          <Button onClick={handleSendMessage}>
+                            Send Message
+                          </Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                 </div>
               </div>
             </div>
@@ -441,13 +488,13 @@ const ModelDetail = () => {
           
           {/* Product Details Tabs */}
           <div className="glass-card rounded-xl overflow-hidden mb-8">
-            <div className="flex border-b border-gray-200">
+            <div className={`flex border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
               <button
                 onClick={() => setActiveTab('description')}
                 className={`px-6 py-3 text-sm font-medium ${
                   activeTab === 'description'
-                    ? 'bg-white text-metadite-primary border-b-2 border-metadite-primary'
-                    : 'text-gray-600 hover:text-metadite-primary'
+                    ? `${isDark ? 'bg-gray-800' : 'bg-white'} text-metadite-primary border-b-2 border-metadite-primary`
+                    : `${isDark ? 'text-gray-300 hover:text-metadite-primary' : 'text-gray-600 hover:text-metadite-primary'}`
                 }`}
               >
                 <FileText className="h-4 w-4 inline-block mr-2" />
@@ -457,8 +504,8 @@ const ModelDetail = () => {
                 onClick={() => setActiveTab('specifications')}
                 className={`px-6 py-3 text-sm font-medium ${
                   activeTab === 'specifications'
-                    ? 'bg-white text-metadite-primary border-b-2 border-metadite-primary'
-                    : 'text-gray-600 hover:text-metadite-primary'
+                    ? `${isDark ? 'bg-gray-800' : 'bg-white'} text-metadite-primary border-b-2 border-metadite-primary`
+                    : `${isDark ? 'text-gray-300 hover:text-metadite-primary' : 'text-gray-600 hover:text-metadite-primary'}`
                 }`}
               >
                 <Info className="h-4 w-4 inline-block mr-2" />
@@ -468,8 +515,8 @@ const ModelDetail = () => {
                 onClick={() => setActiveTab('shipping')}
                 className={`px-6 py-3 text-sm font-medium ${
                   activeTab === 'shipping'
-                    ? 'bg-white text-metadite-primary border-b-2 border-metadite-primary'
-                    : 'text-gray-600 hover:text-metadite-primary'
+                    ? `${isDark ? 'bg-gray-800' : 'bg-white'} text-metadite-primary border-b-2 border-metadite-primary`
+                    : `${isDark ? 'text-gray-300 hover:text-metadite-primary' : 'text-gray-600 hover:text-metadite-primary'}`
                 }`}
               >
                 <Truck className="h-4 w-4 inline-block mr-2" />
@@ -479,8 +526,8 @@ const ModelDetail = () => {
                 onClick={() => setActiveTab('reviews')}
                 className={`px-6 py-3 text-sm font-medium ${
                   activeTab === 'reviews'
-                    ? 'bg-white text-metadite-primary border-b-2 border-metadite-primary'
-                    : 'text-gray-600 hover:text-metadite-primary'
+                    ? `${isDark ? 'bg-gray-800' : 'bg-white'} text-metadite-primary border-b-2 border-metadite-primary`
+                    : `${isDark ? 'text-gray-300 hover:text-metadite-primary' : 'text-gray-600 hover:text-metadite-primary'}`
                 }`}
               >
                 <Star className="h-4 w-4 inline-block mr-2" />
@@ -488,32 +535,32 @@ const ModelDetail = () => {
               </button>
             </div>
             
-            <div className="p-6 bg-white">
+            <div className={`p-6 ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
               {/* Description Tab */}
               {activeTab === 'description' && (
                 <div className="prose max-w-none">
-                  <h3 className="text-lg font-semibold mb-4">Product Description</h3>
-                  <p className="mb-4">{model.longDescription}</p>
-                  <p>{model.detailedDescription}</p>
+                  <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : ''}`}>Product Description</h3>
+                  <p className={`mb-4 ${isDark ? 'text-gray-300' : ''}`}>{model.longDescription}</p>
+                  <p className={isDark ? 'text-gray-300' : ''}>{model.detailedDescription}</p>
                 </div>
               )}
               
               {/* Specifications Tab */}
               {activeTab === 'specifications' && (
                 <div>
-                  <h3 className="text-lg font-semibold mb-4">Product Specifications</h3>
+                  <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : ''}`}>Product Specifications</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
                     {model.specifications.map((spec, index) => (
-                      <div key={index} className="flex border-b border-gray-100 pb-2">
-                        <span className="font-medium w-1/3">{spec.name}:</span>
-                        <span className="text-gray-700 w-2/3">{spec.value}</span>
+                      <div key={index} className={`flex ${isDark ? 'border-b border-gray-700' : 'border-b border-gray-100'} pb-2`}>
+                        <span className={`font-medium w-1/3 ${isDark ? 'text-gray-300' : ''}`}>{spec.name}:</span>
+                        <span className={`${isDark ? 'text-gray-300' : 'text-gray-700'} w-2/3`}>{spec.value}</span>
                       </div>
                     ))}
                   </div>
                   
-                  <div className="flex items-center mt-6 p-4 bg-blue-50 rounded-lg">
-                    <ShieldCheck className="h-5 w-5 text-blue-600 mr-3" />
-                    <p className="text-sm text-blue-800">
+                  <div className={`flex items-center mt-6 p-4 ${isDark ? 'bg-blue-900/20' : 'bg-blue-50'} rounded-lg`}>
+                    <ShieldCheck className={`h-5 w-5 ${isDark ? 'text-blue-400' : 'text-blue-600'} mr-3`} />
+                    <p className={`text-sm ${isDark ? 'text-blue-300' : 'text-blue-800'}`}>
                       All our products come with a 1-year warranty against manufacturing defects.
                     </p>
                   </div>
@@ -523,62 +570,62 @@ const ModelDetail = () => {
               {/* Shipping Tab */}
               {activeTab === 'shipping' && (
                 <div>
-                  <h3 className="text-lg font-semibold mb-4">Shipping Information</h3>
+                  <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : ''}`}>Shipping Information</h3>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                    <div className="border border-gray-200 rounded-lg p-4">
+                    <div className={`border ${isDark ? 'border-gray-700' : 'border-gray-200'} rounded-lg p-4`}>
                       <div className="flex items-center mb-3">
-                        <Package className="h-5 w-5 text-gray-600 mr-2" />
-                        <h4 className="font-medium">Package Details</h4>
+                        <Package className={`h-5 w-5 ${isDark ? 'text-gray-400' : 'text-gray-600'} mr-2`} />
+                        <h4 className={`font-medium ${isDark ? 'text-white' : ''}`}>Package Details</h4>
                       </div>
                       <div className="space-y-2 text-sm">
                         <p className="flex justify-between">
-                          <span className="text-gray-600">Dimensions:</span>
-                          <span>{model.shippingInfo.dimensions}</span>
+                          <span className={isDark ? 'text-gray-400' : 'text-gray-600'}>Dimensions:</span>
+                          <span className={isDark ? 'text-gray-300' : ''}>{model.shippingInfo.dimensions}</span>
                         </p>
                         <p className="flex justify-between">
-                          <span className="text-gray-600">Weight:</span>
-                          <span>{model.shippingInfo.weight}</span>
+                          <span className={isDark ? 'text-gray-400' : 'text-gray-600'}>Weight:</span>
+                          <span className={isDark ? 'text-gray-300' : ''}>{model.shippingInfo.weight}</span>
                         </p>
                       </div>
                     </div>
                     
-                    <div className="border border-gray-200 rounded-lg p-4">
+                    <div className={`border ${isDark ? 'border-gray-700' : 'border-gray-200'} rounded-lg p-4`}>
                       <div className="flex items-center mb-3">
-                        <Clock className="h-5 w-5 text-gray-600 mr-2" />
-                        <h4 className="font-medium">Processing Time</h4>
+                        <Clock className={`h-5 w-5 ${isDark ? 'text-gray-400' : 'text-gray-600'} mr-2`} />
+                        <h4 className={`font-medium ${isDark ? 'text-white' : ''}`}>Processing Time</h4>
                       </div>
-                      <p className="text-sm">
+                      <p className={`text-sm ${isDark ? 'text-gray-300' : ''}`}>
                         Orders are typically processed within {model.shippingInfo.handlingTime} before shipping.
                       </p>
                     </div>
                   </div>
                   
-                  <h4 className="font-medium mb-3">Shipping Options</h4>
-                  <div className="border border-gray-200 rounded-lg overflow-hidden mb-6">
+                  <h4 className={`font-medium mb-3 ${isDark ? 'text-white' : ''}`}>Shipping Options</h4>
+                  <div className={`border ${isDark ? 'border-gray-700' : 'border-gray-200'} rounded-lg overflow-hidden mb-6`}>
                     <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
+                      <thead className={isDark ? 'bg-gray-700' : 'bg-gray-50'}>
                         <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Method</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estimated Delivery</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cost</th>
+                          <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Method</th>
+                          <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Estimated Delivery</th>
+                          <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Cost</th>
                         </tr>
                       </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
+                      <tbody className={`${isDark ? 'bg-gray-800' : 'bg-white'} divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
                         {model.shippingInfo.shippingOptions.map((option, index) => (
                           <tr key={index}>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">{option.method}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{option.time}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${option.price}</td>
+                            <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${isDark ? 'text-white' : ''}`}>{option.method}</td>
+                            <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>{option.time}</td>
+                            <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>${option.price}</td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
                   
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h4 className="font-medium mb-2">Special Notes</h4>
-                    <p className="text-sm text-gray-700">{model.shippingInfo.specialNotes}</p>
+                  <div className={isDark ? 'bg-gray-700 p-4 rounded-lg' : 'bg-gray-50 p-4 rounded-lg'}>
+                    <h4 className={`font-medium mb-2 ${isDark ? 'text-white' : ''}`}>Special Notes</h4>
+                    <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{model.shippingInfo.specialNotes}</p>
                   </div>
                 </div>
               )}
@@ -587,43 +634,43 @@ const ModelDetail = () => {
               {activeTab === 'reviews' && (
                 <div>
                   <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-lg font-semibold">Customer Reviews</h3>
+                    <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : ''}`}>Customer Reviews</h3>
                     <div className="flex items-center">
                       <div className="flex mr-2">
                         {[...Array(5)].map((_, i) => (
                           <Star 
                             key={i} 
-                            className={`h-5 w-5 ${i < Math.floor(model.rating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
+                            className={`h-5 w-5 ${i < Math.floor(model.rating) ? 'text-yellow-400 fill-yellow-400' : isDark ? 'text-gray-600' : 'text-gray-300'}`}
                           />
                         ))}
                       </div>
-                      <span className="text-lg font-medium">{model.rating}</span>
-                      <span className="text-gray-500 ml-1">({model.reviews} reviews)</span>
+                      <span className={`text-lg font-medium ${isDark ? 'text-white' : ''}`}>{model.rating}</span>
+                      <span className={isDark ? 'text-gray-400 ml-1' : 'text-gray-500 ml-1'}>({model.reviews} reviews)</span>
                     </div>
                   </div>
                   
                   <div className="space-y-6">
                     {model.customerReviews.map((review, index) => (
-                      <div key={index} className="border-b border-gray-100 pb-6 last:border-b-0">
+                      <div key={index} className={`${isDark ? 'border-b border-gray-700' : 'border-b border-gray-100'} pb-6 last:border-b-0`}>
                         <div className="flex justify-between mb-2">
                           <div className="flex items-center">
-                            <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center mr-3">
-                              <User className="h-4 w-4 text-gray-500" />
+                            <div className={`w-8 h-8 ${isDark ? 'bg-gray-700' : 'bg-gray-100'} rounded-full flex items-center justify-center mr-3`}>
+                              <User className={`h-4 w-4 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
                             </div>
                           </div>
-                          <span className="text-sm text-gray-500">{review.date}</span>
+                          <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{review.date}</span>
                         </div>
                         
                         <div className="flex mb-2">
                           {[...Array(5)].map((_, i) => (
                             <Star 
                               key={i} 
-                              className={`h-4 w-4 ${i < review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
+                              className={`h-4 w-4 ${i < review.rating ? 'text-yellow-400 fill-yellow-400' : isDark ? 'text-gray-600' : 'text-gray-300'}`}
                             />
                           ))}
                         </div>
                         
-                        <p className="text-gray-700">{review.comment}</p>
+                        <p className={isDark ? 'text-gray-300' : 'text-gray-700'}>{review.comment}</p>
                       </div>
                     ))}
                   </div>
@@ -637,7 +684,7 @@ const ModelDetail = () => {
             <div className="mb-8">
               <div className="flex items-center mb-6">
                 <Grid className="h-5 w-5 text-metadite-primary mr-2" />
-                <h2 className="text-xl font-semibold">You May Also Like</h2>
+                <h2 className={`text-xl font-semibold ${isDark ? 'text-white' : ''}`}>You May Also Like</h2>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -656,10 +703,10 @@ const ModelDetail = () => {
                     </div>
                     
                     <div className="p-4">
-                      <h3 className="font-medium text-lg mb-1">{relatedModel.name}</h3>
+                      <h3 className={`font-medium text-lg mb-1 ${isDark ? 'text-white' : ''}`}>{relatedModel.name}</h3>
                       <div className="flex justify-between items-center">
                         <span className="text-metadite-primary font-bold">${relatedModel.price}</span>
-                        <div className="inline-block bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">
+                        <div className={`inline-block ${isDark ? 'bg-blue-900/30 text-blue-300' : 'bg-blue-100 text-blue-800'} text-xs font-medium px-2.5 py-0.5 rounded`}>
                           {relatedModel.category}
                         </div>
                       </div>
