@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { AtSign, User, UserCog } from 'lucide-react';
+import { User, Shield, Key } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -8,45 +8,51 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useTheme } from '../../context/ThemeContext';
+
+const roleIcons = {
+  user: <User className="h-4 w-4" />,
+  moderator: <Shield className="h-4 w-4" />,
+  admin: <Key className="h-4 w-4" />
+};
+
+const roleLabels = {
+  user: "Regular User",
+  moderator: "Moderator",
+  admin: "Administrator"
+};
 
 const RoleSelector = ({ role, setRole }) => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+  
   return (
     <div className="space-y-1">
-      <label htmlFor="role" className="text-sm font-medium text-gray-700">Login as</label>
+      <label htmlFor="role" className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Login as</label>
       <Select value={role} onValueChange={setRole}>
-        <SelectTrigger className="w-full">
+        <SelectTrigger className={`w-full ${isDark ? 'bg-gray-800 border-gray-700 text-gray-200' : ''}`}>
           <div className="flex items-center">
-            <div className="mr-2">
-              {role === 'admin' ? (
-                <UserCog className="h-4 w-4 text-gray-500" />
-              ) : role === 'moderator' ? (
-                <AtSign className="h-4 w-4 text-gray-500" />
-              ) : (
-                <User className="h-4 w-4 text-gray-500" />
-              )}
+            <div className={`mr-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+              {roleIcons[role]}
             </div>
             <SelectValue placeholder="Select account type" />
           </div>
         </SelectTrigger>
-        <SelectContent className="bg-white border border-gray-200 shadow-md">
-          <SelectItem value="user" className="hover:bg-gray-100">
-            <div className="flex items-center">
-              <User className="h-4 w-4 mr-2 text-gray-500" />
-              <span>Regular User</span>
-            </div>
-          </SelectItem>
-          <SelectItem value="moderator" className="hover:bg-gray-100">
-            <div className="flex items-center">
-              <AtSign className="h-4 w-4 mr-2 text-gray-500" />
-              <span>Moderator</span>
-            </div>
-          </SelectItem>
-          <SelectItem value="admin" className="hover:bg-gray-100">
-            <div className="flex items-center">
-              <UserCog className="h-4 w-4 mr-2 text-gray-500" />
-              <span>Administrator</span>
-            </div>
-          </SelectItem>
+        <SelectContent className={isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border border-gray-200'}>
+          {Object.keys(roleIcons).map((roleKey) => (
+            <SelectItem 
+              key={roleKey}
+              value={roleKey} 
+              className={isDark ? 'text-gray-200 bg-gray-800 hover:bg-gray-700 focus:bg-gray-700' : 'hover:bg-gray-100'}
+            >
+              <div className="flex items-center">
+                <span className={`mr-2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                  {roleIcons[roleKey]}
+                </span>
+                <span>{roleLabels[roleKey]}</span>
+              </div>
+            </SelectItem>
+          ))}
         </SelectContent>
       </Select>
     </div>

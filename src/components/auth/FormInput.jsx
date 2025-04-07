@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Eye, EyeOff } from 'lucide-react';
+import { useTheme } from '../../context/ThemeContext';
 
 const FormInput = ({ 
   id, 
@@ -15,9 +16,12 @@ const FormInput = ({
   showPassword,
   toggleShowPassword
 }) => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+
   return (
     <div className="space-y-1">
-      <label htmlFor={id} className="text-sm font-medium text-gray-700">{label}</label>
+      <label htmlFor={id} className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{label}</label>
       <div className="relative">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
           <Icon className="h-5 w-5 text-gray-400" />
@@ -27,7 +31,11 @@ const FormInput = ({
           type={type === "password" && showPassword ? "text" : type}
           value={value}
           onChange={onChange}
-          className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary"
+          className={`block w-full pl-10 pr-10 py-2 border rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary ${
+            isDark 
+              ? 'bg-gray-800 border-gray-700 text-gray-200' 
+              : 'border-gray-300 text-gray-900'
+          }`}
           placeholder={placeholder}
           required={required}
           minLength={minLength}
