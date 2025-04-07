@@ -24,26 +24,26 @@ const SocialLoginButtons = ({ onSocialLogin }) => {
         <button
           type="button"
           onClick={() => onSocialLogin('Facebook')}
-          className={`w-full flex items-center justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray ${
+          className={`w-full flex items-center justify-center py-2 px-4 border rounded-md shadow-sm text-sm font-medium text-gray ${
             isDark 
               ? 'bg-gray-700 hover:bg-gray-600' 
               : 'bg-gray-100 hover:bg-gray-200'
           } transition-colors`}
         >
-          <Facebook className={`h-5 w-5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
+          <Facebook className={`h-5 w-5 ${isDark ? 'text-blue-400' : 'text-blue-600'} mr-2`} />
           Facebook
         </button>
         
         <button
           type="button"
           onClick={() => onSocialLogin('Twitter')}
-          className={`w-full flex items-center justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray ${
+          className={`w-full flex items-center justify-center py-2 px-4 border rounded-md shadow-sm text-sm font-medium text-gray ${
             isDark 
               ? 'bg-gray-700 hover:bg-gray-600' 
               : 'bg-gray-100 hover:bg-gray-200'
           } transition-colors`}
         >
-          <Twitter className={`h-5 w-5 ${isDark ? 'text-blue-300' : 'text-blue-400'}`} />
+          <Twitter className={`h-5 w-5 ${isDark ? 'text-blue-300' : 'text-blue-400'} mr-2`} />
           Twitter
         </button>
       </div>
