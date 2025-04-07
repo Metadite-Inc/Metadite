@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckIcon, CreditCardIcon, StarIcon } from 'lucide-react';
@@ -13,7 +12,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 const tiers = [
   {
     name: 'Standard',
-    price: 20,
+    price: 10,
     description: 'Perfect for casual users',
     features: [
       'Access to basic models',
@@ -26,7 +25,7 @@ const tiers = [
   },
   {
     name: 'VIP',
-    price: 50,
+    price: 20,
     description: 'Enhanced experience for enthusiasts',
     features: [
       'Access to all Standard features',
@@ -39,7 +38,7 @@ const tiers = [
   },
   {
     name: 'VVIP',
-    price: 100,
+    price: 50,
     description: 'Ultimate experience for collectors',
     features: [
       'Access to all VIP features',
@@ -97,9 +96,9 @@ const Upgrade: React.FC = () => {
             Choose the perfect plan to enhance your Metadite collection and unlock exclusive features.
           </p>
           {currentPlan && (
-            <div className="mt-4 inline-block bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-full text-sm font-medium dark:text-gray-200">
-              Your current plan: <span className="font-bold capitalize">{currentPlan}</span>
-            </div>
+           <div className="mt-4 inline-block bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-full text-sm font-medium dark:text-gray-200">
+           Your current plan: <span className="font-bold italic text-green-500 uppercase">{currentPlan}</span>
+         </div>
           )}
         </div>
         
@@ -107,9 +106,13 @@ const Upgrade: React.FC = () => {
           {tiers.map((tier) => (
             <Card 
               key={tier.name} 
-              className={`relative overflow-hidden transition-all duration-300 hover:shadow-lg dark:bg-gray-800 dark:border-gray-700 ${
+              className={`relative overflow-hidden transition-all duration-300 hover:shadow-lg ${
                 tier.recommended ? 'border-metadite-primary ring-2 ring-metadite-primary/20' : ''
-              } ${currentPlan === tier.level ? 'bg-gray-50 dark:bg-gray-700/70 border-blue-400' : ''}`}
+              } ${
+                currentPlan === tier.level 
+                  ? 'bg-blue-400 dark:bg-green-700/70 border-green-400 text-gray-800'
+                  : 'bg-gray-400 dark:bg-gray-400 dark:border-gray-700 border-blue-400 text-gray-800 dark:text-gray-400'
+              }`}
             >
               {tier.recommended && (
                 <div className="absolute top-0 right-0 bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white px-4 py-1 rounded-bl-lg text-sm font-medium">
@@ -118,7 +121,7 @@ const Upgrade: React.FC = () => {
               )}
               
               {currentPlan === tier.level && (
-                <div className="absolute top-0 left-0 bg-blue-500 text-white px-4 py-1 rounded-br-lg text-sm font-medium">
+                <div className="absolute top-0 left-0 bg-blue-500 text-black px-4 py-1 rounded-br-lg text-sm font-bold">
                   Current Plan
                 </div>
               )}
