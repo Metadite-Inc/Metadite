@@ -28,7 +28,7 @@ const SocialLoginButtons = ({ onSocialLogin }) => {
             isDark 
               ? 'bg-gray-700 hover:bg-gray-600' 
               : 'bg-gray-100 hover:bg-gray-200'
-          } transition-colors`
+          } transition-colors`}
         >
           <Facebook className={`h-5 w-5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
           Facebook
@@ -41,7 +41,7 @@ const SocialLoginButtons = ({ onSocialLogin }) => {
             isDark 
               ? 'bg-gray-700 hover:bg-gray-600' 
               : 'bg-gray-100 hover:bg-gray-200'
-          } transition-colors`
+          } transition-colors`}
         >
           <Twitter className={`h-5 w-5 ${isDark ? 'text-blue-300' : 'text-blue-400'}`} />
           Twitter
