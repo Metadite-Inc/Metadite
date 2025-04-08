@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom'; // Import useNavigate
 import { useAuth } from '../context/AuthContext';
 import { ShoppingCart, User, LogIn, Menu, X } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
@@ -7,6 +7,7 @@ import UserMenu from './UserMenu';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate(); // Initialize useNavigate
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
@@ -27,6 +28,12 @@ const Navbar = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const handleLogout = () => {
+    logout(); // Perform logout
+    toggleMobileMenu(); // Close the mobile menu if open
+    navigate('/#HeroSection'); // Redirect to Home's heroSection
+  };
 
   return (
     <nav className={`glass-nav fixed top-0 left-0 w-full z-50 transition-all duration-300 ${scrolled ? 'py-3' : 'py-4'}`}>
@@ -66,7 +73,7 @@ const Navbar = () => {
                   <User className="h-5 w-5" />
                 </Link>
                 <button
-                  onClick={logout}
+                  onClick={handleLogout}
                   className="bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white px-4 py-2 rounded-md hover:opacity-90 transition-opacity"
                 >
                   Logout
@@ -106,10 +113,7 @@ const Navbar = () => {
               <Link to="/moderator" className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors py-2" onClick={toggleMobileMenu}>Moderator</Link>
               <Link to="/dashboard" className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors py-2" onClick={toggleMobileMenu}>Dashboard</Link>
               <button
-                onClick={() => {
-                  logout();
-                  toggleMobileMenu();
-                }}
+                onClick={handleLogout}
                 className="bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white px-4 py-2 rounded-md hover:opacity-90 transition-opacity"
               >
                 Logout
@@ -128,10 +132,7 @@ const Navbar = () => {
               <Link to="/cart" className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors py-2" onClick={toggleMobileMenu}>Cart</Link>
               <Link to="/dashboard" className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors py-2" onClick={toggleMobileMenu}>Dashboard</Link>
               <button
-                onClick={() => {
-                  logout();
-                  toggleMobileMenu();
-                }}
+                onClick={handleLogout}
                 className="bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white px-4 py-2 rounded-md hover:opacity-90 transition-opacity"
               >
                 Logout

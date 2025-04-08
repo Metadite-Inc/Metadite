@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { useAuth } from '../context/AuthContext';
@@ -14,7 +14,15 @@ const Dashboard = () => {
   const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState('overview');
   const [isLoaded, setIsLoaded] = useState(false);
-  
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Redirect non-logged-in users
+    if (!user) {
+      navigate('/#heroSection'); // Redirect to Home's heroSection
+    }
+  }, [user, navigate]);
+
   useEffect(() => {
     setIsLoaded(true);
   }, []);
