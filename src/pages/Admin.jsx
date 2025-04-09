@@ -110,7 +110,6 @@ const Admin = () => {
   const { theme } = useTheme();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('dashboard');
-  // const [isAuthorized, setIsAuthorized] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [expandedSection, setExpandedSection] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -145,9 +144,9 @@ const Admin = () => {
   ]);
   
   useEffect(() => {
-    // Redirect non-admin users
-    if (!user?.role === 'admin') {
-      navigate('/login');
+    // Redirect non-admin users or logged-out users
+    if (!user || user.role !== 'admin') {
+      navigate('/#heroSection'); // Redirect to Home's heroSection
     }
     
     setIsLoaded(true);
@@ -273,27 +272,6 @@ const Admin = () => {
     });
   };
 
-  /*
-  if (!isAuthorized) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <Navbar />
-        
-        <div className={`flex-1 flex items-center justify-center pt-16 ${
-          theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-gray-100'
-        }`}>
-          <div className="text-center px-4">
-            <br /><br /><br /><br /><br /><br />
-            <h1 className="text-3xl font-bold mb-4">Access Denied</h1>
-            <p className="mb-6">You do not have permission to access this page.</p>
-            <br /><br /><br /><br /><br /><br />
-          </div>
-        </div>
-        <Footer />
-      </div>
-    );
-  } */
-  
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
