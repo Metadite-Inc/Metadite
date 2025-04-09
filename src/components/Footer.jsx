@@ -3,25 +3,26 @@ import { Facebook, Twitter, Instagram, Mail, ShoppingCart, Heart, User } from 'l
 
 const Footer = ({ user }) => {
   return (
-    <footer className="bg-gradient-to-r from-metadite-dark to-metadite-primary text-white py-16">
-      <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div className="space-y-4">
-            <img src="/logo.png" alt="Metadite" className="w-32 h-auto" />
-            <p className="text-gray-300">Premium model content platform with exclusive access to your favorite models.</p>
-            <div className="flex space-x-4 pt-2">
-              <a href="#" className="text-white hover:text-metadite-accent transition-colors">
-                <Facebook className="h-5 w-5" />
-              </a>
-              <a href="#" className="text-white hover:text-metadite-accent transition-colors">
-                <Twitter className="h-5 w-5" />
-              </a>
-              <a href="#" className="text-white hover:text-metadite-accent transition-colors">
-                <Instagram className="h-5 w-5" />
-              </a>
-              <a href="#" className="text-white hover:text-metadite-accent transition-colors">
-                <Mail className="h-5 w-5" />
-              </a>
+    <>
+      <footer className="bg-gradient-to-r from-metadite-dark to-metadite-primary text-white py-16">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div className="space-y-4">
+              <img src="/logo.png" alt="Metadite" className="w-32 h-auto" />
+              <p className="text-gray-300">Premium model content platform with exclusive access to your favorite models.</p>
+              <div className="flex space-x-4 pt-2">
+                <a href="#" className="text-white hover:text-metadite-accent transition-colors">
+                  <Facebook className="h-5 w-5" />
+                </a>
+                <a href="#" className="text-white hover:text-metadite-accent transition-colors">
+                  <Twitter className="h-5 w-5" />
+                </a>
+                <a href="#" className="text-white hover:text-metadite-accent transition-colors">
+                  <Instagram className="h-5 w-5" />
+                </a>
+                <a href="#" className="text-white hover:text-metadite-accent transition-colors">
+                  <Mail className="h-5 w-5" />
+                </a>
               </div>
             </div>
             
