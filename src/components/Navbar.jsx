@@ -39,7 +39,11 @@ const Navbar = () => {
     <nav className={`glass-nav fixed top-0 left-0 w-full z-50 transition-all duration-300 ${scrolled ? 'py-3' : 'py-4'}`}>
       <div className="container mx-auto px-4 flex justify-between items-center">
         <Link to="/" className="flex items-center">
-          <span className="text-2xl font-bold bg-gradient-to-r from-metadite-primary to-metadite-secondary bg-clip-text text-transparent">Metadite</span>
+          <img src="/logo.png" alt="Metadite Logo" className="h-10 w-auto mr-2" />
+          {/* Logo Text */}
+          <span className="hidden md:block text-2xl font-bold bg-gradient-to-r from-metadite-primary to-metadite-secondary bg-clip-text text-transparent">Metadite</span>
+          {/* Logo Text for Mobile */}
+          <span className="md:hidden text-xl font-bold bg-gradient-to-r from-metadite-primary to-metadite-secondary bg-clip-text text-transparent">Metadite</span>
         </Link>
         
         {/* Desktop Navigation */}
