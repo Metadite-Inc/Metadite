@@ -9,6 +9,9 @@ const Footer = ({ user }) => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="space-y-4">
               <img src="/logo.png" alt="Metadite" className="w-32 h-auto" />
+              <span className="hidden md:block text-2xl font-bold bg-gradient-to-r from-metadite-primary to-metadite-secondary bg-clip-text text-transparent">Metadite</span>
+              {/* Logo Text for Mobile */}
+              <span className="md:hidden text-xl font-bold bg-gradient-to-r from-metadite-primary to-metadite-secondary bg-clip-text text-transparent">Metadite</span>
               <p className="text-gray-300">Premium model content platform with exclusive access to your favorite models.</p>
               <div className="flex space-x-4 pt-2">
                 <a href="#" className="text-white hover:text-metadite-accent transition-colors">
