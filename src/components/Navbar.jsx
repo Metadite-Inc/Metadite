@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { ShoppingCart, User, LogIn, Menu, X, MessageSquare, Bell } from 'lucide-react';
+import { ShoppingCart, User, LogIn, Menu, X, MessageSquare } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 import UserMenu from './UserMenu';
 
@@ -10,26 +10,36 @@ const Navbar = () => {
   const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [chatOpen, setChatOpen] = useState(false); // State to toggle chat dropdown
-  const [chats, setChats] = useState([]); // State to store chat history
-  const [newMessage, setNewMessage] = useState(false); // State to track new messages
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chats, setChats] = useState([]);
+  const [newMessage, setNewMessage] = useState(false);
 
   const toggleMobileMenu = () => setMobileMenuOpen(!mobileMenuOpen);
   const toggleChat = () => setChatOpen(!chatOpen);
 
-  // Check if user has VIP access
   const hasVipAccess = user?.membershipLevel === 'vip' || user?.membershipLevel === 'vvip';
 
-  // Simulate fetching chat history
+  // ✅ Redirect admin to /admin on page load if on root
   useEffect(() => {
-    // Fetch chat history from an API or local storage
+    if (user?.role === 'admin' && window.location.pathname === '/') {
+      navigate('/admin', { replace: true });
+    }
+  }, [user, navigate]);
+
+  // ✅ Redirect moderator to /moderator if on /moderator/dashboard
+  useEffect(() => {
+    if (user?.role === 'moderator' && window.location.pathname === '/moderator/dashboard') {
+      navigate('/moderator', { replace: true });
+    }
+  }, [user, navigate]);
+
+  useEffect(() => {
     setChats([
       { id: 1, sender: 'Moderator', message: 'Hello! How can I assist you?', timestamp: '10:30 AM' },
       { id: 2, sender: 'You', message: 'I need help with my subscription.', timestamp: '10:32 AM' },
     ]);
   }, []);
 
-  // Simulate receiving a new message
   useEffect(() => {
     const timer = setTimeout(() => {
       setNewMessage(true);
@@ -37,20 +47,14 @@ const Navbar = () => {
         ...prevChats,
         { id: 3, sender: 'Moderator', message: 'Sure! Let me check that for you.', timestamp: '10:35 AM' },
       ]);
-    }, 10000); // Simulate a new message after 10 seconds
-
+    }, 10000);
     return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 10) {
-        setScrolled(true);
-      } else {
-        setScrolled(false);
-      }
+      setScrolled(window.scrollY > 10);
     };
-
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -64,14 +68,12 @@ const Navbar = () => {
   return (
     <nav className={`glass-nav fixed top-0 left-0 w-full z-50 transition-all duration-300 ${scrolled ? 'py-0' : 'py-0'}`}>
       <div className="container mx-auto px-4 flex justify-between items-center">
-        <Link to="/" className="flex items-center">
+        <Link to={user?.role === 'moderator' ? '/moderator' : '/'} className="flex items-center">
           <img src="/logo.png" alt="Metadite Logo" className="h-20 w-auto mr-0" />
           <span className="hidden md:block text-2xl font-bold bg-gradient-to-r from-metadite-primary to-metadite-secondary bg-clip-text text-transparent">Metadite</span>
-          {/* Logo Text for Mobile */}
           <span className="md:hidden text-xl font-bold bg-gradient-to-r from-metadite-primary to-metadite-secondary bg-clip-text text-transparent">Metadite</span>
         </Link>
 
-        {/* Desktop Navigation */}
         <div className="hidden md:flex items-center space-x-8">
           {user?.role === 'moderator' ? (
             <>
@@ -80,30 +82,46 @@ const Navbar = () => {
             </>
           ) : (
             <>
-              <Link to="/" className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors">Home</Link>
-              <Link to="/models" className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors">Models</Link>
+              {user?.role !== 'admin' && (
+                <>
+                  <Link to="/" className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors">Home</Link>
+                  <Link to="/models" className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors">Models</Link>
+                  {user?.role === 'regular' && (
+                    <button
+                      onClick={() => navigate('/chat')}
+                      className="relative p-2 text-gray-700 dark:text-gray-300 hover:text-metadite-primary transition-colors"
+                    >
+                      <MessageSquare className="h-5 w-5" />
+                      {newMessage && (
+                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">1</span>
+                      )}
+                    </button>
+                  )}
+                  {hasVipAccess && (
+                    <Link to="/vip-content" className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors">VIP Content</Link>
+                  )}
+                </>
+              )}
               {user?.role === 'admin' && (
                 <Link to="/admin" className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors">Admin</Link>
-              )}
-              {hasVipAccess && (
-                <Link to="/vip-content" className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors">VIP Content</Link>
               )}
               <ThemeToggle />
             </>
           )}
         </div>
 
-        {/* User Actions */}
         <div className="hidden md:flex items-center space-x-4">
           {user ? (
             <>
-              <button
-                onClick={toggleChat}
-                className="relative p-2 text-gray-700 dark:text-gray-300 hover:text-metadite-primary transition-colors"
-              >
-                <MessageSquare className="h-5 w-5" />
-                {newMessage && <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">1</span>}
-              </button>
+              {user?.role !== 'admin' && (
+                <button
+                  onClick={toggleChat}
+                  className="relative p-2 text-gray-700 dark:text-gray-300 hover:text-metadite-primary transition-colors"
+                >
+                  <MessageSquare className="h-5 w-5" />
+                  {newMessage && <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">1</span>}
+                </button>
+              )}
               <UserMenu />
               <button
                 onClick={handleLogout}
@@ -123,26 +141,26 @@ const Navbar = () => {
           )}
         </div>
 
-        {/* Mobile Navbar */}
         <div className="md:hidden flex items-center space-x-4">
-          <button
-            onClick={() => navigate('/chat')}
-            className="relative p-2 text-gray-700 dark:text-gray-300 hover:text-metadite-primary transition-colors"
-          >
-            <MessageSquare className="h-5 w-5" />
-            {newMessage && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                1
-              </span>
-            )}
-          </button>
+          {user?.role === 'user' && (
+            <button
+              onClick={() => navigate('/chat')}
+              className="relative p-2 text-gray-700 dark:text-gray-300 hover:text-metadite-primary transition-colors"
+            >
+              <MessageSquare className="h-5 w-5" />
+              {newMessage && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                  1
+                </span>
+              )}
+            </button>
+          )}
           <button className="text-gray-700 dark:text-gray-300" onClick={toggleMobileMenu}>
             {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
         </div>
       </div>
 
-      {/* Mobile Menu */}
       {mobileMenuOpen && (
         <div className="md:hidden glass-card animate-slide-down absolute top-16 left-0 w-full py-4 px-6 flex flex-col space-y-4 bg-white">
           {user?.role === 'moderator' ? (
@@ -158,23 +176,25 @@ const Navbar = () => {
             </>
           ) : (
             <>
-              <Link to="/" className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors py-2" onClick={toggleMobileMenu}>Home</Link>
-              <Link to="/models" className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors py-2" onClick={toggleMobileMenu}>Models</Link>
+              {user?.role !== 'admin' && (
+                <>
+                  <Link to="/" className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors py-2" onClick={toggleMobileMenu}>Home</Link>
+                  <Link to="/models" className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors py-2" onClick={toggleMobileMenu}>Models</Link>
+                  {user?.role === 'regular' && (
+                    <Link to="/chat" className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors py-2" onClick={toggleMobileMenu}>Chat</Link>
+                  )}
+                  {hasVipAccess && (
+                    <Link to="/vip-content" className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors py-2" onClick={toggleMobileMenu}>VIP Content</Link>
+                  )}
+                </>
+              )}
               {user?.role === 'admin' && (
                 <Link to="/admin" className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors py-2" onClick={toggleMobileMenu}>Admin</Link>
               )}
-              {hasVipAccess && (
-                <Link to="/vip-content" className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors py-2" onClick={toggleMobileMenu}>VIP Content</Link>
-              )}
-              <Link to="/cart" className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors py-2" onClick={toggleMobileMenu}>Cart</Link>
               <Link to="/dashboard" className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors py-2" onClick={toggleMobileMenu}>Dashboard</Link>
-              {/*<button
-                onClick={toggleChat}
-                className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors py-2"
-              >
-                Chat
-                {newMessage && <span className="ml-2 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">1</span>}
-              </button>*/}
+              {user?.role === 'user' && (
+                <Link to="/cart" className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors py-2" onClick={toggleMobileMenu}>Cart</Link>
+              )}
               {user ? (
                 <button
                   onClick={handleLogout}
@@ -196,7 +216,6 @@ const Navbar = () => {
         </div>
       )}
 
-      {/* Chat Dropdown */}
       {chatOpen && (
         <div className="absolute top-16 left-1/2 transform -translate-x-1/2 bg-white dark:bg-gray-800 shadow-lg rounded-lg w-96 max-h-80 p-4 z-50">
           <h3 className="text-lg font-semibold mb-3">Chats</h3>

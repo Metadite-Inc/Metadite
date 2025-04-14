@@ -1,11 +1,20 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
+import { useAuth } from '../context/AuthContext'; // Assuming you have an AuthContext to get user info
 
 const ChatPage = () => {
+  const { user } = useAuth(); // Get the current user from AuthContext
   const [chats, setChats] = useState([]);
   const [messageInput, setMessageInput] = useState('');
   const navigate = useNavigate(); // Hook to navigate between pages
+
+  useEffect(() => {
+    // Redirect if the user is not a regular user
+    if (user?.role === 'admin' || user?.role === 'moderator') {
+      navigate('/'); // Redirect to the home page or another appropriate page
+    }
+  }, [user, navigate]);
 
   useEffect(() => {
     // Simulate fetching chat history
@@ -29,12 +38,12 @@ const ChatPage = () => {
     <div className="container mx-auto px-4 py-8">
       {/* Back Button */}
       <button
-      onClick={() => navigate(-1)}
-      className="mb-4 text-metadite-primary hover:underline flex items-center space-x-2"
-    >
-      <ArrowLeft className="w-5 h-5" />
-      <span>Back</span>
-    </button>
+        onClick={() => navigate(-1)}
+        className="mb-4 text-metadite-primary hover:underline flex items-center space-x-2"
+      >
+        <ArrowLeft className="w-5 h-5" />
+        <span>Back</span>
+      </button>
 
       <h1 className="text-2xl font-bold mb-4">Chat</h1>
       <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-4 max-h-[70vh] overflow-y-auto">
