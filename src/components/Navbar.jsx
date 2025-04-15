@@ -60,25 +60,28 @@ const Navbar = () => {
   }, []);
 
   const handleLogout = () => {
-    logout();
-    toggleMobileMenu();
-    navigate('/#HeroSection');
+    logout(); // Perform logout
+    toggleMobileMenu(); // Close the mobile menu if open
+    navigate('/#HeroSection'); // Redirect to Home's heroSection
   };
 
   return (
-    <nav className={`glass-nav fixed top-0 left-0 w-full z-50 transition-all duration-300 ${scrolled ? 'py-0' : 'py-0'}`}>
+    <nav className={`glass-nav fixed top-0 left-0 w-full z-50 transition-all duration-300 ${scrolled ? 'py-3' : 'py-4'}`}>
       <div className="container mx-auto px-4 flex justify-between items-center">
         <Link to={user?.role === 'moderator' ? '/moderator' : '/'} className="flex items-center">
-          <img src="/logo.png" alt="Metadite Logo" className="h-20 w-auto mr-0" />
+          <img src="/logo.png" alt="Metadite Logo" className="h-10 w-auto mr-2" />
+          {/* Logo Text */}
           <span className="hidden md:block text-2xl font-bold bg-gradient-to-r from-metadite-primary to-metadite-secondary bg-clip-text text-transparent">Metadite</span>
+          {/* Logo Text for Mobile */}
           <span className="md:hidden text-xl font-bold bg-gradient-to-r from-metadite-primary to-metadite-secondary bg-clip-text text-transparent">Metadite</span>
         </Link>
-
+        
+        {/* Desktop Navigation */}
         <div className="hidden md:flex items-center space-x-8">
           {user?.role === 'moderator' ? (
             <>
               <Link to="/moderator" className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors">Moderator</Link>
-              <Link to="/dashboard" className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors">Dashboard</Link>
+              <Link to="/moderator" className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors">Assigned Models</Link>
             </>
           ) : (
             <>
@@ -109,11 +112,24 @@ const Navbar = () => {
             </>
           )}
         </div>
-
+        
+        {/* User Actions */}
         <div className="hidden md:flex items-center space-x-4">
           {user ? (
-            <>
-              {user?.role !== 'admin' && (
+            user?.role === 'moderator' ? (
+              <>
+                <Link to="/dashboard" className="p-2 text-gray-700 dark:text-gray-300 hover:text-metadite-primary transition-colors">
+                  <User className="h-5 w-5" />
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white px-4 py-2 rounded-md hover:opacity-90 transition-opacity"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
                 <button
                   onClick={toggleChat}
                   className="relative p-2 text-gray-700 dark:text-gray-300 hover:text-metadite-primary transition-colors"
@@ -121,15 +137,13 @@ const Navbar = () => {
                   <MessageSquare className="h-5 w-5" />
                   {newMessage && <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">1</span>}
                 </button>
-              )}
-              <UserMenu />
-              <button
-                onClick={handleLogout}
-                className="bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white px-4 py-2 rounded-md hover:opacity-90 transition-opacity"
-              >
-                Logout
-              </button>
-            </>
+                <Link to="/cart" className="relative p-2 text-gray-700 dark:text-gray-300 hover:text-metadite-primary transition-colors">
+                  <ShoppingCart className="h-5 w-5" />
+                  <span className="absolute -top-1 -right-1 bg-metadite-accent text-white text-xs rounded-full h-4 w-4 flex items-center justify-center animate-pulse-soft">2</span>
+                </Link>
+                <UserMenu />
+              </>
+            )
           ) : (
             <Link
               to="/login"
@@ -140,7 +154,8 @@ const Navbar = () => {
             </Link>
           )}
         </div>
-
+        
+        {/* Mobile Menu Button */}
         <div className="md:hidden flex items-center space-x-4">
           {user?.role === 'user' && (
             <button
@@ -155,12 +170,13 @@ const Navbar = () => {
               )}
             </button>
           )}
-          <button className="text-gray-700 dark:text-gray-300" onClick={toggleMobileMenu}>
+          <button className="md:hidden text-gray-700 dark:text-gray-300" onClick={toggleMobileMenu}>
             {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
         </div>
       </div>
-
+      
+      {/* Mobile Menu */}
       {mobileMenuOpen && (
         <div className="md:hidden glass-card animate-slide-down absolute top-16 left-0 w-full py-4 px-6 flex flex-col space-y-4 bg-white">
           {user?.role === 'moderator' ? (
@@ -176,25 +192,16 @@ const Navbar = () => {
             </>
           ) : (
             <>
-              {user?.role !== 'admin' && (
-                <>
-                  <Link to="/" className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors py-2" onClick={toggleMobileMenu}>Home</Link>
-                  <Link to="/models" className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors py-2" onClick={toggleMobileMenu}>Models</Link>
-                  {user?.role === 'regular' && (
-                    <Link to="/chat" className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors py-2" onClick={toggleMobileMenu}>Chat</Link>
-                  )}
-                  {hasVipAccess && (
-                    <Link to="/vip-content" className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors py-2" onClick={toggleMobileMenu}>VIP Content</Link>
-                  )}
-                </>
-              )}
+              <Link to="/" className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors py-2" onClick={toggleMobileMenu}>Home</Link>
+              <Link to="/models" className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors py-2" onClick={toggleMobileMenu}>Models</Link>
               {user?.role === 'admin' && (
                 <Link to="/admin" className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors py-2" onClick={toggleMobileMenu}>Admin</Link>
               )}
-              <Link to="/dashboard" className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors py-2" onClick={toggleMobileMenu}>Dashboard</Link>
-              {user?.role === 'user' && (
-                <Link to="/cart" className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors py-2" onClick={toggleMobileMenu}>Cart</Link>
+              {hasVipAccess && (
+                <Link to="/vip-content" className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors py-2" onClick={toggleMobileMenu}>VIP Content</Link>
               )}
+              <Link to="/cart" className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors py-2" onClick={toggleMobileMenu}>Cart</Link>
+              <Link to="/dashboard" className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors py-2" onClick={toggleMobileMenu}>Dashboard</Link>
               {user ? (
                 <button
                   onClick={handleLogout}
