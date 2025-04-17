@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { User, LogOut, LayoutDashboard, MessageSquare, Crown } from 'lucide-react';
 import {
   DropdownMenu,
@@ -17,6 +16,7 @@ import { useAuth } from '../context/AuthContext';
 const UserMenu = () => {
   const { user, logout } = useAuth();
   const { theme } = useTheme();
+  const navigate = useNavigate(); // Add navigate for redirection
   
   // Check if user has VIP access
   const hasVipAccess = user?.membershipLevel === 'vip' || user?.membershipLevel === 'vvip' || user?.vip;
@@ -74,7 +74,12 @@ const UserMenu = () => {
         <DropdownMenuSeparator className={theme === 'dark' ? 'bg-gray-700' : ''} />
         
         <DropdownMenuItem 
-          onClick={logout} 
+          onClick={() => {
+            logout(); // Log the user out
+            if (user?.role === 'moderator') {
+              navigate('/'); // Redirect to home page if the user is a moderator
+            }
+          }} 
           className={`cursor-pointer ${theme === 'dark' ? 'hover:bg-gray-700 focus:bg-gray-700 text-red-400' : 'text-red-600'}`}
         >
           <LogOut className="mr-2 h-4 w-4" />

@@ -19,13 +19,14 @@ const Dashboard = () => {
   useEffect(() => {
     // Redirect non-logged-in users
     if (!user) {
-      navigate('/#heroSection'); // Redirect to Home's heroSection
+      navigate('/'); // Redirect to Home's heroSection
     }
   }, [user, navigate]);
 
   useEffect(() => {
     setIsLoaded(true);
   }, []);
+
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -54,11 +55,11 @@ const Dashboard = () => {
                   <span className="bg-white/20 px-3 py-1 rounded-full font-medium animate-pulse-soft">
                     VIP Member
                   </span>
-                ) : (
+                ) : user?.role === 'user' ? ( // Show Upgrade to VIP only for regular users
                   <Link to="/upgrade" className="bg-white text-metadite-primary px-3 py-1 rounded-full font-medium hover:bg-opacity-90 transition-opacity">
                     Upgrade to VIP
                   </Link>
-                )}
+                ) : null}
               </div>
             </div>
           </div>
