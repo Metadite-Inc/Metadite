@@ -1,6 +1,6 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { toast } from 'sonner';
+import { supabase } from '../lib/supabaseClient'
 
 interface User {
   id: string;
@@ -16,7 +16,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string, role?: string) => Promise<User>;
+  login: (email: string, password: string) => Promise<User>;
   register: (email: string, password: string, name: string, region?: string) => Promise<User>;
   logout: () => void;
   isAuthenticated: boolean;
@@ -52,56 +52,73 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   // Login function
-  const login = async (email: string, password: string, role: string = 'user'): Promise<User> => {
-    // Simulate API request
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    // Find user by email
-    const foundUser = sampleUsers.find(
-      user => user.email.toLowerCase() === email.toLowerCase() && user.password === password
-    );
-    
-    if (!foundUser) {
-      throw new Error('Invalid email or password');
+  const login = async (email: string, password: string): Promise<User> => {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+    if (error) {
+      throw new Error(error.message);
     }
-    
-    // Set the user in state and localStorage
-    setUser(foundUser);
-    localStorage.setItem('metaditeUser', JSON.stringify(foundUser));
-    
-    return foundUser;
+
+    if (!data.user) {
+      throw new Error('User not found');
+    }
+
+    const user: User = {
+      id: data.user.id,
+      email: data.user.email!,
+      password: 'placeholder_password', // Placeholder value for password
+      name: data.user.user_metadata?.name || 'User',
+      role: data.user.user_metadata?.role || 'user',
+      membershipLevel: data.user.user_metadata?.membershipLevel || 'standard',
+      region: data.user.user_metadata?.region,
+      vip: data.user.user_metadata?.vip || false,
+    };
+
+    setUser(user);
+    localStorage.setItem('metaditeUser', JSON.stringify(user));
+
+    return user;
   };
 
   // Register function
   const register = async (email: string, password: string, name: string, region: string = 'north_america'): Promise<User> => {
-    // Simulate API request
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    // Check if user already exists
-    const userExists = sampleUsers.some(
-      user => user.email.toLowerCase() === email.toLowerCase()
-    );
-    
-    if (userExists) {
-      throw new Error('User with this email already exists');
-    }
-    
-    // Create new user
-    const newUser: User = {
-      id: `user-${sampleUsers.length + 1}`,
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        data: {
+          name,
+          role: 'user',
+          membershipLevel: 'standard',
+          region,
+          vip: false,
+        },
+      },
+    });
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    if (!data.user) {
+      throw new Error('Registration failed');
+    }
+
+    const user: User = {
+      id: data.user.id,
+      email: data.user.email!,
+      password: 'placeholder_password', // Placeholder value for password
       name,
       role: 'user',
-      vip: false,
       membershipLevel: 'standard',
-      region
+      region,
+      vip: false,
     };
-    
-    // Add user to sample data (in a real app, this would be a database operation)
-    sampleUsers.push(newUser);
-    
-    return newUser;
+
+    setUser(user);
+    localStorage.setItem('metaditeUser', JSON.stringify(user));
+
+    return user;
   };
 
   // Update membership level
@@ -122,8 +139,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   // Logout function
-  const logout = () => {
-    // Remove user from state and localStorage
+  const logout = async () => {
+    const { error } = await supabase.auth.signOut();
+
+    if (error) {
+      toast.error("Logout failed");
+      return;
+    }
+
     setUser(null);
     localStorage.removeItem('metaditeUser');
     toast.success("You've been logged out");

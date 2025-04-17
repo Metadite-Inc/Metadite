@@ -4,6 +4,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { supabase } from '../lib/supabaseClient';
 import { User } from 'lucide-react';
 import DashboardMenu from '../components/dashboard/DashboardMenu';
 import AccountOverview from '../components/dashboard/AccountOverview';
@@ -14,18 +15,55 @@ const Dashboard = () => {
   const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState('overview');
   const [isLoaded, setIsLoaded] = useState(false);
+  const [profile, setProfile] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     // Redirect non-logged-in users
     if (!user) {
-      navigate('/#heroSection'); // Redirect to Home's heroSection
+      navigate('/#heroSection');
     }
   }, [user, navigate]);
 
   useEffect(() => {
+    const fetchProfile = async () => {
+      if (user) {
+        const { data, error } = await supabase
+          .from('users') /* i can replace this to 'profiles' or 'users' with your table name */
+          .select('*')
+          .eq('id', user.id)
+          .single();
+
+        if (error) {
+          console.error('Error fetching profile:', error.message);
+        } else {
+          setProfile(data);
+        }
+      }
+    };
+
+    fetchProfile();
     setIsLoaded(true);
-  }, []);
+  }, [user]);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Error fetching orders:', error.message);
+      } else {
+        console.log('Orders:', data);
+      }
+    };
+
+    if (user) {
+      fetchOrders();
+    }
+  }, [user]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -44,13 +82,13 @@ const Dashboard = () => {
                   <User className="h-8 w-8 text-metadite-primary" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold">Welcome, {user?.name || 'User'}!</h1>
+                  <h1 className="text-2xl font-bold">Welcome, {profile?.name || user?.name || 'User'}!</h1>
                   <p className="opacity-80">Manage your account and purchases</p>
                 </div>
               </div>
               
               <div className="flex space-x-3">
-                {user?.vip ? (
+                {profile?.vip ? (
                   <span className="bg-white/20 px-3 py-1 rounded-full font-medium animate-pulse-soft">
                     VIP Member
                   </span>
@@ -69,14 +107,14 @@ const Dashboard = () => {
                 activeTab={activeTab} 
                 setActiveTab={setActiveTab} 
                 logout={logout} 
-                userVip={user?.vip}
+                userVip={profile?.vip}
               />
             </div>
             
             <div className="lg:col-span-3">
               {/* Account Overview */}
               {activeTab === 'overview' && (
-                <AccountOverview user={user} isLoaded={isLoaded} />
+                <AccountOverview user={profile || user} isLoaded={isLoaded} />
               )}
               
               {/* Other tabs */}
