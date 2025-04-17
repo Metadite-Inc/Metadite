@@ -78,10 +78,11 @@ const Moderator = () => {
   useEffect(() => {
     // Redirect non-moderator users
     if (user?.role !== 'moderator') {
-      navigate('/login');
-    }
+      navigate('/moderator');
+    } else {
     
     setIsLoaded(true);
+    }
   }, [user, navigate]);
   
   useEffect(() => {

@@ -4,12 +4,12 @@ import { ShoppingCart, Heart, MessageSquare } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { toast } from 'sonner';
 
-const ModelCard = ({ model }) => {
+const ModelCard = ({ model, user }) => {
   const { addToCart } = useCart();
   const [imageLoaded, setImageLoaded] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
-  const [isChatOpen, setIsChatOpen] = useState(false); // State to toggle chat popup
-  const [message, setMessage] = useState(''); // State to store the user's message
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [message, setMessage] = useState('');
 
   const handleAddToCart = () => {
     addToCart(model);
@@ -36,6 +36,11 @@ const ModelCard = ({ model }) => {
   };
 
   const handleSendChat = () => {
+    if (!user) {
+      toast.error("Please log in to send a message.");
+      return;
+    }
+
     const moderatorName = model.moderator?.name || "our team";
     toast.success("Message sent!", {
       description: `Your message has been sent to ${moderatorName}.`,
@@ -84,8 +89,13 @@ const ModelCard = ({ model }) => {
             className="flex items-center space-x-1 bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white px-3 py-2 rounded-md hover:opacity-90 transition-opacity"
           >
             <MessageSquare className="h-4 w-4" />
-            <span>Chat for Inquiry</span>
           </button>
+          <button 
+            onClick={handleAddToCart}
+            className="flex items-center space-x-1 bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white px-3 py-2 rounded-md hover:opacity-90 transition-opacity"
+          >
+            <ShoppingCart className="h-4 w-4" />
+            </button>
         </div>
       </div>
 
