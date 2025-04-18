@@ -89,8 +89,13 @@ const ModelCard = ({ model, user }) => {
             className="flex items-center space-x-1 bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white px-3 py-2 rounded-md hover:opacity-90 transition-opacity"
           >
             <MessageSquare className="h-4 w-4" />
-            <span>Chat for Inquiry</span>
           </button>
+          <button 
+            onClick={handleAddToCart}
+            className="flex items-center space-x-1 bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white px-3 py-2 rounded-md hover:opacity-90 transition-opacity"
+          >
+            <ShoppingCart className="h-4 w-4" />
+            </button>
         </div>
       </div>
 
