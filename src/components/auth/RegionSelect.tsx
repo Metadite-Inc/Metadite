@@ -17,7 +17,9 @@ const regions = [
   { value: 'eu', label: 'EU' },
   { value: 'asia', label: 'Asia' },
   { value: 'africa', label: 'Africa' },
-  { value: 'australia', label: 'Australia' },
+  { value: 'australia', label: 'Australia' },  
+  { value: 'new_zealand', label: 'New Zealand' },
+  { value: 'ocenia', label: 'Ocenia' },
 ];
 
 const RegionSelect: React.FC<RegionSelectProps> = ({ region, setRegion }) => {
