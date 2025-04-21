@@ -8,7 +8,7 @@ const Footer = ({ user }) => {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="space-y-4">
-              <img src="/logo.png" alt="Metadite" className="w-32 h-auto" />
+              <img src="/logo.svg" alt="Metadite" className="w-32 h-auto" />
               <span className="hidden md:block text-2xl font-bold bg-gradient-to-r from-metadite-primary to-metadite-secondary bg-clip-text text-transparent">Metadite</span>
               {/* Logo Text for Mobile */}
               <span className="md:hidden text-xl font-bold bg-gradient-to-r from-metadite-primary to-metadite-secondary bg-clip-text text-transparent">Metadite</span>

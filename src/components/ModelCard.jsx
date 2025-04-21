@@ -4,12 +4,12 @@ import { ShoppingCart, Heart, MessageSquare } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { toast } from 'sonner';
 
-const ModelCard = ({ model }) => {
+const ModelCard = ({ model, user }) => {
   const { addToCart } = useCart();
   const [imageLoaded, setImageLoaded] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
-  const [isChatOpen, setIsChatOpen] = useState(false); // State to toggle chat popup
-  const [message, setMessage] = useState(''); // State to store the user's message
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [message, setMessage] = useState('');
 
   const handleAddToCart = () => {
     addToCart(model);
@@ -36,6 +36,11 @@ const ModelCard = ({ model }) => {
   };
 
   const handleSendChat = () => {
+    if (!user) {
+      toast.error("Please log in to send a message.");
+      return;
+    }
+
     const moderatorName = model.moderator?.name || "our team";
     toast.success("Message sent!", {
       description: `Your message has been sent to ${moderatorName}.`,
