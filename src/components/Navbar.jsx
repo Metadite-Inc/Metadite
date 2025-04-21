@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { ShoppingCart, User, LogIn, Menu, X, MessageSquare } from 'lucide-react';
+import { ShoppingCart, User, LogIn, Menu, X, Bell } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 import UserMenu from './UserMenu';
 
@@ -71,7 +71,7 @@ const Navbar = () => {
             onClick={() => navigate('/chat')}
             className="absolute top-2 right-4 p-2 text-gray-700 dark:text-gray-300 hover:text-metadite-primary transition-colors"
           >
-            <MessageSquare className="h-5 w-5" />
+            <Bell className="h-5 w-5" />
             {newMessage && (
               <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
                 1
@@ -103,7 +103,7 @@ const Navbar = () => {
                       onClick={() => navigate('/chat')}
                       className="relative p-2 text-gray-700 dark:text-gray-300 hover:text-metadite-primary transition-colors"
                     >
-                      <MessageSquare className="h-5 w-5" />
+                      <Bell className="h-5 w-5" />
                       {newMessage && (
                         <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">1</span>
                       )}
@@ -130,7 +130,7 @@ const Navbar = () => {
                   onClick={toggleChat}
                   className="relative p-2 text-gray-700 dark:text-gray-300 hover:text-metadite-primary transition-colors"
                 >
-                  <MessageSquare className="h-5 w-5" />
+                  <Bell className="h-5 w-5" />
                   {newMessage && (
                     <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
                       1
@@ -157,7 +157,7 @@ const Navbar = () => {
               onClick={() => navigate('/chat')}
               className="relative p-2 text-gray-700 dark:text-gray-300 hover:text-metadite-primary transition-colors"
             >
-              <MessageSquare className="h-5 w-5" />
+              <Bell className="h-5 w-5" />
               {newMessage && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
                   1
