@@ -81,7 +81,7 @@ const Navbar = () => {
         )}
 
         <Link to={user?.role === 'moderator' ? '/moderator' : '/'} className="flex items-center">
-          <img src="/logo.svg" alt="Metadite Logo" className="h-20 w-auto mr-0" />
+          <img src="/logo.png" alt="Metadite Logo" className="h-20 w-auto mr-0" />
           <span className="hidden md:block text-2xl font-bold bg-gradient-to-r from-metadite-primary to-metadite-secondary bg-clip-text text-transparent">Metadite</span>
           <span className="md:hidden text-xl font-bold bg-gradient-to-r from-metadite-primary to-metadite-secondary bg-clip-text text-transparent">Metadite</span>
         </Link>
@@ -130,7 +130,7 @@ const Navbar = () => {
                   onClick={toggleChat}
                   className="relative p-2 text-gray-700 dark:text-gray-300 hover:text-metadite-primary transition-colors"
                 >
-                  <MessageSquare className="h-5 w-5" />
+                  <Bell className="h-5 w-5" />
                   {newMessage && (
                     <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
                       1
