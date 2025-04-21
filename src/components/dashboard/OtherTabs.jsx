@@ -2,9 +2,14 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext';
+import SettingsTab from './SettingsTab';
 
-const OtherTabs = ({ activeTab }) => {
+const OtherTabs = ({ activeTab, user }) => {
   const { theme } = useTheme();
+
+  if (activeTab === 'settings') {
+    return <SettingsTab user={user} />;
+  }
 
   return (
     <div className={`glass-card rounded-xl p-10 text-center ${theme === 'dark' ? 'bg-gray-800/70' : ''}`}>
@@ -14,7 +19,6 @@ const OtherTabs = ({ activeTab }) => {
         {activeTab === 'favorites' && 'Your Favorites'}
         {activeTab === 'payment' && 'Payment Methods'}
         {activeTab === 'notifications' && 'Notifications'}
-        {activeTab === 'settings' && 'Account Settings'}
       </h2>
       <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} mb-4`}>This section is under development.</p>
       {activeTab === 'vip' && (

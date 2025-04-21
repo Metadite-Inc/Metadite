@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
@@ -26,7 +27,6 @@ const Dashboard = () => {
   useEffect(() => {
     setIsLoaded(true);
   }, []);
-
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -71,6 +71,7 @@ const Dashboard = () => {
                 setActiveTab={setActiveTab} 
                 logout={logout} 
                 userVip={user?.vip}
+                user={user}
               />
             </div>
             
@@ -82,7 +83,7 @@ const Dashboard = () => {
               
               {/* Other tabs */}
               {activeTab !== 'overview' && (
-                <OtherTabs activeTab={activeTab} />
+                <OtherTabs activeTab={activeTab} user={user} />
               )}
             </div>
           </div>
