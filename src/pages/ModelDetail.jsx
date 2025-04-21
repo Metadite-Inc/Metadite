@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
@@ -11,7 +10,7 @@ import ModelGallery from './model/components/ModelGallery';
 import ModelDetails from './model/components/ModelDetails';
 import ModelTabs from './model/components/ModelTabs';
 import RelatedModels from './model/components/RelatedModels';
-import { getModelData, getRelatedModels } from './model/api/modelData';
+import { apiService } from '../services/api';
 
 const ModelDetail = () => {
   const { id } = useParams();
@@ -23,20 +22,39 @@ const ModelDetail = () => {
   const [mainImage, setMainImage] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [isLiked, setIsLiked] = useState(false);
+  const [error, setError] = useState(null);
   
   useEffect(() => {
-    // Simulate fetching the model from an API
-    setTimeout(() => {
-      const fetchedModel = getModelData(id);
-      setModel(fetchedModel);
-      if (fetchedModel) {
+    const fetchModelData = async () => {
+      try {
+        setIsLoaded(false);
+        setError(null);
+        
+        const fetchedModel = await apiService.getModelDetails(Number(id));
+        
+        if (!fetchedModel) {
+          setError("Model not found");
+          setIsLoaded(true);
+          return;
+        }
+        
+        setModel(fetchedModel);
         setMainImage(fetchedModel.image);
+        
         // Get related models
-        const related = getRelatedModels(id, fetchedModel.category);
-        setRelatedModels(related);
+        if (fetchedModel.category) {
+          const related = await apiService.getRelatedModels(Number(id), fetchedModel.category);
+          setRelatedModels(related);
+        }
+      } catch (err) {
+        console.error("Error fetching model details:", err);
+        setError("Failed to load model details. Please try again later.");
+      } finally {
+        setIsLoaded(true);
       }
-      setIsLoaded(true);
-    }, 800);
+    };
+    
+    fetchModelData();
   }, [id]);
   
   const handleAddToCart = () => {
@@ -88,7 +106,7 @@ const ModelDetail = () => {
     );
   }
 
-  if (!model) {
+  if (error || !model) {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />

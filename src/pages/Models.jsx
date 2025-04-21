@@ -1,62 +1,10 @@
-
 import { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import ModelCard from '../components/ModelCard';
 import { Search, Filter, Bookmark, Grid, Tag } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
-
-// Mock data for model listings with categories
-const modelData = [
-  {
-    id: 1,
-    name: 'Sophia Elegance',
-    price: 129.99,
-    description: 'Handcrafted porcelain doll with intricate details and premium fabric clothing. A classic addition to any collection.',
-    image: 'https://images.unsplash.com/photo-1611042553365-9b101d749e31?q=80&w=1000&auto=format&fit=crop',
-    category: 'Premium'
-  },
-  {
-    id: 2,
-    name: 'Victoria Vintage',
-    price: 159.99,
-    description: 'Inspired by Victorian era fashion, this doll features authentic period clothing and accessories with incredible attention to detail.',
-    image: 'https://images.unsplash.com/photo-1547277854-fa0bf6c8ba26?q=80&w=1000&auto=format&fit=crop',
-    category: 'Premium'
-  },
-  {
-    id: 3,
-    name: 'Modern Mila',
-    price: 99.99,
-    description: 'Contemporary doll design with customizable features and modern fashion elements. Perfect for the trendy collector.',
-    image: 'https://images.unsplash.com/photo-1603552489088-b8304faff8ad?q=80&w=1000&auto=format&fit=crop',
-    category: 'Standard'
-  },
-  {
-    id: 4,
-    name: 'Elegant Eleanor',
-    price: 149.99,
-    description: 'Elegant porcelain doll with handcrafted lace details and satin finish. A premium collector\'s item.',
-    image: 'https://images.unsplash.com/photo-1590072060877-89cdc8ab5524?q=80&w=1000&auto=format&fit=crop',
-    category: 'Premium'
-  },
-  {
-    id: 5,
-    name: 'Classic Charlotte',
-    price: 119.99,
-    description: 'Traditional design with timeless appeal, featuring hand-painted features and authentic period costume.',
-    image: 'https://images.unsplash.com/photo-1566512772618-ddecb1492ee9?q=80&w=1000&auto=format&fit=crop',
-    category: 'Standard'
-  },
-  {
-    id: 6,
-    name: 'Retro Rebecca',
-    price: 139.99,
-    description: 'Vintage-inspired model with authentic mid-century styling and accessories. A nostalgic addition to any collection.',
-    image: 'https://images.unsplash.com/photo-1597046510717-b0ffd88d592d?q=80&w=1000&auto=format&fit=crop',
-    category: 'Limited Edition'
-  }
-];
+import { apiService } from '../services/api';
 
 const Models = () => {
   const [models, setModels] = useState([]);
@@ -65,13 +13,30 @@ const Models = () => {
   const [priceFilter, setPriceFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const { theme } = useTheme();
-  
+  const [categories, setCategories] = useState(['all']);
+  const [error, setError] = useState(null);
+
   useEffect(() => {
-    // Simulate fetching models from an API
-    setTimeout(() => {
-      setModels(modelData);
-      setIsLoaded(true);
-    }, 800);
+    const fetchModels = async () => {
+      try {
+        setIsLoaded(false);
+        const data = await apiService.getModels();
+        setModels(data);
+        
+        // Extract unique categories
+        const uniqueCategories = ['all', ...new Set(data.map(model => model.category))];
+        setCategories(uniqueCategories);
+        
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching models:", err);
+        setError("Failed to load models. Please try again later.");
+      } finally {
+        setIsLoaded(true);
+      }
+    };
+
+    fetchModels();
   }, []);
   
   const filteredModels = models.filter(model => {
@@ -88,9 +53,6 @@ const Models = () => {
     
     return matchesSearch && matchesCategory && matchesPrice;
   });
-
-  // Get available categories from model data
-  const categories = ['all', ...new Set(models.map(model => model.category))];
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -149,7 +111,6 @@ const Models = () => {
               </div>
             </div>
             
-            {/* Active Filters Display */}
             {(categoryFilter !== 'all' || priceFilter !== 'all') && (
               <div className="flex items-center flex-wrap mt-4 ml-2">
                 <span className={`text-sm mr-2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Active filters:</span>
@@ -191,7 +152,6 @@ const Models = () => {
             )}
           </div>
           
-          {/* Category Quick Filter Buttons */}
           <div className="flex flex-wrap gap-2 mb-6">
             <button
               onClick={() => setCategoryFilter('all')}
@@ -226,6 +186,14 @@ const Models = () => {
               </button>
             ))}
           </div>
+          
+          {error && (
+            <div className="text-center py-8 mb-8">
+              <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded" role="alert">
+                <p>{error}</p>
+              </div>
+            </div>
+          )}
           
           {isLoaded ? (
             filteredModels.length > 0 ? (

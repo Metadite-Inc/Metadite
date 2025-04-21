@@ -1,6 +1,7 @@
+
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { User, LogOut, LayoutDashboard, MessageSquare, Crown } from 'lucide-react';
+import { User, LogOut, LayoutDashboard, MessageSquare, Crown, Shield, Database } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,10 +17,12 @@ import { useAuth } from '../context/AuthContext';
 const UserMenu = () => {
   const { user, logout } = useAuth();
   const { theme } = useTheme();
-  const navigate = useNavigate(); // Add navigate for redirection
+  const navigate = useNavigate();
   
   // Check if user has VIP access
   const hasVipAccess = user?.membershipLevel === 'vip' || user?.membershipLevel === 'vvip' || user?.vip;
+  const isModerator = user?.role === 'moderator';
+  const isAdmin = user?.role === 'admin';
 
   if (!user) {
     return (
@@ -45,6 +48,12 @@ const UserMenu = () => {
       <DropdownMenuContent align="end" className={theme === 'dark' ? 'bg-gray-800 border-gray-700 text-white' : ''}>
         <DropdownMenuLabel className={theme === 'dark' ? 'text-gray-300' : ''}>
           {user.name || 'User'}
+          {isModerator && (
+            <span className="ml-2 text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full">Moderator</span>
+          )}
+          {isAdmin && (
+            <span className="ml-2 text-xs bg-purple-500 text-white px-2 py-0.5 rounded-full">Admin</span>
+          )}
         </DropdownMenuLabel>
         <DropdownMenuSeparator className={theme === 'dark' ? 'bg-gray-700' : ''} />
         
@@ -61,6 +70,24 @@ const UserMenu = () => {
             Contact Us
           </Link>
         </DropdownMenuItem>
+        
+        {isModerator && (
+          <DropdownMenuItem className={theme === 'dark' ? 'hover:bg-gray-700 focus:bg-gray-700' : ''}>
+            <Link to="/moderator" className="flex items-center w-full">
+              <Shield className="mr-2 h-4 w-4" />
+              Moderator Panel
+            </Link>
+          </DropdownMenuItem>
+        )}
+        
+        {isAdmin && (
+          <DropdownMenuItem className={theme === 'dark' ? 'hover:bg-gray-700 focus:bg-gray-700' : ''}>
+            <Link to="/admin" className="flex items-center w-full">
+              <Database className="mr-2 h-4 w-4" />
+              Admin Portal
+            </Link>
+          </DropdownMenuItem>
+        )}
         
         {!hasVipAccess && (
           <DropdownMenuItem className={theme === 'dark' ? 'hover:bg-gray-700 focus:bg-gray-700' : ''}>
