@@ -30,7 +30,7 @@ export interface ModelDetail extends ModelBasic {
 }
 
 // Base API configuration
-const API_URL = "https://fakestoreapi.com"; // Example API URL
+const API_URL = import.meta.env.BACKEND_API_URL;
 
 class ApiService {
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
@@ -57,18 +57,18 @@ class ApiService {
     }
   }
 
-  // Get all models (products)
+  // Get all models (dolls)
   async getModels(): Promise<ModelBasic[]> {
     try {
-      const products = await this.request<any[]>("/products");
+      const dolls = await this.request<any[]>("/dolls");
       // Transform the API response to match our ModelBasic interface
-      return products.map(product => ({
-        id: product.id,
-        name: product.title,
-        price: product.price,
-        description: product.description.substring(0, 100) + "...", // Truncate for preview
-        image: product.image,
-        category: product.category
+      return dolls.map(doll => ({
+        id: doll.id,
+        name: doll.title,
+        price: doll.price,
+        description: doll.description.substring(0, 100) + "...", // Truncate for preview
+        image: doll.image,
+        category: doll.category
       }));
     } catch (error) {
       console.error("Failed to fetch models:", error);
@@ -80,35 +80,35 @@ class ApiService {
   // Get a single model details
   async getModelDetails(id: number): Promise<ModelDetail | null> {
     try {
-      const product = await this.request<any>(`/products/${id}`);
+      const doll = await this.request<any>(`/dolls/${id}`);
       
       // Transform the API response to match our ModelDetail interface
       return {
-        id: product.id,
-        name: product.title,
-        price: product.price,
-        description: product.description.substring(0, 100) + "...",
-        longDescription: product.description,
-        image: product.image,
-        gallery: [product.image, product.image, product.image], // API doesn't provide multiple images
-        rating: product.rating?.rate || 4.5,
-        reviews: product.rating?.count || 10,
+        id: doll.id,
+        name: doll.title,
+        price: doll.price,
+        description: doll.description.substring(0, 100) + "...",
+        longDescription: doll.description,
+        image: doll.image,
+        gallery: [doll.image, doll.image, doll.image], // API doesn't provide multiple images
+        rating: doll.rating?.rate || 4.5,
+        reviews: doll.rating?.count || 10,
         inStock: true,
-        category: product.category,
+        category: doll.category,
         specifications: [
-          { name: "Category", value: product.category },
-          { name: "Rating", value: `${product.rating?.rate || 4.5}/5` },
+          { name: "Category", value: doll.category },
+          { name: "Rating", value: `${doll.rating?.rate || 4.5}/5` },
           { name: "Material", value: "Premium Quality" },
         ],
-        detailedDescription: product.description,
+        detailedDescription: doll.description,
         shippingInfo: {
           dimensions: "20\" x 12\" x 8\"",
           weight: "3.5 lbs",
           handlingTime: "3-5 business days",
           shippingOptions: [
             { method: "Standard", time: "7-10 business days", price: "Free" },
-            { method: "Express", time: "2-3 business days", price: "$9.99" },
-            { method: "International", time: "10-14 business days", price: "$14.99" },
+            { method: "Express", time: "2-3 business days", price: "Free" },
+            { method: "International", time: "10-14 business days", price: "Free" },
           ],
           specialNotes: "Packaged with care for safe delivery."
         },
@@ -116,7 +116,7 @@ class ApiService {
           { 
             rating: 5, 
             date: "2023-05-15", 
-            comment: "Excellent product, very satisfied with the quality." 
+            comment: "Excellent doll, very satisfied with the quality." 
           },
           { 
             rating: 4, 
@@ -134,17 +134,17 @@ class ApiService {
   // Get related models based on category
   async getRelatedModels(currentModelId: number, category: string): Promise<ModelBasic[]> {
     try {
-      const products = await this.request<any[]>(`/products/category/${category}`);
-      return products
-        .filter(product => product.id !== currentModelId)
+      const dolls = await this.request<any[]>(`/dolls/category/${category}`);
+      return dolls
+        .filter(doll => doll.id !== currentModelId)
         .slice(0, 3)
-        .map(product => ({
-          id: product.id,
-          name: product.title,
-          price: product.price,
-          description: product.description.substring(0, 100) + "...",
-          image: product.image,
-          category: product.category
+        .map(doll => ({
+          id: doll.id,
+          name: doll.title,
+          price: doll.price,
+          description: doll.description.substring(0, 100) + "...",
+          image: doll.image,
+          category: doll.category
         }));
     } catch (error) {
       console.error("Failed to fetch related models:", error);
