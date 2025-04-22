@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8000'; // Update this with your actual backend URL
+const API_BASE_URL = 'http://127.0.0.1:8000'; // Update this with your actual backend URL
 
 interface LoginRequest {
   email: string;
@@ -10,8 +10,13 @@ interface LoginRequest {
 interface RegisterRequest {
   email: string;
   password: string;
-  name: string;
+  full_name: string;
+  role?: 'admin' | 'moderator' | 'user';
+  membership_level?: 'standard' | 'vip' | 'vvip';
   region?: string;
+  is_active?: boolean;
+  assigned_dolls?: string[];
+  video_access_count?: number;
 }
 
 interface UserResponse {

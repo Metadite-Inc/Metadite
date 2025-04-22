@@ -66,7 +66,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const register = async (email: string, password: string, name: string, region?: string): Promise<void> => {
     try {
-      await authApi.register({ email, password, name, region });
+      await authApi.register({ 
+        email, 
+        password, 
+        full_name: name,
+        role: 'user',
+        membership_level: 'standard',
+        is_active: true,
+        assigned_dolls: [],
+        video_access_count: 0,
+        region 
+      });
       toast.success('Registration successful. Please login.');
     } catch (error) {
       toast.error('Registration failed. Please try again.');
