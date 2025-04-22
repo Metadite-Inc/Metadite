@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = "https://metadite-fccag.ondigitalocean.app";
+const API_BASE_URL = "https://metadite-9g2lk.ondigitalocean.app";
 
 interface LoginRequest {
   email: string;
