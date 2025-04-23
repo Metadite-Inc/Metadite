@@ -71,6 +71,19 @@ const Navbar = () => {
       style={{ height: '74px' }}
     >
       <div className="container mx-auto px-4 flex justify-between items-center h-full">
+        {user?.role === 'regular' && (
+          <button
+            onClick={() => navigate('/chat')}
+            className="absolute top-2 right-4 p-2 text-gray-700 dark:text-gray-300 hover:text-metadite-primary transition-colors"
+          >
+            <Bell className="h-5 w-5" />
+            {newMessage && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                1
+              </span>
+            )}
+          </button>
+        )}
         <Link
           to={user?.role === 'moderator' ? '/moderator' : '/'}
           className="flex items-center h-full"
