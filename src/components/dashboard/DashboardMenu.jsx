@@ -30,7 +30,7 @@ const DashboardMenu = ({ activeTab, setActiveTab, logout, userVip, user }) => {
             <span>Account Overview</span>
           </button>
         </li>
-        {user?.role !== 'moderator' && (
+        {user?.role !== 'moderator' && user?.role !== 'admin' && (
           <li>
             <button 
               onClick={() => setActiveTab('orders')}
@@ -47,7 +47,7 @@ const DashboardMenu = ({ activeTab, setActiveTab, logout, userVip, user }) => {
             </button>
           </li>
         )}
-        {userVip && (
+        {userVip && user?.role !== 'moderator' && user?.role !== 'admin' && (
           <li>
             <button 
               onClick={() => setActiveTab('vip')}
@@ -64,7 +64,7 @@ const DashboardMenu = ({ activeTab, setActiveTab, logout, userVip, user }) => {
             </button>
           </li>
         )}
-        {user?.role !== 'moderator' && (
+        {user?.role !== 'moderator' && user?.role !== 'admin' && (
           <li>
             <button 
               onClick={() => setActiveTab('favorites')}
@@ -81,7 +81,7 @@ const DashboardMenu = ({ activeTab, setActiveTab, logout, userVip, user }) => {
             </button>
           </li>
         )}
-        {user?.role !== 'moderator' && (
+        {user?.role !== 'moderator' && user?.role !== 'admin' && (
           <li>
             <button 
               onClick={() => setActiveTab('payment')}

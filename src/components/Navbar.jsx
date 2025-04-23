@@ -64,8 +64,13 @@ const Navbar = () => {
   };
 
   return (
-    <nav className={`glass-nav fixed top-0 left-0 w-full z-50 transition-all duration-300 ${scrolled ? 'py-0' : 'py-0'}`}>
-      <div className="container mx-auto px-4 flex justify-between items-center relative">
+    <nav
+      className={`glass-nav fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
+        scrolled ? 'py-0' : 'py-0'
+      }`}
+      style={{ height: '74px' }}
+    >
+      <div className="container mx-auto px-4 flex justify-between items-center h-full">
         {user?.role === 'regular' && (
           <button
             onClick={() => navigate('/chat')}
@@ -79,11 +84,21 @@ const Navbar = () => {
             )}
           </button>
         )}
-
-        <Link to={user?.role === 'moderator' ? '/moderator' : '/'} className="flex items-center">
-          <img src="/logo.png" alt="Metadite Logo" className="h-20 w-auto mr-0" />
-          <span className="hidden md:block text-2xl font-bold bg-gradient-to-r from-metadite-primary to-metadite-secondary bg-clip-text text-transparent">Metadite</span>
-          <span className="md:hidden text-xl font-bold bg-gradient-to-r from-metadite-primary to-metadite-secondary bg-clip-text text-transparent">Metadite</span>
+        <Link
+          to={user?.role === 'moderator' ? '/moderator' : '/'}
+          className="flex items-center h-full"
+        >
+          <img
+            src="/logo.png"
+            alt="Metadite Logo"
+            className="h-12 w-auto mr-2"
+          />
+          <span className="hidden md:block text-2xl font-bold bg-gradient-to-r from-metadite-primary to-metadite-secondary bg-clip-text text-transparent">
+            Metadite
+          </span>
+          <span className="md:hidden text-xl font-bold bg-gradient-to-r from-metadite-primary to-metadite-secondary bg-clip-text text-transparent">
+            Metadite
+          </span>
         </Link>
 
         <div className="hidden md:flex items-center space-x-8">
