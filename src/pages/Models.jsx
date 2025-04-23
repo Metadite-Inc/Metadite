@@ -191,6 +191,42 @@ const Models = () => {
             )}
           </div>
 
+          {/* Category Quick Filter Buttons */}
+          <div className="flex flex-wrap gap-2 mb-6">
+            <button
+              onClick={() => setCategoryFilter('all')}
+              className={`flex items-center px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                categoryFilter === 'all'
+                  ? 'bg-metadite-primary text-white'
+                  : theme === 'dark' 
+                    ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                    : 'bg-white text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              <Grid className="h-4 w-4 mr-2" />
+              All Categories
+            </button>
+
+            {categories.filter(cat => cat !== 'all').map((category) => (
+              <button
+                key={category}
+                onClick={() => setCategoryFilter(category)}
+                className={`flex items-center px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                  categoryFilter === category
+                    ? 'bg-metadite-primary text-white'
+                    : theme === 'dark' 
+                      ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                      : 'bg-white text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                {category === 'Premium' && <Bookmark className="h-4 w-4 mr-2" />}
+                {category === 'Standard' && <Tag className="h-4 w-4 mr-2" />}
+                {category === 'Limited Edition' && <Bookmark className="h-4 w-4 mr-2 fill-current" />}
+                {category}
+              </button>
+            ))}
+          </div>
+
           {isLoaded ? (
             filteredModels.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
