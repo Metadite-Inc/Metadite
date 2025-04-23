@@ -1,62 +1,10 @@
-
 import { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import ModelCard from '../components/ModelCard';
 import { Search, Filter, Bookmark, Grid, Tag } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
-
-// Mock data for model listings with categories
-const modelData = [
-  {
-    id: 1,
-    name: 'Sophia Elegance',
-    price: 129.99,
-    description: 'Handcrafted porcelain doll with intricate details and premium fabric clothing. A classic addition to any collection.',
-    image: 'https://images.unsplash.com/photo-1611042553365-9b101d749e31?q=80&w=1000&auto=format&fit=crop',
-    category: 'Premium'
-  },
-  {
-    id: 2,
-    name: 'Victoria Vintage',
-    price: 159.99,
-    description: 'Inspired by Victorian era fashion, this doll features authentic period clothing and accessories with incredible attention to detail.',
-    image: 'https://images.unsplash.com/photo-1547277854-fa0bf6c8ba26?q=80&w=1000&auto=format&fit=crop',
-    category: 'Premium'
-  },
-  {
-    id: 3,
-    name: 'Modern Mila',
-    price: 99.99,
-    description: 'Contemporary doll design with customizable features and modern fashion elements. Perfect for the trendy collector.',
-    image: 'https://images.unsplash.com/photo-1603552489088-b8304faff8ad?q=80&w=1000&auto=format&fit=crop',
-    category: 'Standard'
-  },
-  {
-    id: 4,
-    name: 'Elegant Eleanor',
-    price: 149.99,
-    description: 'Elegant porcelain doll with handcrafted lace details and satin finish. A premium collector\'s item.',
-    image: 'https://images.unsplash.com/photo-1590072060877-89cdc8ab5524?q=80&w=1000&auto=format&fit=crop',
-    category: 'Premium'
-  },
-  {
-    id: 5,
-    name: 'Classic Charlotte',
-    price: 119.99,
-    description: 'Traditional design with timeless appeal, featuring hand-painted features and authentic period costume.',
-    image: 'https://images.unsplash.com/photo-1566512772618-ddecb1492ee9?q=80&w=1000&auto=format&fit=crop',
-    category: 'Standard'
-  },
-  {
-    id: 6,
-    name: 'Retro Rebecca',
-    price: 139.99,
-    description: 'Vintage-inspired model with authentic mid-century styling and accessories. A nostalgic addition to any collection.',
-    image: 'https://images.unsplash.com/photo-1597046510717-b0ffd88d592d?q=80&w=1000&auto=format&fit=crop',
-    category: 'Limited Edition'
-  }
-];
+import { apiService } from '../lib/api';
 
 const Models = () => {
   const [models, setModels] = useState([]);
@@ -65,44 +13,65 @@ const Models = () => {
   const [priceFilter, setPriceFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const { theme } = useTheme();
-  
+
   useEffect(() => {
-    // Simulate fetching models from an API
-    setTimeout(() => {
-      setModels(modelData);
-      setIsLoaded(true);
-    }, 800);
+    const fetchModels = async () => {
+      try {
+        const fetchedModels = await apiService.getModels();
+        setModels(fetchedModels);
+        setIsLoaded(true);
+      } catch (error) {
+        console.error('Failed to fetch models:', error);
+        // Set to true to stop the loading state even if there's an error
+        setIsLoaded(true);
+      }
+    };
+
+    fetchModels();
   }, []);
-  
-  const filteredModels = models.filter(model => {
-    const matchesSearch = model.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                        model.description.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
+  const filteredModels = models.filter((model) => {
+    const matchesSearch =
+      model.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      model.description.toLowerCase().includes(searchTerm.toLowerCase());
+
     const matchesCategory = categoryFilter === 'all' || model.category === categoryFilter;
-    
+
     let matchesPrice = true;
     if (priceFilter === 'under100' && model.price < 100) matchesPrice = true;
     else if (priceFilter === '100to150' && model.price >= 100 && model.price <= 150) matchesPrice = true;
     else if (priceFilter === 'over150' && model.price > 150) matchesPrice = true;
     else if (priceFilter !== 'all') matchesPrice = false;
-    
+
     return matchesSearch && matchesCategory && matchesPrice;
   });
 
   // Get available categories from model data
-  const categories = ['all', ...new Set(models.map(model => model.category))];
+  const categories = ['all', ...new Set(models.map((model) => model.category))];
 
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      
-      <div className={`flex-1 pt-24 pb-12 px-4 ${theme === 'dark' ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' : 'bg-gradient-to-br from-white via-metadite-light to-white'}`}>
+
+      <div
+        className={`flex-1 pt-24 pb-12 px-4 ${
+          theme === 'dark'
+            ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900'
+            : 'bg-gradient-to-br from-white via-metadite-light to-white'
+        }`}
+      >
         <div className="container mx-auto max-w-6xl">
-          <h1 className={`text-3xl font-bold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Our Model Collection</h1>
+          <h1
+            className={`text-3xl font-bold mb-2 ${
+              theme === 'dark' ? 'text-white' : 'text-gray-900'
+            }`}
+          >
+            Our Model Collection
+          </h1>
           <p className={`mb-8 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
             Explore our premium selection of beautifully crafted model dolls
           </p>
-          
+
           <div className="glass-card rounded-xl p-4 mb-8">
             <div className="flex flex-col md:flex-row gap-4">
               <div className="flex-1">
@@ -110,19 +79,31 @@ const Models = () => {
                   <input
                     type="text"
                     placeholder="Search models..."
-                    className={`w-full py-2 pl-10 pr-4 rounded-md border ${theme === 'dark' ? 'border-gray-700 bg-gray-800 text-white placeholder-gray-400' : 'border-gray-200 bg-white text-gray-800'} focus:outline-none focus:ring-2 focus:ring-metadite-primary`}
+                    className={`w-full py-2 pl-10 pr-4 rounded-md border ${
+                      theme === 'dark'
+                        ? 'border-gray-700 bg-gray-800 text-white placeholder-gray-400'
+                        : 'border-gray-200 bg-white text-gray-800'
+                    } focus:outline-none focus:ring-2 focus:ring-metadite-primary`}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
-                  <Search className={`absolute left-3 top-2.5 h-5 w-5 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-400'}`} />
+                  <Search
+                    className={`absolute left-3 top-2.5 h-5 w-5 ${
+                      theme === 'dark' ? 'text-gray-400' : 'text-gray-400'
+                    }`}
+                  />
                 </div>
               </div>
-              
+
               <div className="flex flex-wrap items-center gap-2">
                 <div className="flex items-center gap-2 mr-4">
                   <Filter className="h-5 w-5 text-metadite-primary" />
                   <select
-                    className={`py-2 px-4 rounded-md border ${theme === 'dark' ? 'border-gray-700 bg-gray-800 text-white' : 'border-gray-200 bg-white text-gray-800'} focus:outline-none focus:ring-2 focus:ring-metadite-primary`}
+                    className={`py-2 px-4 rounded-md border ${
+                      theme === 'dark'
+                        ? 'border-gray-700 bg-gray-800 text-white'
+                        : 'border-gray-200 bg-white text-gray-800'
+                    } focus:outline-none focus:ring-2 focus:ring-metadite-primary`}
                     value={priceFilter}
                     onChange={(e) => setPriceFilter(e.target.value)}
                   >
@@ -132,32 +113,46 @@ const Models = () => {
                     <option value="over150">Over $150</option>
                   </select>
                 </div>
-                
+
                 <div className="flex items-center gap-2">
                   <Tag className="h-5 w-5 text-metadite-primary" />
                   <select
-                    className={`py-2 px-4 rounded-md border ${theme === 'dark' ? 'border-gray-700 bg-gray-800 text-white' : 'border-gray-200 bg-white text-gray-800'} focus:outline-none focus:ring-2 focus:ring-metadite-primary`}
+                    className={`py-2 px-4 rounded-md border ${
+                      theme === 'dark'
+                        ? 'border-gray-700 bg-gray-800 text-white'
+                        : 'border-gray-200 bg-white text-gray-800'
+                    } focus:outline-none focus:ring-2 focus:ring-metadite-primary`}
                     value={categoryFilter}
                     onChange={(e) => setCategoryFilter(e.target.value)}
                   >
                     <option value="all">All Categories</option>
-                    {categories.filter(cat => cat !== 'all').map((category) => (
-                      <option key={category} value={category}>{category}</option>
-                    ))}
+                    {categories
+                      .filter((cat) => cat !== 'all')
+                      .map((category) => (
+                        <option key={category} value={category}>
+                          {category}
+                        </option>
+                      ))}
                   </select>
                 </div>
               </div>
             </div>
-            
+
             {/* Active Filters Display */}
             {(categoryFilter !== 'all' || priceFilter !== 'all') && (
               <div className="flex items-center flex-wrap mt-4 ml-2">
-                <span className={`text-sm mr-2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Active filters:</span>
-                
+                <span
+                  className={`text-sm mr-2 ${
+                    theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                  }`}
+                >
+                  Active filters:
+                </span>
+
                 {categoryFilter !== 'all' && (
                   <span className="inline-flex items-center bg-metadite-primary/10 text-metadite-primary text-xs px-2 py-1 rounded-full mr-2">
                     Category: {categoryFilter}
-                    <button 
+                    <button
                       onClick={() => setCategoryFilter('all')}
                       className="ml-1 hover:text-metadite-secondary"
                     >
@@ -165,11 +160,16 @@ const Models = () => {
                     </button>
                   </span>
                 )}
-                
+
                 {priceFilter !== 'all' && (
                   <span className="inline-flex items-center bg-metadite-primary/10 text-metadite-primary text-xs px-2 py-1 rounded-full">
-                    Price: {priceFilter === 'under100' ? 'Under $100' : priceFilter === '100to150' ? '$100 - $150' : 'Over $150'}
-                    <button 
+                    Price:{' '}
+                    {priceFilter === 'under100'
+                      ? 'Under $100'
+                      : priceFilter === '100to150'
+                      ? '$100 - $150'
+                      : 'Over $150'}
+                    <button
                       onClick={() => setPriceFilter('all')}
                       className="ml-1 hover:text-metadite-secondary"
                     >
@@ -177,8 +177,8 @@ const Models = () => {
                     </button>
                   </span>
                 )}
-                
-                <button 
+
+                <button
                   onClick={() => {
                     setCategoryFilter('all');
                     setPriceFilter('all');
@@ -190,7 +190,7 @@ const Models = () => {
               </div>
             )}
           </div>
-          
+
           {/* Category Quick Filter Buttons */}
           <div className="flex flex-wrap gap-2 mb-6">
             <button
@@ -206,7 +206,7 @@ const Models = () => {
               <Grid className="h-4 w-4 mr-2" />
               All Categories
             </button>
-            
+
             {categories.filter(cat => cat !== 'all').map((category) => (
               <button
                 key={category}
@@ -226,7 +226,7 @@ const Models = () => {
               </button>
             ))}
           </div>
-          
+
           {isLoaded ? (
             filteredModels.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -236,8 +236,14 @@ const Models = () => {
               </div>
             ) : (
               <div className="text-center py-16">
-                <p className={`text-lg ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>No models found matching your criteria.</p>
-                <button 
+                <p
+                  className={`text-lg ${
+                    theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                  }`}
+                >
+                  No models found matching your criteria.
+                </p>
+                <button
                   onClick={() => {
                     setSearchTerm('');
                     setPriceFilter('all');
@@ -258,7 +264,7 @@ const Models = () => {
           )}
         </div>
       </div>
-      
+
       <Footer />
     </div>
   );

@@ -9,8 +9,7 @@ const MessageItem = ({ message, onFlag }) => {
   const isOwnMessage = message.senderId === user?.id;
   const isFlagged = message.flagged;
   
-  // Determine if the message might contain inappropriate content
-  // This would be analyzed by your AI system in a real implementation
+
   const mightBeInappropriate = message.content.toLowerCase().includes('inappropriate');
   
   return (

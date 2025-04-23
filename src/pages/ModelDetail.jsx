@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
@@ -25,19 +24,26 @@ const ModelDetail = () => {
   const [isLiked, setIsLiked] = useState(false);
   
   useEffect(() => {
-    // Simulate fetching the model from an API
-    setTimeout(() => {
-      const fetchedModel = getModelData(id);
-      setModel(fetchedModel);
-      if (fetchedModel) {
-        setMainImage(fetchedModel.image);
-        // Get related models
-        const related = getRelatedModels(id, fetchedModel.category);
-        setRelatedModels(related);
-      }
+    const fetchModelData = async () => {
+      const modelData = await getModelData(id);
+      setModel(modelData);
+      setMainImage(modelData?.gallery?.[0] || '');
       setIsLoaded(true);
-    }, 800);
+    };
+
+    fetchModelData();
   }, [id]);
+
+  useEffect(() => {
+    if (model) {
+      const fetchRelatedModels = async () => {
+        const related = await getRelatedModels(model.id, model.category);
+        setRelatedModels(related);
+      };
+
+      fetchRelatedModels();
+    }
+  }, [model]);
   
   const handleAddToCart = () => {
     if (model) {
