@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 
 // Interfaces based on your existing model data structure
@@ -30,7 +29,7 @@ export interface ModelDetail extends ModelBasic {
 }
 
 // Base API configuration
-const API_URL = import.meta.env.BACKEND_API_URL;
+const API_URL = "https://metadite-9g2lk.ondigitalocean.app";//"http://127.0.0.1:8000/api";
 
 class ApiService {
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
@@ -49,7 +48,6 @@ class ApiService {
 
       return await response.json();
     } catch (error) {
-      console.error("API request failed:", error);
       toast.error("Failed to load data", {
         description: "Please try again later",
       });
@@ -64,15 +62,13 @@ class ApiService {
       // Transform the API response to match our ModelBasic interface
       return dolls.map(doll => ({
         id: doll.id,
-        name: doll.title,
+        name: doll.name,
         price: doll.price,
         description: doll.description.substring(0, 100) + "...", // Truncate for preview
         image: doll.image,
-        category: doll.category
+        category: doll.doll_category,
       }));
     } catch (error) {
-      console.error("Failed to fetch models:", error);
-      // Return empty array instead of throwing to prevent UI crashes
       return [];
     }
   }
@@ -81,24 +77,33 @@ class ApiService {
   async getModelDetails(id: number): Promise<ModelDetail | null> {
     try {
       const doll = await this.request<any>(`/dolls/${id}`);
-      
+      const reviews = await this.request<any[]>(`/reviews/doll/${id}`); // Fetch all reviews for the doll
+
       // Transform the API response to match our ModelDetail interface
       return {
         id: doll.id,
-        name: doll.title,
+        name: doll.name,
         price: doll.price,
-        description: doll.description.substring(0, 100) + "...",
+        description: doll.description.substring(0, 150) + "...",
         longDescription: doll.description,
         image: doll.image,
-        gallery: [doll.image, doll.image, doll.image], // API doesn't provide multiple images
-        rating: doll.rating?.rate || 4.5,
-        reviews: doll.rating?.count || 10,
-        inStock: true,
-        category: doll.category,
+        gallery: [doll.image, doll.image, doll.image],
+        rating: doll.rating || 4.5,
+        reviews: reviews.length, // Total number of reviews
+        inStock: doll.inStock || true,
+        category: doll.doll_category,
         specifications: [
-          { name: "Category", value: doll.category },
-          { name: "Rating", value: `${doll.rating?.rate || 4.5}/5` },
-          { name: "Material", value: "Premium Quality" },
+          { name: 'Height', value: `${doll.doll_height} inches` },
+          { name: "Material", value: doll.doll_material },
+          { name: 'Age Range', value: 'Adult Collectors' },
+          { name: 'Origin', value: doll.doll_origin },
+          { 
+            name: 'Release Date', 
+            value: new Date(doll.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) 
+          },
+          { name: "Category", value: doll.doll_category },
+          { name: 'Articulation', value: `${doll.doll_articulation || 'Fixed pose'}` },
+          { name: 'Hair Type', value: doll.doll_hair_type }
         ],
         detailedDescription: doll.description,
         shippingInfo: {
@@ -112,21 +117,14 @@ class ApiService {
           ],
           specialNotes: "Packaged with care for safe delivery."
         },
-        customerReviews: [
-          { 
-            rating: 5, 
-            date: "2023-05-15", 
-            comment: "Excellent doll, very satisfied with the quality." 
-          },
-          { 
-            rating: 4, 
-            date: "2023-04-22", 
-            comment: "Good value for money, would recommend." 
-          }
-        ]
+        customerReviews: reviews.map(review => ({
+          rating: review.rating,
+          date: new Date(review.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+          comment: review.comment
+        }))
       };
     } catch (error) {
-      console.error(`Failed to fetch model ${id}:`, error);
+      console.error(`Failed to fetch model details for ID ${id}:`, error);
       return null;
     }
   }
@@ -140,14 +138,13 @@ class ApiService {
         .slice(0, 3)
         .map(doll => ({
           id: doll.id,
-          name: doll.title,
+          name: doll.name,
           price: doll.price,
           description: doll.description.substring(0, 100) + "...",
           image: doll.image,
-          category: doll.category
+          category: doll.doll_category,
         }));
     } catch (error) {
-      console.error("Failed to fetch related models:", error);
       return [];
     }
   }
