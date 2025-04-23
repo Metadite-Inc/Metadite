@@ -6,7 +6,6 @@ import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import FormInput from './FormInput';
-import RoleSelector from './RoleSelector';
 import SocialLoginButtons from './SocialLoginButtons';
 import RegionSelect from './RegionSelect';
 
@@ -115,8 +114,6 @@ const LoginForm = () => {
           
           {!isLogin && <RegionSelect region={region} setRegion={setRegion} />}
           
-          {isLogin && <RoleSelector role={role} setRole={setRole} />}
-          
           {isLogin && (
             <div className="flex items-center justify-between">
               <div className="flex items-center">
@@ -157,17 +154,6 @@ const LoginForm = () => {
           >
             {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
           </button>
-        </div>
-        
-        <div className="mt-4 text-center">
-          {isLogin && (
-            <Link 
-              to="/upgrade"
-              className="inline-block text-sm font-medium text-white bg-gradient-to-r from-metadite-primary to-metadite-secondary px-4 py-2 rounded-md hover:opacity-90 transition-opacity"
-            >
-              Upgrade your membership
-            </Link>
-          )}
         </div>
         
         <div className={`mt-8 text-xs text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
