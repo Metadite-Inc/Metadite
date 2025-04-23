@@ -81,7 +81,7 @@ const Navbar = () => {
         )}
 
         <Link to={user?.role === 'moderator' ? '/moderator' : '/'} className="flex items-center">
-          <img src="/logo.svg" alt="Metadite Logo" className="h-20 w-auto mr-0" />
+          <img src="/logo.png" alt="Metadite Logo" className="h-20 w-auto mr-0" />
           <span className="hidden md:block text-2xl font-bold bg-gradient-to-r from-metadite-primary to-metadite-secondary bg-clip-text text-transparent">Metadite</span>
           <span className="md:hidden text-xl font-bold bg-gradient-to-r from-metadite-primary to-metadite-secondary bg-clip-text text-transparent">Metadite</span>
         </Link>
