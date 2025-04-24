@@ -71,6 +71,7 @@ const Dashboard = () => {
                 setActiveTab={setActiveTab} 
                 logout={logout} 
                 userVip={user?.vip}
+                user={user}
               />
             </div>
             

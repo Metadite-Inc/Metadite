@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { 
   User, ShoppingBag, Video, Heart, CreditCard, 
@@ -7,6 +8,9 @@ import { useTheme } from '../../context/ThemeContext';
 
 const DashboardMenu = ({ activeTab, setActiveTab, logout, userVip, user }) => {
   const { theme } = useTheme();
+  
+  // Check if the user is a regular user (not admin or moderator)
+  const isRegularUser = user?.role === 'user';
 
   return (
     <div className={`glass-card rounded-xl overflow-hidden ${theme === 'dark' ? 'bg-gray-800/70' : ''}`}>
@@ -30,7 +34,7 @@ const DashboardMenu = ({ activeTab, setActiveTab, logout, userVip, user }) => {
             <span>Account Overview</span>
           </button>
         </li>
-        {user?.role !== 'moderator' && user?.role !== 'admin' && (
+        {isRegularUser && (
           <li>
             <button 
               onClick={() => setActiveTab('orders')}
@@ -47,7 +51,7 @@ const DashboardMenu = ({ activeTab, setActiveTab, logout, userVip, user }) => {
             </button>
           </li>
         )}
-        {userVip && user?.role !== 'moderator' && user?.role !== 'admin' && (
+        {userVip && (
           <li>
             <button 
               onClick={() => setActiveTab('vip')}
@@ -64,7 +68,7 @@ const DashboardMenu = ({ activeTab, setActiveTab, logout, userVip, user }) => {
             </button>
           </li>
         )}
-        {user?.role !== 'moderator' && user?.role !== 'admin' && (
+        {isRegularUser && (
           <li>
             <button 
               onClick={() => setActiveTab('favorites')}
@@ -81,7 +85,7 @@ const DashboardMenu = ({ activeTab, setActiveTab, logout, userVip, user }) => {
             </button>
           </li>
         )}
-        {user?.role !== 'moderator' && user?.role !== 'admin' && (
+        {isRegularUser && (
           <li>
             <button 
               onClick={() => setActiveTab('payment')}
