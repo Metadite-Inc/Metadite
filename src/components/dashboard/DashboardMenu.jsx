@@ -51,7 +51,7 @@ const DashboardMenu = ({ activeTab, setActiveTab, logout, userVip, user }) => {
             </button>
           </li>
         )}
-        {userVip && (
+        {userVip && user?.role !== 'moderator' && user?.role !== 'admin' && (
           <li>
             <button 
               onClick={() => setActiveTab('vip')}
