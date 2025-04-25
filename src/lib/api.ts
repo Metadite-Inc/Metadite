@@ -29,7 +29,7 @@ export interface ModelDetail extends ModelBasic {
 }
 
 // Base API configuration
-const API_URL = "https://metadite-9g2lk.ondigitalocean.app";//"http://127.0.0.1:8000/api";
+const API_URL = "https://metadite-9g2lk.ondigitalocean.app/api";//"http://127.0.0.1:8000/api";
 
 class ApiService {
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
