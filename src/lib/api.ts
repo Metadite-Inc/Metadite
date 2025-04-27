@@ -75,10 +75,24 @@ class ApiService {
   }
 
   // Get a single model details
+  // Get a single model details
   async getModelDetails(id: number): Promise<ModelDetail | null> {
     try {
-      const doll = await this.request<any>(`/dolls/${id}`);
-      const reviews = await this.request<any[]>(`/reviews/doll/${id}`); // Fetch all reviews for the doll
+      const doll = await this.request<any>(`/api/dolls/${id}`);
+      const reviews = await this.request<any[]>(`/api/reviews/doll/${id}`);
+      const images = await this.request<any[]>(`/api/images/${id}/images`);
+
+      // Determine backend URL
+      const backendUrl = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
+
+      // Find primary image and gallery
+      let mainImage = '';
+      let gallery: string[] = [];
+      if (Array.isArray(images)) {
+        const primary = images.find(img => img.is_primary);
+        mainImage = primary ? `${backendUrl}${primary.image_url}` : '';
+        gallery = images.filter(img => !img.is_primary).map(img => `${backendUrl}${img.image_url}`);
+      }
 
       // Transform the API response to match our ModelDetail interface
       return {
@@ -87,8 +101,8 @@ class ApiService {
         price: doll.price,
         description: doll.description.substring(0, 150) + "...",
         longDescription: doll.description,
-        image: doll.image,
-        gallery: [doll.image, doll.image, doll.image],
+        image: mainImage,
+        gallery: gallery,
         rating: doll.rating || 4.5,
         reviews: reviews.length, // Total number of reviews
         inStock: doll.inStock || false,
