@@ -28,9 +28,8 @@ export interface ModelDetail extends ModelBasic {
   customerReviews: { rating: number; date: string; comment: string }[];
 }
 
-// Base API configuration
-//const API_URL = "https://metadite-9g2lk.ondigitalocean.app/api";//"http://127.0.0.1:8000/api";
-const API_URL = import.meta.env.VITE_API_BASE_URL;
+
+const API_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
 
 class ApiService {
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
@@ -59,22 +58,30 @@ class ApiService {
   // Get all models (dolls)
   async getModels(): Promise<ModelBasic[]> {
     try {
-      const dolls = await this.request<any[]>("/dolls");
+      const dolls = await this.request<any[]>("/api/dolls");
+      const backendUrl = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
+
       // Transform the API response to match our ModelBasic interface
-      return dolls.map(doll => ({
-        id: doll.id,
-        name: doll.name,
-        price: doll.price,
-        description: doll.description.substring(0, 100) + "...", // Truncate for preview
-        image: doll.image,
-        category: doll.doll_category,
-      }));
+      return dolls.map(doll => {
+        let mainImage = '';
+        if (Array.isArray(doll.images)) {
+          const primary = doll.images.find((img: any) => img.is_primary);
+          mainImage = primary ? `${backendUrl}${primary.image_url}` : '';
+        }
+        return {
+          id: doll.id,
+          name: doll.name,
+          price: doll.price,
+          description: doll.description.substring(0, 100) + "...", // Truncate for preview
+          image: mainImage,
+          category: doll.doll_category,
+        };
+      });
     } catch (error) {
       return [];
     }
   }
 
-  // Get a single model details
   // Get a single model details
   async getModelDetails(id: number): Promise<ModelDetail | null> {
     try {
@@ -147,18 +154,27 @@ class ApiService {
   // Get related models based on category
   async getRelatedModels(currentModelId: number, category: string): Promise<ModelBasic[]> {
     try {
-      const dolls = await this.request<any[]>(`/dolls/category/${category}`);
+      const dolls = await this.request<any[]>(`/api/dolls/category/${category}`);
+
+      const backendUrl = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
       return dolls
         .filter(doll => doll.id !== currentModelId)
         .slice(0, 3)
-        .map(doll => ({
-          id: doll.id,
-          name: doll.name,
-          price: doll.price,
-          description: doll.description.substring(0, 100) + "...",
-          image: doll.image,
-          category: doll.doll_category,
-        }));
+        .map(doll => {
+          let mainImage = '';
+          if (Array.isArray(doll.images)) {
+            const primary = doll.images.find((img: any) => img.is_primary);
+            mainImage = primary ? `${backendUrl}${primary.image_url}` : '';
+          }
+          return {
+            id: doll.id,
+            name: doll.name,
+            price: doll.price,
+            description: doll.description.substring(0, 100) + "...",
+            image: mainImage,
+            category: doll.doll_category,
+          };
+        });
     } catch (error) {
       return [];
     }
