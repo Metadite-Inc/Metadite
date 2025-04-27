@@ -22,11 +22,9 @@ const Models = () => {
         setIsLoaded(true);
       } catch (error) {
         console.error('Failed to fetch models:', error);
-        // Set to true to stop the loading state even if there's an error
         setIsLoaded(true);
       }
     };
-
     fetchModels();
   }, []);
 
