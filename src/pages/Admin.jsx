@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import ModelImageUploader from '../components/ModelImageUploader';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -120,7 +121,10 @@ const Admin = () => {
   });
   
   // New states for model management
-  const [models, setModels] = useState(modelData);
+  const [models, setModels] = useState(() => {
+    const stored = localStorage.getItem('models');
+    return stored ? JSON.parse(stored) : modelData;
+  });
   const [newModelData, setNewModelData] = useState({
     name: '',
     price: '',
@@ -129,6 +133,9 @@ const Admin = () => {
     assignedModerator: '',
     image: ''
   });
+  // For drag-and-drop image upload
+  const [modelImageFile, setModelImageFile] = useState(null);
+  const [modelImagePreview, setModelImagePreview] = useState(null);
   
   // New state for admin management
   const [newAdminData, setNewAdminData] = useState({
@@ -185,55 +192,65 @@ const Admin = () => {
   };
   
   // Handle adding a new model
-  const handleAddModel = (e) => {
+  const handleAddModel = async (e) => {
     e.preventDefault();
-    
     // Basic validation
-    if (!newModelData.name || !newModelData.price || !newModelData.description || !newModelData.image) {
+    if (!newModelData.name || !newModelData.price || !newModelData.description || !modelImageFile) {
       toast.error("Missing required fields", {
-        description: "Please fill in all required fields.",
+        description: "Please fill in all required fields including image.",
       });
       return;
     }
-    
-    // Create new model object
-    const newModel = {
-      id: models.length + 1,
-      name: newModelData.name,
-      price: parseFloat(newModelData.price),
-      description: newModelData.description,
-      category: newModelData.category,
-      assignedModerator: newModelData.assignedModerator,
-      image: newModelData.image
-    };
-    
-    // Add model to the list
-    setModels([...models, newModel]);
-    
-    // Assign model to moderator if one was selected
-    if (newModelData.assignedModerator) {
-      const modIndex = moderators.findIndex(mod => mod.email === newModelData.assignedModerator);
-      if (modIndex !== -1) {
-        const updatedModerators = [...moderators];
-        updatedModerators[modIndex].assignedModels.push(newModelData.name);
-        // In a real app, you'd update the backend here
+    try {
+      // Prepare form data for backend
+      const formData = new FormData();
+      formData.append('name', newModelData.name);
+      formData.append('price', newModelData.price);
+      formData.append('description', newModelData.description);
+      formData.append('category', newModelData.category);
+      if (newModelData.assignedModerator) {
+        formData.append('assignedModerator', newModelData.assignedModerator);
       }
+      formData.append('image', modelImageFile);
+
+      // POST to backend
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/dolls`, {
+        method: 'POST',
+        body: formData,
+      });
+      if (!response.ok) {
+        let errorMsg = 'Failed to upload model';
+        try {
+          const errorData = await response.json();
+          if (errorData && errorData.detail) {
+            errorMsg = errorData.detail;
+          } else if (typeof errorData === 'string') {
+            errorMsg = errorData;
+          }
+        } catch {}
+        throw new Error(errorMsg);
+      }
+      toast.success("Model added successfully", {
+        description: `${newModelData.name} has been added to the catalog.`,
+      });
+      // Refresh models from backend
+      const fetchedModels = await apiService.getModels();
+      setModels(fetchedModels);
+      setNewModelData({
+        name: '',
+        price: '',
+        description: '',
+        category: 'Standard',
+        assignedModerator: '',
+        image: ''
+      });
+      setModelImageFile(null);
+      setModelImagePreview(null);
+    } catch (err) {
+      toast.error("Image upload failed", { description: err.message });
     }
-    
-    toast.success("Model added successfully", {
-      description: `${newModelData.name} has been added to the catalog.`,
-    });
-    
-    // Reset form
-    setNewModelData({
-      name: '',
-      price: '',
-      description: '',
-      category: 'Standard',
-      assignedModerator: '',
-      image: ''
-    });
   };
+
   
   // Handle adding a new admin
   const handleAddAdmin = (e) => {
@@ -629,17 +646,16 @@ const Admin = () => {
                           
                           <div className="md:col-span-2">
                             <label className={`block text-sm font-medium mb-1 
-                              ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
-                              Image URL*
-                            </label>
-                            <input
-                              type="url"
-                              value={newModelData.image}
-                              onChange={(e) => setNewModelData({...newModelData, image: e.target.value})}
-                              className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary"
-                              placeholder="https://example.com/image.jpg"
-                              required
+                              ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>Image*</label>
+                            <ModelImageUploader 
+                              onImageChange={file => {
+                                setModelImageFile(file);
+                                setModelImagePreview(file ? URL.createObjectURL(file) : null);
+                              }}
                             />
+                            {modelImagePreview && (
+                              <img src={modelImagePreview} alt="Preview" style={{ maxWidth: '100%', maxHeight: 150, margin: '8px 0' }} />
+                            )}
                           </div>
                           
                           <div className="md:col-span-2">
