@@ -1,28 +1,35 @@
 
 // Mock data for the home page
-export const featuredModels = [
-  {
-    id: 1,
-    name: 'Sophia Elegance',
-    price: 129.99,
-    description: 'Handcrafted porcelain doll with intricate details and premium fabric clothing. A classic addition to any collection.',
-    image: 'https://images.unsplash.com/photo-1611042553365-9b101d749e31?q=80&w=1000&auto=format&fit=crop'
-  },
-  {
-    id: 2,
-    name: 'Victoria Vintage',
-    price: 159.99,
-    description: 'Inspired by Victorian era fashion, this doll features authentic period clothing and accessories with incredible attention to detail.',
-    image: 'https://images.unsplash.com/photo-1547277854-fa0bf6c8ba26?q=80&w=1000&auto=format&fit=crop'
-  },
-  {
-    id: 3,
-    name: 'Modern Mila',
-    price: 99.99,
-    description: 'Contemporary doll design with customizable features and modern fashion elements. Perfect for the trendy collector.',
-    image: 'https://images.unsplash.com/photo-1603552489088-b8304faff8ad?q=80&w=1000&auto=format&fit=crop'
+import { apiService } from '../lib/api';
+
+/**
+ * Fetches up to 3 featured models from the backend with category 'limited_edition'.
+ * @returns {Promise<Array>} Array of featured models
+ */
+export async function fetchFeaturedModels() {
+  try {
+    const dolls = await apiService.request('/api/dolls/category/limited_edition');
+    const backendUrl = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
+    return (dolls || []).slice(0, 3).map(doll => {
+      let mainImage = '';
+      if (Array.isArray(doll.images)) {
+        const primary = doll.images.find(img => img.is_primary);
+        mainImage = primary ? `${backendUrl}${primary.image_url}` : '';
+      }
+      return {
+        id: doll.id,
+        name: doll.name,
+        price: doll.price,
+        description: doll.description.substring(0, 100) + "...",
+        image: mainImage,
+        category: doll.doll_category,
+      };
+    });
+  } catch (error) {
+    return [];
   }
-];
+}
+
 
 export const testimonials = [
   {

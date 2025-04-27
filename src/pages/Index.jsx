@@ -10,17 +10,18 @@ import FeaturedModelsSection from '../components/home/FeaturedModelsSection';
 import TestimonialsSection from '../components/home/TestimonialsSection';
 import CtaSection from '../components/home/CtaSection';
 
-// Mock data imported from data file
-import { featuredModels, testimonials } from '../data/homePageData';
+import { fetchFeaturedModels, testimonials } from '../data/homePageData';
 
 const Index = () => {
   const [isLoaded, setIsLoaded] = useState(false);
+  const [featuredModels, setFeaturedModels] = useState([]);
   const { user } = useAuth();
   const { theme } = useTheme();
   const hasVipAccess = user?.membershipLevel === 'vip' || user?.membershipLevel === 'vvip';
-  
+
   useEffect(() => {
     setIsLoaded(true);
+    fetchFeaturedModels().then(setFeaturedModels);
   }, []);
 
   return (
