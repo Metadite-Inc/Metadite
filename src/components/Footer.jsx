@@ -72,7 +72,7 @@ const Footer = ({ user }) => {
       </footer>
 
       {/* Mobile Bottom Navigation */}
-      {user?.role === 'regular' && (
+      {(!user || user.role === 'regular') && (
         <div className="md:hidden fixed bottom-0 left-0 w-full bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex justify-around items-center py-2 z-50">
           <Link to="/models" className="flex flex-col items-center text-gray-700 dark:text-gray-300 hover:text-metadite-primary transition-colors">
             <ShoppingCart className="h-6 w-6" />
@@ -87,11 +87,11 @@ const Footer = ({ user }) => {
             <span className="text-xs mt-1">Cart</span>
           </Link>
           <Link 
-            to={user ? (user.role === 'user' ? '/' : user.role === 'admin' ? '/admin' : user.role === 'moderator' ? '/moderator' : '/dashboard') : '/login'} 
+            to={user ? '/dashboard' : '/login'} 
             className="flex flex-col items-center text-gray-700 dark:text-gray-300 hover:text-metadite-primary transition-colors"
           >
             <User className="h-6 w-6" />
-            <span className="text-xs mt-1">My Account</span>
+            <span className="text-xs mt-1">Me</span>
           </Link>
         </div>
       )}
