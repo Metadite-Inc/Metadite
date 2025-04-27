@@ -112,7 +112,7 @@ class ApiService {
         gallery: gallery,
         rating: doll.rating || 4.5,
         reviews: reviews.length, // Total number of reviews
-        inStock: doll.inStock || false,
+        inStock: doll.is_available,
         category: doll.doll_category,
         specifications: [
           { name: 'Height', value: `${doll.doll_height} inches` },
