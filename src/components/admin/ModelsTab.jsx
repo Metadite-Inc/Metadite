@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { PackagePlus, Search, Edit, Trash2, Image } from 'lucide-react';
+import { PackagePlus, Search, Edit, Trash2, Image, Plus, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,20 +7,12 @@ import ModelImageUploader from '../ModelImageUploader';
 import { useTheme } from '../../context/ThemeContext';
 import { apiService } from '../../lib/api';
 
-// Mock data for moderators
-const moderators = [
-  { id: 1, name: 'Anita Jones', email: 'anita.moderator@metadite.com', assignedModels: ['Sophia Elegance', 'Victoria Vintage'], status: 'Active' },
-  { id: 2, name: 'Michael Brown', email: 'michael.moderator@metadite.com', assignedModels: ['Modern Mila'], status: 'Active' },
-  { id: 3, name: 'Sarah Smith', email: 'sarah.moderator@metadite.com', assignedModels: [], status: 'Inactive' }
-];
-
 const ModelsTab = ({ isLoaded }) => {
   const { theme } = useTheme();
   const [searchTerm, setSearchTerm] = useState('');
-  // State for models
   const [models, setModels] = useState([]);
   const [loading, setLoading] = useState(true);
-  
+
   const [newModelData, setNewModelData] = useState({
     name: '',
     description: '',
@@ -34,12 +26,12 @@ const ModelsTab = ({ isLoaded }) => {
     doll_articulation: '',
     doll_hair_type: '',
   });
-  
-  // For drag-and-drop image upload
-  const [modelImageFile, setModelImageFile] = useState(null);
-  const [modelImagePreview, setModelImagePreview] = useState(null);
-  
-  // Fetch models on component mount
+
+  const [primaryImageFile, setPrimaryImageFile] = useState(null);
+  const [primaryImagePreview, setPrimaryImagePreview] = useState(null);
+  const [additionalImages, setAdditionalImages] = useState([]);
+  const [createdModelId, setCreatedModelId] = useState(null);
+
   useEffect(() => {
     const fetchModels = async () => {
       try {
@@ -51,73 +43,122 @@ const ModelsTab = ({ isLoaded }) => {
         setLoading(false);
       }
     };
-    
+
     fetchModels();
   }, []);
-  
-  // Handle adding a new model
-  const handleAddModel = async (e) => {
+
+  const handleSaveDetails = async (e) => {
     e.preventDefault();
-    // Basic validation
     if (!newModelData.name || !newModelData.price || !newModelData.description) {
       toast.error("Missing required fields", {
         description: "Please fill in all required fields.",
       });
       return;
     }
-    try {
-      // Prepare model data for API
-      const modelData = {
-        name: newModelData.name,
-        description: newModelData.description,
-        price: parseFloat(newModelData.price),
-        stock: parseInt(newModelData.stock),
-        is_available: newModelData.is_available,
-        doll_category: newModelData.doll_category,
-        doll_height: parseFloat(newModelData.doll_height),
-        doll_material: newModelData.doll_material,
-        doll_origin: newModelData.doll_origin,
-        doll_articulation: newModelData.doll_articulation,
-        doll_hair_type: newModelData.doll_hair_type,
-      };
 
-      // Create the model
-      const createdModel = await apiService.createModel(modelData);
-      
-      if (createdModel && modelImageFile) {
-        // Upload the image for the newly created model
-        await apiService.uploadModelImage(createdModel.id, modelImageFile, newModelData.name, true);
-        
-        // Update the model with image URL
-        createdModel.image = modelImagePreview;
+    try {
+      const createdModel = await apiService.createModel(newModelData);
+      if (createdModel) {
+        setCreatedModelId(createdModel.id);
+        toast.success("Model details saved successfully!");
       }
-      
-      // Update models list with the new model
-      setModels(prevModels => [...prevModels, createdModel]);
-      
-      // Reset form
-      setNewModelData({
-        name: '',
-        description: '',
-        price: '',
-        stock: 0,
-        is_available: true,
-        doll_category: 'premium',
-        doll_height: 0,
-        doll_material: '',
-        doll_origin: '',
-        doll_articulation: '',
-        doll_hair_type: '',
-      });
-      setModelImageFile(null);
-      setModelImagePreview(null);
-      
     } catch (err) {
-      toast.error("Failed to add model", { description: err.message });
+      toast.error("Failed to save model details", { description: err.message });
     }
   };
-  
-  // Handle deleting a model
+
+  const handleAddAdditionalImage = (file) => {
+    if (!file) return;
+
+    // Check if image is larger than 20MB
+    if (file.size > 20 * 1024 * 1024) {
+      toast.error("Image too large", {
+        description: "Images must be less than 20MB."
+      });
+      return;
+    }
+
+    const preview = URL.createObjectURL(file);
+    setAdditionalImages([...additionalImages, { file, preview }]);
+  };
+
+  const handleRemoveAdditionalImage = (index) => {
+    const newImages = [...additionalImages];
+    URL.revokeObjectURL(newImages[index].preview); // Clean up the URL object
+    newImages.splice(index, 1);
+    setAdditionalImages(newImages);
+  };
+
+  const handleUploadImages = async () => {
+    if (!primaryImageFile || !createdModelId) {
+      toast.error("Please upload a primary image and ensure the model details are saved.");
+      return;
+    }
+
+    try {
+      // First upload the primary image
+      const primarySuccess = await apiService.uploadModelImage(createdModelId, primaryImageFile, '', true);
+      
+      if (!primarySuccess) {
+        throw new Error("Failed to upload primary image");
+      }
+      
+      // Then upload additional images if there are any
+      if (additionalImages.length > 0) {
+        const additionalFiles = additionalImages.map(img => img.file);
+        const additionalSuccess = await apiService.uploadModelImages(createdModelId, additionalFiles);
+        
+        if (!additionalSuccess) {
+          toast.warning("Primary image uploaded, but there was an issue with additional images");
+          return;
+        }
+      }
+      
+      toast.success("All images uploaded successfully!");
+    } catch (err) {
+      toast.error("Failed to upload images", { description: err.message });
+    }
+  };
+
+  const handleAddModel = () => {
+    if (!createdModelId) {
+      toast.error("Please save the model details and upload images first.");
+      return;
+    }
+
+    // Reset form and state
+    setNewModelData({
+      name: '',
+      description: '',
+      price: '',
+      stock: 0,
+      is_available: true,
+      doll_category: 'premium',
+      doll_height: 0,
+      doll_material: '',
+      doll_origin: '',
+      doll_articulation: '',
+      doll_hair_type: '',
+    });
+    setPrimaryImageFile(null);
+    setPrimaryImagePreview(null);
+    setAdditionalImages([]);
+    setCreatedModelId(null);
+
+    // Update the models list to include the new model
+    const fetchModels = async () => {
+      try {
+        const modelsData = await apiService.getModels();
+        setModels(modelsData);
+      } catch (error) {
+        console.error("Error fetching models:", error);
+      }
+    };
+    fetchModels();
+
+    toast.success("Model added successfully!");
+  };
+
   const handleDeleteModel = async (modelId) => {
     try {
       await apiService.deleteModel(modelId);
@@ -134,200 +175,281 @@ const ModelsTab = ({ isLoaded }) => {
         <div className="bg-gradient-to-r from-metadite-primary to-metadite-secondary p-4 text-white">
           <h2 className="text-lg font-semibold">Add New Model</h2>
         </div>
-        
+
         <div className="p-6">
-          <form onSubmit={handleAddModel}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div>
-                <label className={`block text-sm font-medium mb-1 
-                  ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
-                  Model Name*
-                </label>
-                <input
-                  type="text"
-                  value={newModelData.name}
-                  onChange={(e) => setNewModelData({...newModelData, name: e.target.value})}
-                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary"
-                  required
-                />
-              </div>
-              
-              <div>
-                <label className={`block text-sm font-medium mb-1 
-                  ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
-                  Price*
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={newModelData.price}
-                  onChange={(e) => setNewModelData({...newModelData, price: e.target.value})}
-                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary"
-                  required
-                />
-              </div>
+          {!createdModelId ? (
+            <form onSubmit={handleSaveDetails}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className={`block text-sm font-medium mb-1 
+                    ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
+                    Model Name*
+                  </label>
+                  <input
+                    type="text"
+                    value={newModelData.name}
+                    onChange={(e) => setNewModelData({...newModelData, name: e.target.value})}
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label className={`block text-sm font-medium mb-1 
+                    ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
+                    Price*
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={newModelData.price}
+                    onChange={(e) => setNewModelData({...newModelData, price: e.target.value})}
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary"
+                    required
+                  />
+                </div>
 
-              <div>
-                <label className={`block text-sm font-medium mb-1 
-                  ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
-                  Stock*
-                </label>
-                <input
-                  type="number"
-                  value={newModelData.stock}
-                  onChange={(e) => setNewModelData({...newModelData, stock: parseInt(e.target.value) || 0})}
-                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary"
-                  required
-                />
+                <div>
+                  <label className={`block text-sm font-medium mb-1 
+                    ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
+                    Stock*
+                  </label>
+                  <input
+                    type="number"
+                    value={newModelData.stock}
+                    onChange={(e) => setNewModelData({...newModelData, stock: parseInt(e.target.value) || 0})}
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label className={`block text-sm font-medium mb-1 
+                    ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
+                    Category
+                  </label>
+                  <Select
+                    value={newModelData.doll_category}
+                    onValueChange={(value) => setNewModelData({...newModelData, doll_category: value})}
+                  >
+                    <SelectTrigger className="w-full bg-white">
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white">
+                      <SelectItem value="premium">Premium</SelectItem>
+                      <SelectItem value="standard">Standard</SelectItem>
+                      <SelectItem value="limited">Limited Edition</SelectItem>
+                      <SelectItem value="custom">Custom</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-medium mb-1 
+                    ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
+                    Height (inches)*
+                  </label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={newModelData.doll_height}
+                    onChange={(e) => setNewModelData({...newModelData, doll_height: parseFloat(e.target.value) || 0})}
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-medium mb-1 
+                    ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
+                    Material*
+                  </label>
+                  <input
+                    type="text"
+                    value={newModelData.doll_material}
+                    onChange={(e) => setNewModelData({...newModelData, doll_material: e.target.value})}
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-medium mb-1 
+                    ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
+                    Origin*
+                  </label>
+                  <input
+                    type="text"
+                    value={newModelData.doll_origin}
+                    onChange={(e) => setNewModelData({...newModelData, doll_origin: e.target.value})}
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-medium mb-1 
+                    ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
+                    Articulation*
+                  </label>
+                  <input
+                    type="text"
+                    value={newModelData.doll_articulation}
+                    onChange={(e) => setNewModelData({...newModelData, doll_articulation: e.target.value})}
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-medium mb-1 
+                    ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
+                    Hair Type*
+                  </label>
+                  <input
+                    type="text"
+                    value={newModelData.doll_hair_type}
+                    onChange={(e) => setNewModelData({...newModelData, doll_hair_type: e.target.value})}
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary"
+                    required
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className={`block text-sm font-medium mb-1 
+                    ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
+                    Description*
+                  </label>
+                  <Textarea
+                    value={newModelData.description}
+                    onChange={(e) => setNewModelData({...newModelData, description: e.target.value})}
+                    className="min-h-[100px]"
+                    required
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input 
+                      type="checkbox"
+                      checked={newModelData.is_available}
+                      onChange={(e) => setNewModelData({...newModelData, is_available: e.target.checked})}
+                      className="rounded text-metadite-primary focus:ring-metadite-primary h-4 w-4"
+                    />
+                    <span className={`text-sm ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
+                      Available for purchase
+                    </span>
+                  </label>
+                </div>
               </div>
-              
-              <div>
-                <label className={`block text-sm font-medium mb-1 
-                  ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
-                  Category
-                </label>
-                <Select
-                  value={newModelData.doll_category}
-                  onValueChange={(value) => setNewModelData({...newModelData, doll_category: value})}
+              <div className="flex justify-end">
+                <button
+                  type="submit"
+                  className="flex items-center bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white px-4 py-2 rounded-md hover:opacity-90 transition-opacity"
                 >
-                  <SelectTrigger className="w-full bg-white">
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white">
-                    <SelectItem value="premium">Premium</SelectItem>
-                    <SelectItem value="standard">Standard</SelectItem>
-                    <SelectItem value="limited">Limited Edition</SelectItem>
-                    <SelectItem value="custom">Custom</SelectItem>
-                  </SelectContent>
-                </Select>
+                  Save Details
+                </button>
               </div>
-
-              <div>
-                <label className={`block text-sm font-medium mb-1 
-                  ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
-                  Height (inches)*
-                </label>
-                <input
-                  type="number"
-                  step="0.1"
-                  value={newModelData.doll_height}
-                  onChange={(e) => setNewModelData({...newModelData, doll_height: parseFloat(e.target.value) || 0})}
-                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className={`block text-sm font-medium mb-1 
-                  ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
-                  Material*
-                </label>
-                <input
-                  type="text"
-                  value={newModelData.doll_material}
-                  onChange={(e) => setNewModelData({...newModelData, doll_material: e.target.value})}
-                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className={`block text-sm font-medium mb-1 
-                  ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
-                  Origin*
-                </label>
-                <input
-                  type="text"
-                  value={newModelData.doll_origin}
-                  onChange={(e) => setNewModelData({...newModelData, doll_origin: e.target.value})}
-                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className={`block text-sm font-medium mb-1 
-                  ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
-                  Articulation*
-                </label>
-                <input
-                  type="text"
-                  value={newModelData.doll_articulation}
-                  onChange={(e) => setNewModelData({...newModelData, doll_articulation: e.target.value})}
-                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className={`block text-sm font-medium mb-1 
-                  ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
-                  Hair Type*
-                </label>
-                <input
-                  type="text"
-                  value={newModelData.doll_hair_type}
-                  onChange={(e) => setNewModelData({...newModelData, doll_hair_type: e.target.value})}
-                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary"
-                  required
-                />
-              </div>
+            </form>
+          ) : (
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Upload Model Images</h3>
               
-              <div className="md:col-span-2">
-                <label className={`block text-sm font-medium mb-1 
-                  ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>Image*</label>
-                <ModelImageUploader 
-                  onImageChange={file => {
-                    setModelImageFile(file);
-                    setModelImagePreview(file ? URL.createObjectURL(file) : null);
+              <div className="mb-6">
+                <h4 className="text-md font-medium mb-2">Primary Image</h4>
+                <ModelImageUploader
+                  onImageChange={(file) => {
+                    // Check if image is larger than 20MB
+                    if (file && file.size > 20 * 1024 * 1024) {
+                      toast.error("Image too large", {
+                        description: "Images must be less than 20MB."
+                      });
+                      return;
+                    }
+                    setPrimaryImageFile(file);
+                    setPrimaryImagePreview(file ? URL.createObjectURL(file) : null);
                   }}
                 />
-                {modelImagePreview && (
-                  <img src={modelImagePreview} alt="Preview" style={{ maxWidth: '100%', maxHeight: 150, margin: '8px 0' }} />
+                {primaryImagePreview && (
+                  <div className="mt-2 relative inline-block">
+                    <img 
+                      src={primaryImagePreview} 
+                      alt="Primary Preview" 
+                      className="max-w-[150px] max-h-[150px] rounded border border-gray-200" 
+                    />
+                    <button 
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"
+                      onClick={() => {
+                        URL.revokeObjectURL(primaryImagePreview);
+                        setPrimaryImageFile(null);
+                        setPrimaryImagePreview(null);
+                      }}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
                 )}
               </div>
               
-              <div className="md:col-span-2">
-                <label className={`block text-sm font-medium mb-1 
-                  ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
-                  Description*
-                </label>
-                <Textarea
-                  value={newModelData.description}
-                  onChange={(e) => setNewModelData({...newModelData, description: e.target.value})}
-                  className="min-h-[100px]"
-                  required
-                />
+              <div className="mb-6">
+                <h4 className="text-md font-medium mb-2">Additional Images</h4>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                  {additionalImages.map((img, index) => (
+                    <div key={index} className="relative">
+                      <img 
+                        src={img.preview} 
+                        alt={`Additional ${index + 1}`} 
+                        className="w-full h-[120px] object-cover rounded border border-gray-200" 
+                      />
+                      <button 
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"
+                        onClick={() => handleRemoveAdditionalImage(index)}
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                  
+                  <label className="border-2 border-dashed border-gray-300 rounded flex items-center justify-center cursor-pointer h-[120px]">
+                    <div className="text-center">
+                      <Plus className="h-6 w-6 mx-auto mb-1 text-gray-400" />
+                      <span className="text-sm text-gray-500">Add Image</span>
+                    </div>
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      className="hidden" 
+                      onChange={(e) => {
+                        if (e.target.files?.[0]) {
+                          handleAddAdditionalImage(e.target.files[0]);
+                          e.target.value = ''; // Reset input value for reuse
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
               </div>
 
-              <div className="md:col-span-2">
-                <label className="flex items-center space-x-2 cursor-pointer">
-                  <input 
-                    type="checkbox"
-                    checked={newModelData.is_available}
-                    onChange={(e) => setNewModelData({...newModelData, is_available: e.target.checked})}
-                    className="rounded text-metadite-primary focus:ring-metadite-primary h-4 w-4"
-                  />
-                  <span className={`text-sm ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
-                    Available for purchase
-                  </span>
-                </label>
+              <div className="flex justify-end space-x-4 mt-4">
+                <button
+                  onClick={handleUploadImages}
+                  disabled={!primaryImageFile}
+                  className={`flex items-center ${!primaryImageFile ? 'bg-gray-300 cursor-not-allowed' : 'bg-gradient-to-r from-metadite-primary to-metadite-secondary hover:opacity-90'} text-white px-4 py-2 rounded-md transition-opacity`}
+                >
+                  Upload Images
+                </button>
+                <button
+                  onClick={handleAddModel}
+                  className="flex items-center bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white px-4 py-2 rounded-md hover:opacity-90 transition-opacity"
+                >
+                  Add Model
+                </button>
               </div>
             </div>
-            
-            <div className="flex justify-end">
-              <button 
-                type="submit"
-                className="flex items-center bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white px-4 py-2 rounded-md hover:opacity-90 transition-opacity"
-              >
-                <PackagePlus className="h-4 w-4 mr-2" />
-                Add Model
-              </button>
-            </div>
-          </form>
+          )}
         </div>
       </div>
-      
+
       <div className="glass-card rounded-xl overflow-hidden">
         <div className="p-4 border-b border-gray-100 flex justify-between items-center">
           <h2 className="font-semibold">Manage Models</h2>

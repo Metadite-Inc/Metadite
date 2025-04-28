@@ -32,11 +32,11 @@ const ModelChat = () => {
       // Initial message from moderator
       if (fetchedModel) {
         const moderatorMessage = {
-          id: 1,
+          id: model.id,
           modelId: fetchedModel.id,
-          senderId: 'moderator-1',
-          senderName: 'Support Team',
-          content: `Hello! I'm the moderator assigned to ${fetchedModel.name}. How can I help you today?`,
+          senderId: 'moderator.id',
+          senderName: model.name,
+          content: `Hello! I'm ${fetchedModel.name}. How are you today?`,
           timestamp: new Date().toISOString(),
           flagged: false
         };
@@ -243,7 +243,7 @@ const ModelChat = () => {
               <div className="mt-2 text-xs text-gray-500">
                 <span className="flex items-center">
                   <AlertTriangle className="h-3 w-3 mr-1" />
-                  Messages are monitored by moderators and our AI system.
+                  
                 </span>
               </div>
             </div>

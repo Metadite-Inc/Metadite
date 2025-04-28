@@ -185,13 +185,12 @@ class ApiService {
       }
 
       const formData = new FormData();
-      imageFiles.forEach((file, index) => {
+      imageFiles.forEach((file) => {
         formData.append('files', file);
-        // First image is primary by default
-        if (index === 0) {
-          formData.append('is_primary', 'true');
-        }
       });
+      
+      // These images are additional images, not primary ones
+      formData.append('is_primary', 'false');
 
       const response = await fetch(`${API_URL}/api/images/${dollId}/images/bulk`, {
         method: 'POST',
@@ -202,13 +201,20 @@ class ApiService {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to upload images: ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || `Failed to upload images: ${response.status}`);
       }
 
-      toast.success('Images uploaded successfully');
+      toast.success('Additional images uploaded successfully');
       return true;
     } catch (error) {
-      toast.error('Failed to upload images');
+      if (error instanceof Error) {
+        toast.error('Failed to upload additional images', {
+          description: error.message
+        });
+      } else {
+        toast.error('Failed to upload additional images');
+      }
       console.error(error);
       return false;
     }
@@ -227,6 +233,7 @@ class ApiService {
       // Find primary image and gallery
       let mainImage = '';
       let gallery: string[] = [];
+
       if (Array.isArray(images)) {
         const primary = images.find(img => img.is_primary);
         mainImage = primary ? `${backendUrl}${primary.image_url}` : '';
