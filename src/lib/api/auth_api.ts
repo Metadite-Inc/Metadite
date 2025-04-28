@@ -1,7 +1,9 @@
 import axios from 'axios';
 
-//const API_BASE_URL = "https://metadite-9g2lk.ondigitalocean.app";//"http://127.0.0.1:8000/api";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+if (!API_BASE_URL) {
+  throw new Error("API_BASE_URL is not defined. Please set the VITE_API_BASE_URL environment variable.");
+}
 
 interface LoginRequest {
   email: string;

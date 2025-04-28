@@ -10,6 +10,20 @@ export interface ModelBasic {
   category: string;
 }
 
+export interface CreateModelRequest {
+  name: string;
+  description: string;
+  price: number;
+  stock: number;
+  is_available: boolean;
+  doll_category: string;
+  doll_height: number;
+  doll_material: string;
+  doll_origin: string;
+  doll_articulation: string;
+  doll_hair_type: string;
+}
+
 export interface ModelDetail extends ModelBasic {
   longDescription: string;
   gallery: string[];
@@ -27,7 +41,6 @@ export interface ModelDetail extends ModelBasic {
   };
   customerReviews: { rating: number; date: string; comment: string }[];
 }
-
 
 const API_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
 
@@ -79,6 +92,125 @@ class ApiService {
       });
     } catch (error) {
       return [];
+    }
+  }
+
+  // create a new model
+  async createModel(model: CreateModelRequest): Promise<ModelBasic | null> {
+    try {
+      // Get auth token from localStorage
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        toast.error('Authentication required', {
+          description: 'You must be logged in as an admin to create models.',
+        });
+        return null;
+      }
+      
+      const response = await this.request<any>('/api/dolls/create/', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(model)
+      });
+      
+      toast.success('Model created successfully');
+      
+      // Return the created model in the expected format
+      return {
+        id: response.id,
+        name: response.name,
+        price: response.price,
+        description: response.description.substring(0, 100) + "...",
+        image: '', // New models won't have images yet
+        category: response.doll_category
+      };
+    } catch (error) {
+      toast.error('Failed to create model');
+      console.error(error);
+      return null;
+    }
+  }
+
+  // Upload an image for a model
+  async uploadModelImage(dollId: number, imageFile: File, caption: string = '', isPrimary: boolean = true): Promise<boolean> {
+    try {
+      // Get auth token from localStorage
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        toast.error('Authentication required', {
+          description: 'You must be logged in as an admin to upload images.',
+        });
+        return false;
+      }
+
+      const formData = new FormData();
+      formData.append('file', imageFile);
+      formData.append('doll_id', dollId.toString());
+      formData.append('caption', caption);
+      formData.append('is_primary', isPrimary.toString());
+
+      const response = await fetch(`${API_URL}/api/images/upload`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to upload image: ${response.status}`);
+      }
+
+      toast.success('Image uploaded successfully');
+      return true;
+    } catch (error) {
+      toast.error('Failed to upload image');
+      console.error(error);
+      return false;
+    }
+  }
+
+  // Upload multiple images for a model
+  async uploadModelImages(dollId: number, imageFiles: File[]): Promise<boolean> {
+    try {
+      // Get auth token from localStorage
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        toast.error('Authentication required', {
+          description: 'You must be logged in as an admin to upload images.',
+        });
+        return false;
+      }
+
+      const formData = new FormData();
+      imageFiles.forEach((file, index) => {
+        formData.append('files', file);
+        // First image is primary by default
+        if (index === 0) {
+          formData.append('is_primary', 'true');
+        }
+      });
+
+      const response = await fetch(`${API_URL}/api/images/${dollId}/images/bulk`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to upload images: ${response.status}`);
+      }
+
+      toast.success('Images uploaded successfully');
+      return true;
+    } catch (error) {
+      toast.error('Failed to upload images');
+      console.error(error);
+      return false;
     }
   }
 
@@ -177,6 +309,37 @@ class ApiService {
         });
     } catch (error) {
       return [];
+    }
+  }
+
+  // delete a model by id
+  async deleteModel(id: number): Promise<void> {
+    try {
+      // Get auth token from localStorage
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        toast.error('Authentication required', {
+          description: 'You must be logged in as an admin to delete models.',
+        });
+        return;
+      }
+
+      const response = await fetch(`${API_URL}/api/dolls/delete/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to delete model with ID ${id}`);
+      }
+
+      toast.success("Model deleted successfully");
+    } catch (error) {
+      toast.error("Failed to delete model");
+      console.error(error);
     }
   }
 }
