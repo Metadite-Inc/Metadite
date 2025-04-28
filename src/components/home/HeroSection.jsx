@@ -1,9 +1,44 @@
 
 import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { apiService } from '../../lib/api';
 
 const HeroSection = ({ isLoaded, user, hasVipAccess, theme }) => {
+  const [modelImages, setModelImages] = useState([]);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    setLoading(true);
+    apiService.getModels()
+      .then(models => {
+        if (!isMounted) return;
+        const images = models
+          .map(m => m.image)
+          .filter(Boolean)
+          .slice(0, 5);
+        setModelImages(images);
+        setLoading(false);
+      })
+      .catch(err => {
+        if (!isMounted) return;
+        setError('Failed to load images');
+        setLoading(false);
+      });
+    return () => { isMounted = false; };
+  }, []);
+
+  useEffect(() => {
+    if (!modelImages.length) return;
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % modelImages.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [modelImages]);
   return (
-    <section className={`pt-24 pb-20 px-4 ${theme === 'dark' ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' : 'bg-gradient-to-br from-white via-metadite-light to-white'}`}>
+    <section className={`pt-24 pb-20 px-2 ${theme === 'dark' ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' : 'bg-gradient-to-br from-white via-metadite-light to-white'}`}>
       <div className="container mx-auto max-w-6xl">
         <div className="flex flex-col md:flex-row items-center">
           <div className={`md:w-1/2 md:pr-8 mb-8 md:mb-0 transition-all duration-700 ${isLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10'}`}>
@@ -42,15 +77,53 @@ const HeroSection = ({ isLoaded, user, hasVipAccess, theme }) => {
             </div>
           </div>
           
-          <div className={`md:w-1/2 transition-all duration-700 delay-300 ${isLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'}`}>
+          <div className={`pt-10 md:pl-32 md:w-1/2 transition-all duration-700 delay-300 ${isLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'} flex justify-center md:block`}>
             <div className="relative">
-              <div className="absolute -top-6 -right-6 -bottom-6 -left-6 bg-gradient-to-br from-metadite-primary/20 via-metadite-secondary/20 to-metadite-accent/20 rounded-xl animate-pulse-soft"></div>
-              <img 
-                src="https://images.unsplash.com/photo-1620218944474-d2a3029da66d?q=80&w=1000&auto=format&fit=crop" 
-                alt="Featured Model Doll" 
-                className="w-full h-auto rounded-xl relative z-10 object-cover shadow-xl"
-              />
-              <div className="absolute top-4 right-4 bg-white/80 backdrop-blur-sm rounded-full py-1 px-3 shadow-lg z-20">
+             {/* <div className="absolute -top-2 -right-2 -bottom-2 -left-2 bg-gradient-to-br from-metadite-primary/20 via-metadite-secondary/20 to-metadite-accent/20 rounded-xl animate-pulse-soft"></div> */}
+              {/* Slideshow Start */}
+              <div className="relative w-11/12 max-w-sm sm:max-w-lg md:max-w-xl lg:max-w-2xl mx-auto md:w-full aspect-[4/3] h-auto rounded-xl z-10 min-h-[260px] max-h-[400px] md:min-h-[260px] md:max-h-[400px]">
+                {loading && (
+                  <div className="flex items-center justify-center w-full h-full min-h-[200px] bg-gray-100 rounded-xl animate-pulse">
+                    <span className="text-gray-400">Loading images...</span>
+                  </div>
+                )}
+                {error && (
+                  <div className="flex items-center justify-center w-full h-full min-h-[180px] bg-red-50 rounded-xl">
+                    <span className="text-red-500">{error}</span>
+                  </div>
+                )}
+                {!loading && !error && modelImages.map((img, idx) => (
+                  <div
+                    key={img}
+                    className={`absolute top-0 left-0 w-full h-full flex items-center justify-center transition-opacity duration-700 ${currentSlide === idx ? 'opacity-100 z-20' : 'opacity-0 z-0'}`}
+                    style={{ position: 'absolute' }}
+                  >
+                    <div className="w-[97%] h-[97%] p-1 bg-white/80 dark:bg-gray-900/60 rounded-xl border-2 border-metadite-primary/40 flex items-center justify-center">
+                      <img
+                        src={img}
+                        alt={`Model ${idx + 1}`}
+                        className="w-full h-full object-cover rounded-lg"
+                        style={{ display: 'block' }}
+                      />
+                    </div>
+                  </div>
+                ))}
+                {/* Dots Navigation */}
+                {!loading && !error && modelImages.length > 1 && (
+                  <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 flex space-x-2 z-30">
+                    {modelImages.map((_, idx) => (
+                      <button
+                        key={idx}
+                        className={`w-2 h-2 rounded-full ${currentSlide === idx ? 'bg-metadite-primary' : 'bg-gray-300'} focus:outline-none`}
+                        onClick={() => setCurrentSlide(idx)}
+                        aria-label={`Go to slide ${idx + 1}`}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+              {/* Slideshow End */}
+              <div className="text-sm absolute top-0 right-5 bg-white/70 backdrop-blur-sm rounded-full py-0 px-1 shadow-lg z-10">
                 <span className="text-metadite-primary font-bold">New Collection</span>
               </div>
             </div>
