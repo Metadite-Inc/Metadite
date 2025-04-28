@@ -16,7 +16,7 @@ const regions = [
   { value: 'uk', label: 'UK' },
   { value: 'eu', label: 'EU' },
   { value: 'asia', label: 'Asia' },
-  { value: 'africa', label: 'Africa' },
+  //{ value: 'africa', label: 'Africa' },
   { value: 'australia', label: 'Australia' },
 ];
 
