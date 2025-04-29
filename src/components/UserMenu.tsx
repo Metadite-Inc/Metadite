@@ -19,7 +19,7 @@ const UserMenu = () => {
   const navigate = useNavigate(); // Add navigate for redirection
   
   // Check if user has VIP access
-  const hasVipAccess = user?.membershipLevel === 'vip' || user?.membershipLevel === 'vvip' || user?.vip;
+  const hasVipAccess = user?.membershipLevel === 'vip' || user?.membershipLevel === 'vvip';
 
   if (!user) {
     return (

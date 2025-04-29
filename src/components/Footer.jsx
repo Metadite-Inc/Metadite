@@ -4,14 +4,14 @@ import { Facebook, Twitter, Instagram, Mail, ShoppingCart, Heart, User } from 'l
 const Footer = ({ user }) => {
   return (
     <>
-      <footer className="bg-gradient-to-r from-metadite-dark to-metadite-primary text-white py-16">
+      <footer className="bg-gradient-to-r from-metadite-dark to-metadite-primary text-white py-6">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="space-y-4">
               <img src="/logo.png" alt="Metadite" className="w-32 h-auto" />
-              <span className="hidden md:block text-2xl font-bold bg-gradient-to-r from-metadite-primary to-metadite-secondary bg-clip-text text-transparent">Metadite</span>
+              <span className="px-4 hidden md:block text-2xl font-bold bg-gradient-to-r from-metadite-primary to-metadite-secondary bg-clip-text text-transparent">Metadite</span>
               {/* Logo Text for Mobile */}
-              <span className="md:hidden text-xl font-bold bg-gradient-to-r from-metadite-primary to-metadite-secondary bg-clip-text text-transparent">Metadite</span>
+              <span className="px-5 md:hidden text-xl font-bold bg-gradient-to-r from-metadite-primary to-metadite-secondary bg-clip-text text-transparent">Metadite</span>
               <p className="text-gray-300">Premium model content platform with exclusive access to your favorite models.</p>
               <div className="flex space-x-4 pt-2">
                 <a href="#" className="text-white hover:text-metadite-accent transition-colors">
@@ -65,14 +65,14 @@ const Footer = ({ user }) => {
             </div>
           </div>
           
-          <div className="border-t border-gray-700 mt-12 pt-8 text-center text-gray-400">
+          <div className="pb-10 border-t border-gray-700 mt-12 pt-8 text-center text-gray-400">
             <p>&copy; {new Date().getFullYear()} Metadite. All rights reserved.</p>
           </div>
         </div>
       </footer>
 
       {/* Mobile Bottom Navigation */}
-      {(!user || user.role === 'regular') && (
+      {(!user || (user && user.role === 'user')) && (
         <div className="md:hidden fixed bottom-0 left-0 w-full bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex justify-around items-center py-2 z-50">
           <Link to="/models" className="flex flex-col items-center text-gray-700 dark:text-gray-300 hover:text-metadite-primary transition-colors">
             <ShoppingCart className="h-6 w-6" />
