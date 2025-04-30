@@ -33,7 +33,7 @@ const AccountOverview = ({ user, isLoaded }) => {
             <User className={`h-5 w-5 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'} mr-3`} />
             <div>
               <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Full Name</p>
-              <p className={`font-medium ${theme === 'dark' ? 'text-white' : ''}`}>{user?.name || 'John Doe'}</p>
+              <p className={`font-medium ${theme === 'dark' ? 'text-white' : ''}`}>{user?.full_name || '-'}</p>
             </div>
           </div>
           <div className={`flex items-center p-3 ${theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-lg`}>
@@ -47,7 +47,7 @@ const AccountOverview = ({ user, isLoaded }) => {
             <Calendar className={`h-5 w-5 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'} mr-3`} />
             <div>
               <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Member Since</p>
-              <p className={`font-medium ${theme === 'dark' ? 'text-white' : ''}`}>August 2023</p>
+              <p className={`font-medium ${theme === 'dark' ? 'text-white' : ''}`}>{user?.created_at ? new Date(user.created_at).toLocaleString('default', { month: 'long', year: 'numeric' }) : '-'}</p>
             </div>
           </div>
           <div className={`flex items-center p-3 ${theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-lg`}>
