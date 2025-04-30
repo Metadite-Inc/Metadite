@@ -19,9 +19,16 @@ export interface CreateModelRequest {
   doll_category: string;
   doll_height: number;
   doll_material: string;
-  doll_origin: string;
-  doll_articulation: string;
-  doll_hair_type: string;
+  //doll_origin: string;
+  //doll_articulation: string;
+  //doll_hair_type: string;
+  doll_vaginal_depth: number;
+  doll_anal_depth: number;
+  doll_oral_depth: number;
+  doll_weight: number;
+  doll_gross_weight: number;
+  doll_packing_size: string;
+  doll_body_size: string;
 }
 
 export interface ModelDetail extends ModelBasic {
@@ -42,7 +49,7 @@ export interface ModelDetail extends ModelBasic {
   customerReviews: { rating: number; date: string; comment: string }[];
 }
 
-const API_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
+const API_URL = import.meta.env.VITE_API_BASE_URL;// || "http://127.0.0.1:8000";
 
 class ApiService {
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
@@ -228,7 +235,7 @@ class ApiService {
       const images = await this.request<any[]>(`/api/images/${id}/images`);
 
       // Determine backend URL
-      const backendUrl = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
+      const backendUrl = import.meta.env.VITE_API_BASE_URL;// || "http://127.0.0.1:8000";
 
       // Find primary image and gallery
       let mainImage = '';
@@ -257,14 +264,21 @@ class ApiService {
           { name: 'Height', value: `${doll.doll_height} inches` },
           { name: "Material", value: doll.doll_material },
           { name: 'Age Range', value: 'Adult Collectors' },
-          { name: 'Origin', value: doll.doll_origin },
+          //{ name: 'Origin', value: doll.doll_origin },
           { 
             name: 'Release Date', 
             value: new Date(doll.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) 
           },
           { name: "Category", value: doll.doll_category },
-          { name: 'Articulation', value: `${doll.doll_articulation || 'Fixed pose'}` },
-          { name: 'Hair Type', value: doll.doll_hair_type }
+          //{ name: 'Articulation', value: `${doll.doll_articulation || 'Fixed pose'}` },
+          //{ name: 'Hair Type', value: doll.doll_hair_type }
+          { name: 'Vaginal Depth', value: `${doll.doll_vaginal_depth} inches` },
+          { name: 'Anal Depth', value: `${doll.doll_anal_depth} inches` },
+          { name: 'Oral Depth', value: `${doll.doll_oral_depth} inches` },
+          { name: 'Weight', value: `${doll.doll_weight} lbs` },
+          { name: 'Gross Weight', value: `${doll.doll_gross_weight} lbs` },
+          { name: 'Packing Size', value: `${doll.doll_packing_size} lbs` },
+          { name: 'Body Size', value: `${doll.doll_body_size} lbs` }
         ],
         detailedDescription: doll.description,
         shippingInfo: {

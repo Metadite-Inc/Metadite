@@ -17,14 +17,21 @@ const ModelsTab = ({ isLoaded }) => {
     name: '',
     description: '',
     price: '',
-    stock: 0,
+    //stock: 0,
     is_available: true,
-    doll_category: 'premium',
-    doll_height: 0,
+    doll_category: 'standard',
+    doll_height: '',
+    doll_vaginal_depth: '',
     doll_material: '',
-    doll_origin: '',
-    doll_articulation: '',
-    doll_hair_type: '',
+    doll_anal_depth: '',
+    doll_oral_depth: '',
+    doll_weight: '',
+    doll_gross_weight: '',
+    doll_packing_size: '',
+    doll_body_size: '',
+    //doll_origin: '',
+    //doll_articulation: '',
+    //doll_hair_type: '',
   });
 
   const [primaryImageFile, setPrimaryImageFile] = useState(null);
@@ -135,10 +142,16 @@ const ModelsTab = ({ isLoaded }) => {
       is_available: true,
       doll_category: 'premium',
       doll_height: 0,
-      doll_material: '',
-      doll_origin: '',
-      doll_articulation: '',
-      doll_hair_type: '',
+      //doll_origin: '',
+      //doll_articulation: '',
+      //doll_hair_type: '',
+      doll_vaginal_depth: 0,
+      doll_anal_depth: 0,
+      doll_oral_depth: 0,
+      doll_weight: 0,
+      doll_gross_weight: 0,
+      doll_packing_size: '',
+      doll_body_size: '',
     });
     setPrimaryImageFile(null);
     setPrimaryImagePreview(null);
@@ -212,20 +225,6 @@ const ModelsTab = ({ isLoaded }) => {
                 <div>
                   <label className={`block text-sm font-medium mb-1 
                     ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
-                    Stock*
-                  </label>
-                  <input
-                    type="number"
-                    value={newModelData.stock}
-                    onChange={(e) => setNewModelData({...newModelData, stock: parseInt(e.target.value) || 0})}
-                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary"
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <label className={`block text-sm font-medium mb-1 
-                    ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
                     Category
                   </label>
                   <Select
@@ -239,7 +238,7 @@ const ModelsTab = ({ isLoaded }) => {
                       <SelectItem value="premium">Premium</SelectItem>
                       <SelectItem value="standard">Standard</SelectItem>
                       <SelectItem value="limited">Limited Edition</SelectItem>
-                      <SelectItem value="custom">Custom</SelectItem>
+                      {/*<SelectItem value="custom">Custom</SelectItem>*/}
                     </SelectContent>
                   </Select>
                 </div>
@@ -247,7 +246,7 @@ const ModelsTab = ({ isLoaded }) => {
                 <div>
                   <label className={`block text-sm font-medium mb-1 
                     ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
-                    Height (inches)*
+                    Height (cm)*
                   </label>
                   <input
                     type="number"
@@ -276,12 +275,13 @@ const ModelsTab = ({ isLoaded }) => {
                 <div>
                   <label className={`block text-sm font-medium mb-1 
                     ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
-                    Origin*
+                    Vaginal Depth (cm)*
                   </label>
                   <input
-                    type="text"
-                    value={newModelData.doll_origin}
-                    onChange={(e) => setNewModelData({...newModelData, doll_origin: e.target.value})}
+                    type="number"
+                    step="0.1"
+                    value={newModelData.doll_vaginal_depth}
+                    onChange={(e) => setNewModelData({...newModelData, doll_vaginal_depth: parseFloat(e.target.value) || 0})}
                     className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary"
                     required
                   />
@@ -290,12 +290,13 @@ const ModelsTab = ({ isLoaded }) => {
                 <div>
                   <label className={`block text-sm font-medium mb-1 
                     ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
-                    Articulation*
+                    Anal Depth (cm)*
                   </label>
                   <input
-                    type="text"
-                    value={newModelData.doll_articulation}
-                    onChange={(e) => setNewModelData({...newModelData, doll_articulation: e.target.value})}
+                    type="number"
+                    step="0.1"
+                    value={newModelData.doll_anal_depth}
+                    onChange={(e) => setNewModelData({...newModelData, doll_anal_depth: parseFloat(e.target.value) || 0})}
                     className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary"
                     required
                   />
@@ -304,12 +305,71 @@ const ModelsTab = ({ isLoaded }) => {
                 <div>
                   <label className={`block text-sm font-medium mb-1 
                     ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
-                    Hair Type*
+                    Oral Depth (cm)*
+                  </label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={newModelData.doll_oral_depth}
+                    onChange={(e) => setNewModelData({...newModelData, doll_oral_depth: parseFloat(e.target.value) || 0})}
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-medium mb-1 
+                    ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
+                    Weight (KG)*
+                  </label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={newModelData.doll_weight}
+                    onChange={(e) => setNewModelData({...newModelData, doll_weight: parseFloat(e.target.value) || 0})}
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-medium mb-1 
+                    ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
+                    Gross Weight (KG)*
+                  </label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={newModelData.doll_gross_weight}
+                    onChange={(e) => setNewModelData({...newModelData, doll_gross_weight: parseFloat(e.target.value) || 0})}
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-medium mb-1 
+                    ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
+                    Packing Size*
                   </label>
                   <input
                     type="text"
-                    value={newModelData.doll_hair_type}
-                    onChange={(e) => setNewModelData({...newModelData, doll_hair_type: e.target.value})}
+                    value={newModelData.doll_packing_size}
+                    onChange={(e) => setNewModelData({...newModelData, doll_packing_size: e.target.value})}
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-medium mb-1 
+                    ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
+                    Body Size(cm)*
+                  </label>
+                  <input
+                    type="text"
+                    value={newModelData.doll_body_size}
+                    onChange={(e) => setNewModelData({...newModelData, doll_body_size: e.target.value})}
                     className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary"
                     required
                   />

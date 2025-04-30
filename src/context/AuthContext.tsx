@@ -5,10 +5,11 @@ import { authApi } from '../lib/api/auth_api';
 interface User {
   id: string;
   email: string;
-  name: string;
+  full_name: string;
   role: 'admin' | 'moderator' | 'user';
   membershipLevel?: 'standard' | 'vip' | 'vvip';
   region?: string;
+  created_at?: string;
 }
 
 interface AuthContextType {
