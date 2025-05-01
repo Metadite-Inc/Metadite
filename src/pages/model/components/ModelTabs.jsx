@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { FileText, Info, Truck, Star, ShieldCheck, Package, Clock, User } from 'lucide-react';
 import { useTheme } from '../../../context/ThemeContext';
+import ReviewForm from './ReviewForm';
 
 const ModelTabs = ({ model }) => {
   const [activeTab, setActiveTab] = useState('description');
@@ -169,6 +170,12 @@ const ModelTabs = ({ model }) => {
                 <span className={`text-lg font-medium ${isDark ? 'text-white' : ''}`}>{model.rating}</span>
                 <span className={isDark ? 'text-gray-400 ml-1' : 'text-gray-500 ml-1'}>({model.reviews} reviews)</span>
               </div>
+            </div>
+
+            {/* Add review section */}
+            <div className={`mb-8 border-b ${isDark ? 'border-gray-700' : 'border-gray-200'} pb-8`}>
+              <h4 className={`text-md font-semibold mb-4 ${isDark ? 'text-white' : ''}`}>Write a Review</h4>
+              <ReviewForm modelId={model.id} onReviewSubmitted={onReviewSubmitted} />
             </div>
             
             <div className="space-y-6">
