@@ -137,8 +137,7 @@ const ModelsTab = ({ isLoaded }) => {
     setNewModelData({
       name: '',
       description: '',
-      price: '',
-      stock: 0,
+      price: 0,
       is_available: true,
       doll_category: 'premium',
       doll_height: 0,
