@@ -20,7 +20,7 @@ const OtherTabs = ({ activeTab }) => {
   if (activeTab === 'favorites') {
     return (
       <div className={`glass-card rounded-xl ${theme === 'dark' ? 'bg-gray-800/70' : ''}`}>
-        <FavoritesTab user={user} />
+        <FavoritesTab />
       </div>
     );
   }
@@ -28,7 +28,7 @@ const OtherTabs = ({ activeTab }) => {
   if (activeTab === 'orders') {
     return (
       <div className={`glass-card rounded-xl ${theme === 'dark' ? 'bg-gray-800/70' : ''}`}>
-        <OrdersTab user={user} />
+        <OrdersTab />
       </div>
     );
   }
