@@ -4,14 +4,14 @@ import { FileText, Info, Truck, Star, ShieldCheck, Package, Clock, User } from '
 import { useTheme } from '../../../context/ThemeContext';
 import ReviewForm from './ReviewForm';
 
-const ModelTabs = ({ model }) => {
+const ModelTabs = ({ model, onReviewSubmitted }) => {
   const [activeTab, setActiveTab] = useState('description');
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
   return (
     <div className="glass-card rounded-xl overflow-hidden mb-8">
-      <div className={`flex border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+      <div className={`flex border-b ${isDark ? 'border-gray-700' : 'border-gray-200'} overflow-x-auto`}>
         <button
           onClick={() => setActiveTab('description')}
           className={`px-6 py-3 text-sm font-medium ${

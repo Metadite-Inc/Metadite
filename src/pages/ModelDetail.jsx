@@ -78,6 +78,19 @@ const ModelDetail = () => {
     });
   };
 
+  const handleReviewSubmitted = (newReview) => {
+    if (model) {
+      // Add the new review to the model
+      setModel({
+        ...model,
+        customerReviews: [newReview, ...model.customerReviews],
+        // Recalculate the average rating
+        rating: ((model.rating * model.reviews) + newReview.rating) / (model.reviews + 1),
+        reviews: model.reviews + 1
+      });
+    }
+  };
+
   const isDark = theme === 'dark';
 
   if (!isLoaded) {
@@ -152,7 +165,10 @@ const ModelDetail = () => {
           </div>
           
           {/* Product Details Tabs */}
-          <ModelTabs model={model} />
+          <ModelTabs 
+            model={model} 
+            onReviewSubmitted={handleReviewSubmitted} 
+          />
           
           {/* Related Products */}
           <RelatedModels models={relatedModels} />
