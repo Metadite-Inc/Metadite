@@ -5,7 +5,7 @@ import AccountSettings from './AccountSettings';
 import FavoritesTab from './FavoritesTab';
 import OrdersTab from './OrdersTab';
 
-const OtherTabs = ({ activeTab, user }) => {
+const OtherTabs = ({ activeTab }) => {
   const { theme } = useTheme();
 
   // First handle the tabs that have dedicated components
