@@ -10,23 +10,31 @@ import AccountOverview from '../components/dashboard/AccountOverview';
 import OtherTabs from '../components/dashboard/OtherTabs';
 
 const Dashboard = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, loading } = useAuth();
   const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState('overview');
   const [isLoaded, setIsLoaded] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Redirect non-logged-in users
-    if (!user) {
+    // Wait for auth check to finish before redirecting
+    if (!loading && !user) {
       navigate('/'); // Redirect to Home's heroSection
     }
-  }, [user, navigate]);
+  }, [user, loading, navigate]);
 
   useEffect(() => {
     setIsLoaded(true);
   }, []);
 
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <span className="text-lg">Loading...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
