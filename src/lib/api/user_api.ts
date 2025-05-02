@@ -1,0 +1,198 @@
+import { toast } from "sonner";
+
+const API_URL = import.meta.env.VITE_API_BASE_URL;
+
+// Define types for the API
+interface ModelReview {
+  id?: number;
+  user_id: number;
+  doll_id: number;
+  rating: number;
+  comment: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+interface FavoriteModel {
+  id?: number;
+  user_id: number;
+  doll_id: number;
+  created_at?: string;
+}
+
+class userApiService {
+  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+    // Use access_token to match auth_api.ts implementation
+    const token = localStorage.getItem('access_token');
+    
+    try {
+      // Prepare headers with authentication
+      const headers = {
+        "Content-Type": "application/json",
+        ...(token && { Authorization: `Bearer ${token}` }),
+        ...options.headers,
+      };
+
+      console.log(`Making request to ${API_URL}${endpoint} with auth: ${token ? 'Yes' : 'No'}`);
+      
+      const response = await fetch(`${API_URL}${endpoint}`, {
+        ...options,
+        headers,
+      });
+
+      // Handle different response statuses
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          console.error("Authentication error:", response.status);
+          // Optionally clear token if it's expired
+          // localStorage.removeItem('access_token');
+          throw new Error(`Authentication error (${response.status}): Please log in again`);
+        }
+        
+        const errorData = await response.json().catch(() => ({}));
+        console.error("API Error:", response.status, errorData);
+        throw new Error(`API Error: ${response.status} - ${errorData.detail || "Unknown error"}`);
+      }
+
+      // Return successful response
+      return response.json();
+    } catch (error) {
+      console.error("API Request Error:", error);
+      throw error;
+    }
+  }
+
+  async getUserFavoriteModels(skip: number = 0, limit: number = 10): Promise<FavoriteModel[]> {
+    try {
+      const result = await this.request<FavoriteModel[]>(`/api/favorites/?skip=${skip}&limit=${limit}`, {
+        method: 'GET',
+      });
+      return result;
+    } catch (error) {
+      console.error("Failed to fetch favorites:", error);
+      toast.error("Failed to fetch favorite models");
+      throw error;
+    }
+  }
+
+  async addModelToFavorites(userId: number, dollId: number): Promise<FavoriteModel> {
+    try {
+      const result = await this.request<FavoriteModel>('/api/favorites/', {
+        method: 'POST',
+        body: JSON.stringify({
+          user_id: userId, // This will be ignored by the backend as it uses the token
+          doll_id: dollId
+        })
+      });
+      toast.success("Model added to favorites");
+      return result;
+    } catch (error) {
+      // Show more specific error messages
+      if (error.message?.includes("401") || error.message?.includes("403")) {
+        toast.error("Authentication failed. Please log in again.");
+      } else {
+        toast.error("Failed to add model to favorites");
+      }
+      throw error;
+    }
+  }
+
+  async removeModelFromFavorites(favoriteId: number): Promise<void> {
+    try {
+      await this.request<void>(`/api/favorites/${favoriteId}`, {
+        method: 'DELETE',
+      });
+      toast.success("Model removed from favorites");
+    } catch (error) {
+      // Show more specific error messages
+      if (error.message?.includes("401") || error.message?.includes("403")) {
+        toast.error("Authentication failed. Please log in again.");
+      } else {
+        toast.error("Failed to remove model from favorites");
+      }
+      throw error;
+    }
+  }
+
+  async createModelReview(userId: number, dollId: number, rating: number, comment: string): Promise<ModelReview> {
+    try {
+      const result = await this.request<ModelReview>('/api/reviews/', {
+        method: 'POST',
+        body: JSON.stringify({
+          user_id: userId, // This will be ignored by the backend as it uses the token
+          doll_id: dollId,
+          rating,
+          comment
+        })
+      });
+      toast.success("Review submitted successfully");
+      return result;
+    } catch (error) {
+      // Show more specific error messages
+      if (error.message?.includes("401") || error.message?.includes("403")) {
+        toast.error("Authentication failed. Please log in again.");
+      } else {
+        toast.error("Failed to submit review");
+      }
+      throw error;
+    }
+  }
+
+  async updateModelReview(reviewId: number, rating: number, comment: string): Promise<ModelReview> {
+    try {
+      const result = await this.request<ModelReview>(`/api/reviews/${reviewId}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          rating,
+          comment
+        })
+      });
+      toast.success("Review updated successfully");
+      return result;
+    } catch (error) {
+      // Show more specific error messages
+      if (error.message?.includes("401") || error.message?.includes("403")) {
+        toast.error("Authentication failed. Please log in again.");
+      } else {
+        toast.error("Failed to update review");
+      }
+      throw error;
+    }
+  }
+
+  async deleteModelReview(reviewId: number): Promise<void> {
+    try {
+      await this.request<void>(`/api/reviews/${reviewId}`, {
+        method: 'DELETE',
+      });
+      toast.success("Review deleted successfully");
+    } catch (error) {
+      // Show more specific error messages
+      if (error.message?.includes("401") || error.message?.includes("403")) {
+        toast.error("Authentication failed. Please log in again.");
+      } else {
+        toast.error("Failed to delete review");
+      }
+      throw error;
+    }
+  }
+  
+  async getUserModelReviews(userId: number, skip: number = 0, limit: number = 10): Promise<ModelReview[]> {
+    try {
+      const result = await this.request<ModelReview[]>(`/api/reviews/user/${userId}?skip=${skip}&limit=${limit}`, {
+        method: 'GET',
+      });
+      return result;
+    } catch (error) {
+      // Show more specific error messages
+      if (error.message?.includes("401") || error.message?.includes("403")) {
+        toast.error("Authentication failed. Please log in again.");
+      } else {
+        toast.error("Failed to fetch user reviews");
+      }
+      throw error;
+    }
+  }
+}
+
+export const userApi = new userApiService();

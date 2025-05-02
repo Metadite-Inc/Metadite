@@ -1,9 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../../context/ThemeContext';
 import { BookmarkX } from 'lucide-react';
 import { toast } from 'sonner';
 import ModelCard from '../ModelCard';
+import { userApi } from '../../lib/api/user_api';
 
 const FavoritesTab = ({ user }) => {
   const { theme } = useTheme();
@@ -11,36 +11,24 @@ const FavoritesTab = ({ user }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // In a real app, this would fetch from an API based on the user's ID
-    // For demo purposes, we'll use mock data
+    // Fetch user favorites from API
     const fetchFavorites = async () => {
+      // Check for token instead of user id
+      const token = localStorage.getItem('access_token');
+      if (!token) return;
+      
       try {
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 800));
-        
-        // Mock favorite models
-        const mockFavorites = [
-          {
-            id: 'model-1',
-            name: 'Emma Watson',
-            description: 'Popular celebrity model with multiple looks and styles.',
-            price: 24.99,
-            image: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=688&auto=format&fit=crop'
-          },
-          {
-            id: 'model-2',
-            name: 'John Smith',
-            description: 'Professional fitness model for sports and activewear.',
-            price: 19.99,
-            image: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=687&auto=format&fit=crop'
-          },
-          // Add more mock data as needed
-        ];
-        
-        setFavorites(mockFavorites);
+        setIsLoading(true);
+        const favoriteModels = await userApi.getUserFavoriteModels();
+        setFavorites(favoriteModels);
         setIsLoading(false);
       } catch (error) {
         console.error('Error fetching favorites:', error);
+        if (error.message && (error.message.includes("401") || error.message.includes("403"))) {
+          toast.error("Authentication failed. Please log in again.");
+        } else {
+          toast.error("Failed to load your favorites");
+        }
         setIsLoading(false);
       }
     };
@@ -48,9 +36,15 @@ const FavoritesTab = ({ user }) => {
     fetchFavorites();
   }, [user?.id]);
 
-  const removeFromFavorites = (modelId) => {
-    setFavorites(favorites.filter(model => model.id !== modelId));
-    toast.success('Removed from favorites');
+  const removeFromFavorites = async (favoriteId) => {
+    try {
+      await userApi.removeModelFromFavorites(favoriteId);
+      // Update the local state after successful removal
+      setFavorites(favorites.filter(favorite => favorite.id !== favoriteId));
+    } catch (error) {
+      console.error('Error removing favorite:', error);
+      toast.error("Failed to remove from favorites");
+    }
   };
 
   if (isLoading) {
@@ -89,8 +83,19 @@ const FavoritesTab = ({ user }) => {
       </h2>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {favorites.map((model) => (
-          <ModelCard key={model.id} model={model} />
+        {favorites.map((favorite) => (
+          <ModelCard 
+            key={favorite.id} 
+            model={{
+              id: favorite.doll_id,
+              // If your API returns comprehensive model data, use that instead
+              // Otherwise, you might need an additional API call to fetch model details
+              ...favorite
+            }} 
+            onRemoveFavorite={() => removeFromFavorites(favorite.id)}
+            isFavorite={true}
+            user={user}
+          />
         ))}
       </div>
     </div>

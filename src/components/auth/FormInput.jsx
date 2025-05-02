@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
@@ -14,7 +13,9 @@ const FormInput = ({
   icon: Icon,
   label,
   showPassword,
-  toggleShowPassword
+  toggleShowPassword,
+  error,
+  onBlur
 }) => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
@@ -31,7 +32,10 @@ const FormInput = ({
           type={type === "password" && showPassword ? "text" : type}
           value={value}
           onChange={onChange}
+          onBlur={onBlur}
           className={`block w-full pl-10 pr-10 py-2 border rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary ${
+            error ? 'border-red-500' : ''
+          } ${
             isDark 
               ? 'bg-gray-800 border-gray-700 text-gray-200' 
               : 'border-gray-300 text-gray-900'
@@ -54,6 +58,9 @@ const FormInput = ({
           </button>
         )}
       </div>
+      {error && (
+        <p className="text-sm text-red-500 mt-1">{error}</p>
+      )}
     </div>
   );
 };

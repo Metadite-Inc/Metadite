@@ -1,15 +1,21 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ShoppingCart, Heart, MessageSquare } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { toast } from 'sonner';
+import { userApi } from '../lib/api/user_api';
 
-const ModelCard = ({ model, user }) => {
+const ModelCard = ({ model, user, isFavorite, onRemoveFavorite }) => {
   const { addToCart } = useCart();
   const [imageLoaded, setImageLoaded] = useState(false);
-  const [isLiked, setIsLiked] = useState(false);
+  const [isLiked, setIsLiked] = useState(isFavorite || false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [message, setMessage] = useState('');
+  const [favoriteId, setFavoriteId] = useState(model.id); // Store the favorite ID for API operations
+
+  useEffect(() => {
+    setIsLiked(isFavorite || false);
+  }, [isFavorite]);
 
   const handleAddToCart = () => {
     addToCart(model);
@@ -18,16 +24,40 @@ const ModelCard = ({ model, user }) => {
     });
   };
 
-  const handleLike = () => {
-    setIsLiked(!isLiked);
-    if (!isLiked) {
-      toast("Added to favorites", {
-        description: `${model.name} has been added to your favorites.`,
-      });
-    } else {
-      toast("Removed from favorites", {
-        description: `${model.name} has been removed from your favorites.`,
-      });
+  const handleLike = async () => {
+    // Use access_token to match auth_api.ts implementation
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      toast.error("Please log in to save favorites");
+      return;
+    }
+
+    try {
+      if (!isLiked) {
+        // Add to favorites - We'll get user ID from the backend based on the token
+        const response = await userApi.addModelToFavorites(0, model.id); // 0 as placeholder, backend will use token
+        setFavoriteId(response.id); // Save the favorite ID returned from the API
+        setIsLiked(true);
+        toast.success("Added to favorites");
+      } else {
+        // Remove from favorites
+        if (onRemoveFavorite) {
+          // If callback provided (used in FavoritesTab), use that
+          onRemoveFavorite();
+        } else {
+          // Otherwise call API directly
+          await userApi.removeModelFromFavorites(favoriteId);
+        }
+        setIsLiked(false);
+        toast.success("Removed from favorites");
+      }
+    } catch (error) {
+      console.error("Favorite operation failed:", error);
+      if (error.message && (error.message.includes("401") || error.message.includes("403"))) {
+        toast.error("Authentication failed. Please log in again.");
+      } else {
+        toast.error("Failed to update favorites");
+      }
     }
   };
 
