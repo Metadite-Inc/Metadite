@@ -22,6 +22,7 @@ import NotFound from "./pages/NotFound";
 import Upgrade from "./pages/Upgrade";
 import ChatPage from "./pages/ChatPage";
 import Terms from "./pages/Terms";
+import OrderDetail from "./pages/OrderDetail";
 
 // Create a client
 const queryClient = new QueryClient();
@@ -51,6 +52,7 @@ const App = () => {
                   <Route path="/contact" element={<Contact />} />
                   <Route path="/upgrade" element={<Upgrade />} />
                   <Route path="/terms" element={<Terms />} />
+                  <Route path="/order/:orderId" element={<OrderDetail />} />
                   <Route path="/chat" element={<ChatPage />} /> {/* New Chat Page Route */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
