@@ -66,8 +66,31 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
+  const validatePassword = (password: string): string => {
+    if (password.length < 8) {
+      return "Password must be at least 8 characters long";
+    }
+    if (!/[A-Z]/.test(password)) {
+      return "Password must contain at least one uppercase letter";
+    }
+    if (!/[a-z]/.test(password)) {
+      return "Password must contain at least one lowercase letter";
+    }
+    if (!/[0-9]/.test(password)) {
+      return "Password must contain at least one digit";
+    }
+    return "";
+  };
+
   const register = async (email: string, password: string, name: string, region?: string): Promise<void> => {
     try {
+      // Validate password complexity
+      const validationError = validatePassword(password);
+      if (validationError) {
+        toast.error(validationError);
+        throw new Error(validationError);
+      }
+
       await authApi.register({ 
         email, 
         password, 

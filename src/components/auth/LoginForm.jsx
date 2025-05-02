@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, User, ArrowRight } from 'lucide-react';
@@ -13,6 +12,7 @@ const LoginForm = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
   const [name, setName] = useState('');
   const [role, setRole] = useState('user');
   const [region, setRegion] = useState('north_america');
@@ -26,9 +26,43 @@ const LoginForm = () => {
     // Reset form
     setEmail('');
     setPassword('');
+    setPasswordError('');
     setName('');
     setRole('user');
     setRegion('north_america');
+  };
+  
+  const validatePassword = (password) => {
+    if (password.length < 8) {
+      return "Password must be at least 8 characters long";
+    }
+    if (!/[A-Z]/.test(password)) {
+      return "Password must contain at least one uppercase letter";
+    }
+    if (!/[a-z]/.test(password)) {
+      return "Password must contain at least one lowercase letter";
+    }
+    if (!/[0-9]/.test(password)) {
+      return "Password must contain at least one digit";
+    }
+    return "";
+  };
+  
+  const handlePasswordChange = (e) => {
+    const newPassword = e.target.value;
+    setPassword(newPassword);
+    
+    if (!isLogin && newPassword) {
+      setPasswordError(validatePassword(newPassword));
+    } else {
+      setPasswordError('');
+    }
+  };
+  
+  const handlePasswordBlur = () => {
+    if (!isLogin && password) {
+      setPasswordError(validatePassword(password));
+    }
   };
   
   const handleSubmit = async (e) => {
@@ -48,6 +82,13 @@ const LoginForm = () => {
           navigate('/dashboard');
         }
       } else {
+        // Validate password before registration
+        const validationError = validatePassword(password);
+        if (validationError) {
+          setPasswordError(validationError);
+          return;
+        }
+        
         await register(email, password, name, region);
         toast.success("Registration successful! Please log in.");
         setIsLogin(true);
@@ -102,15 +143,21 @@ const LoginForm = () => {
             id="password"
             type="password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Enter your password"
+            onChange={handlePasswordChange}
+            onBlur={handlePasswordBlur}
+            placeholder={isLogin ? "Enter your password" : "At least 8 chars with uppercase, lowercase & number"}
             required
-            minLength={6}
+            minLength={8}
             icon={Lock}
             label="Password"
             showPassword={showPassword}
             toggleShowPassword={() => setShowPassword(!showPassword)}
+            error={passwordError}
           />
+          
+          {!isLogin && !passwordError && password && (
+            <div className="text-sm text-green-500">Password meets requirements</div>
+          )}
           
           {!isLogin && <RegionSelect region={region} setRegion={setRegion} />}
           
