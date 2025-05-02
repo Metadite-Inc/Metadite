@@ -135,8 +135,12 @@ const ModelDetail = () => {
       <div className={`flex-1 pt-24 pb-12 px-4 ${isDark ? 'bg-gray-900' : 'bg-gradient-to-br from-white via-metadite-light to-white'}`}>
         <div className="container mx-auto max-w-6xl">
           <div className="mb-6">
-            <Link to="/models" className="flex items-center text-metadite-primary hover:underline">
-              <ChevronLeft className="h-4 w-4 mr-1" />
+            <Link
+              to="/models"
+              className="mb-6 inline-flex items-center px-4 py-2 bg-metadite-primary text-white rounded hover:bg-metadite-secondary transition-colors"
+              aria-label="Back to Models"
+            >
+              <ChevronLeft className="h-4 w-4 mr-2" />
               Back to Models
             </Link>
           </div>

@@ -157,7 +157,7 @@ const LoginForm = () => {
         </div>
         
         <div className={`mt-8 text-xs text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-          By continuing, you agree to Metadite's <Link to="/terms" className="text-metadite-primary">Terms of Service</Link> and <Link to="/privacy" className="text-metadite-primary">Privacy Policy</Link>.
+          By continuing, you agree to Metadite's <Link to="/terms" className="text-metadite-primary underline">Terms of Service</Link> and <Link to="/privacy" className="text-metadite-primary">Privacy Policy</Link>.
         </div>
       </div>
     </div>

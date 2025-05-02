@@ -44,7 +44,7 @@ const UserMenu = () => {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className={theme === 'dark' ? 'bg-gray-800 border-gray-700 text-white' : ''}>
         <DropdownMenuLabel className={theme === 'dark' ? 'text-gray-300' : ''}>
-          {user.name || 'User'}
+          {user.full_name || 'User'}
         </DropdownMenuLabel>
         <DropdownMenuSeparator className={theme === 'dark' ? 'bg-gray-700' : ''} />
         
