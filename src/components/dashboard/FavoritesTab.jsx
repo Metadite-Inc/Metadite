@@ -1,9 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../../context/ThemeContext';
 import { BookmarkX } from 'lucide-react';
 import { toast } from 'sonner';
 import ModelCard from '../ModelCard';
+import { userApi } from '../../lib/api/user_api';
 
 const FavoritesTab = ({ user }) => {
   const { theme } = useTheme();
@@ -11,30 +11,40 @@ const FavoritesTab = ({ user }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Fetch user favorites from API
     const fetchFavorites = async () => {
+      // Check for token instead of user id
+      const token = localStorage.getItem('access_token');
+      if (!token) return;
+      
       try {
         setIsLoading(true);
-        // Replace this endpoint with your actual backend API endpoint
-        const response = await fetch(`/api/users/${user.id}/favorites`);
-        if (!response.ok) throw new Error('Failed to fetch favorites');
-        const data = await response.json();
-        setFavorites(data); // Adjust if your API response structure is different
+        const favoriteModels = await userApi.getUserFavoriteModels();
+        setFavorites(favoriteModels);
+        setIsLoading(false);
       } catch (error) {
-        toast.error('Could not load favorites');
-        setFavorites([]);
-      } finally {
+        console.error('Error fetching favorites:', error);
+        if (error.message && (error.message.includes("401") || error.message.includes("403"))) {
+          toast.error("Authentication failed. Please log in again.");
+        } else {
+          toast.error("Failed to load your favorites");
+        }
         setIsLoading(false);
       }
     };
+    
+    fetchFavorites();
+  }, [user?.id]);
 
-    if (user?.id) {
-      fetchFavorites();
+  const removeFromFavorites = async (favoriteId) => {
+    try {
+      await userApi.removeModelFromFavorites(favoriteId);
+      // Update the local state after successful removal
+      setFavorites(favorites.filter(favorite => favorite.id !== favoriteId));
+    } catch (error) {
+      console.error('Error removing favorite:', error);
+      toast.error("Failed to remove from favorites");
     }
-  }, [user]);
-
-  const removeFromFavorites = (modelId) => {
-    setFavorites(favorites.filter(model => model.id !== modelId));
-    toast.success('Removed from favorites');
   };
 
   if (isLoading) {
@@ -73,8 +83,19 @@ const FavoritesTab = ({ user }) => {
       </h2>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {favorites.map((model) => (
-          <ModelCard key={model.id} model={model} />
+        {favorites.map((favorite) => (
+          <ModelCard 
+            key={favorite.id} 
+            model={{
+              id: favorite.doll_id,
+              // If your API returns comprehensive model data, use that instead
+              // Otherwise, you might need an additional API call to fetch model details
+              ...favorite
+            }} 
+            onRemoveFavorite={() => removeFromFavorites(favorite.id)}
+            isFavorite={true}
+            user={user}
+          />
         ))}
       </div>
     </div>

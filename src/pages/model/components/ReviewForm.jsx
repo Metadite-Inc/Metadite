@@ -1,19 +1,19 @@
-
 import React, { useState } from 'react';
 import { Star } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from 'sonner';
+import { userApi } from '../../../lib/api/user_api';
 
-const ReviewForm = ({ modelId, onReviewSubmitted }) => {
+const ReviewForm = ({ modelId, onReviewSubmitted, existingReview = null, onCancel = null }) => {
   const { user } = useAuth();
-  const [rating, setRating] = useState(0);
+  const [rating, setRating] = useState(existingReview?.rating || 0);
   const [hoverRating, setHoverRating] = useState(0);
-  const [comment, setComment] = useState('');
+  const [comment, setComment] = useState(existingReview?.comment || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (rating === 0) {
@@ -28,30 +28,62 @@ const ReviewForm = ({ modelId, onReviewSubmitted }) => {
     
     setIsSubmitting(true);
     
-    // In a real app, this would be an API call to save the review
-    setTimeout(() => {
-      const newReview = {
-        id: Date.now(),
-        userId: user?.id || 'guest',
-        userName: user?.name || 'Guest User',
-        rating,
-        comment,
-        date: new Date().toLocaleDateString('en-US', { 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric' 
-        })
-      };
+    try {
+      let reviewData;
       
-      onReviewSubmitted(newReview);
+      if (existingReview) {
+        // Update existing review
+        reviewData = await userApi.updateModelReview(existingReview.id, rating, comment);
+        
+        const updatedReview = {
+          ...existingReview,
+          rating,
+          comment,
+          // Add any other fields needed
+        };
+        
+        onReviewSubmitted(updatedReview);
+        
+        if (onCancel) onCancel(); // Close edit form if applicable
+        
+      } else {
+        // Create new review
+        reviewData = await userApi.createModelReview(
+          user.id, 
+          parseInt(modelId), 
+          rating, 
+          comment
+        );
+        
+        // Format response for the UI
+        const newReview = {
+          id: reviewData.id,
+          userId: user.id,
+          userName: user.name || user.email || 'User',
+          rating,
+          comment,
+          date: new Date().toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+          })
+        };
+        
+        onReviewSubmitted(newReview);
+        
+        // Reset form for new submissions
+        setRating(0);
+        setComment('');
+      }
       
-      // Reset form
-      setRating(0);
-      setComment('');
+      toast.success(existingReview ? "Review updated successfully" : "Review submitted successfully");
+      
+    } catch (error) {
+      console.error("Review submission failed:", error);
+      toast.error(existingReview ? "Failed to update review" : "Failed to submit review");
+    } finally {
       setIsSubmitting(false);
-      
-      toast.success("Review submitted successfully");
-    }, 800);
+    }
   };
   
   if (!user) {
@@ -104,13 +136,28 @@ const ReviewForm = ({ modelId, onReviewSubmitted }) => {
         />
       </div>
       
-      <Button 
-        type="submit" 
-        disabled={isSubmitting || rating === 0 || !comment.trim()}
-        className="bg-gradient-to-r from-metadite-primary to-metadite-secondary"
-      >
-        {isSubmitting ? 'Submitting...' : 'Submit Review'}
-      </Button>
+      <div className="flex space-x-3">
+        {existingReview && onCancel && (
+          <Button 
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            className="flex-1"
+          >
+            Cancel
+          </Button>
+        )}
+        
+        <Button 
+          type="submit" 
+          disabled={isSubmitting || rating === 0 || !comment.trim()}
+          className={`bg-gradient-to-r from-metadite-primary to-metadite-secondary ${existingReview ? 'flex-1' : 'w-full'}`}
+        >
+          {isSubmitting 
+            ? 'Submitting...' 
+            : (existingReview ? 'Update Review' : 'Submit Review')}
+        </Button>
+      </div>
     </form>
   );
 };
