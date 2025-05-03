@@ -36,6 +36,7 @@ const AdminsTab = ({ isLoaded }) => {
     password: '',
     type: 'content'
   });
+  const [passwordError, setPasswordError] = useState('');
   
   const [admins, setAdmins] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -57,6 +58,17 @@ const AdminsTab = ({ isLoaded }) => {
     fetchAdmins();
   }, []);
   
+  const handlePasswordChange = (e) => {
+    const value = e.target.value;
+    setNewAdminData({...newAdminData, password: value});
+    
+    if (value.length > 0 && value.length < 8) {
+      setPasswordError('Password must be at least 8 characters');
+    } else {
+      setPasswordError('');
+    }
+  };
+
   const handleAddAdmin = async (e) => {
     e.preventDefault();
     
@@ -64,6 +76,11 @@ const AdminsTab = ({ isLoaded }) => {
       toast.error("Missing required fields", {
         description: "Please fill in all required fields.",
       });
+      return;
+    }
+    
+    if (newAdminData.password.length < 8) {
+      setPasswordError('Password must be at least 8 characters');
       return;
     }
     
@@ -157,10 +174,13 @@ const AdminsTab = ({ isLoaded }) => {
                 <input
                   type="password"
                   value={newAdminData.password}
-                  onChange={(e) => setNewAdminData({...newAdminData, password: e.target.value})}
-                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary"
+                  onChange={handlePasswordChange}
+                  className={`block w-full px-3 py-2 border ${passwordError ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary`}
                   required
                 />
+                {passwordError && (
+                  <p className="mt-1 text-sm text-red-500">{passwordError}</p>
+                )}
               </div>
               <div>
                 <label className={`block text-sm font-medium mb-1 
