@@ -1,17 +1,21 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from '../context/ThemeContext';
 
 const Terms = () => {
   const navigate = useNavigate();
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   return (
-    <div className="container mx-auto max-w-2xl py-12 px-4 text-gray-800">
-      <button
-        onClick={() => navigate(-1)}
-        className="mb-6 px-4 py-2 bg-metadite-primary text-white rounded hover:bg-metadite-secondary transition-colors"
-        aria-label="Back"
-      >
-        &larr; Back
-      </button>
+    <div className={`min-h-screen flex items-center justify-center ${isDark ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' : 'bg-gradient-to-br from-white via-metadite-light to-white'}`}>
+      <div className={`w-full max-w-2xl glass-card rounded-xl overflow-hidden shadow-lg px-6 py-10 ${isDark ? 'bg-gray-900/80 text-gray-100' : 'bg-white/90 text-gray-800'}`}>
+        <button
+          onClick={() => navigate(-1)}
+          className={`mb-8 px-4 py-2 inline-flex items-center bg-metadite-primary text-white rounded hover:bg-metadite-secondary transition-colors shadow ${isDark ? 'hover:bg-opacity-90' : ''}`}
+          aria-label="Back"
+        >
+          &larr; Back
+        </button>
     <h1 className="text-3xl font-bold mb-4">Metadite Terms and Conditions</h1>
     <p className="text-sm text-gray-500 mb-8">Last Updated: May 2, 2025</p>
     <p className="mb-6">Welcome to Metadite. By accessing and using our platform, you agree to the following terms and conditions. Please read them carefully before proceeding.</p>
@@ -75,6 +79,7 @@ const Terms = () => {
     <h2 className="text-xl font-semibold mb-2">Contact Us</h2>
     <p className="mb-6">If you have any questions regarding these terms, please contact our support team at <a href="mailto:support@metadite.com" className="text-metadite-primary underline">support@metadite.com</a>.</p>
     <p className="text-sm text-gray-500">By signing up, you acknowledge and accept these Terms and Conditions in full.</p>
+  </div>
   </div>
   );
 };
