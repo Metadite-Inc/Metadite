@@ -53,7 +53,7 @@ const Dashboard = () => {
                   <User className="h-8 w-8 text-metadite-primary" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold">Welcome, {user?.name || 'User'}!</h1>
+                  <h1 className="text-2xl font-bold">Welcome, {(user?.full_name?.split(' ')[0]) || 'User'}!</h1>
                   <p className="opacity-80">Manage your account and purchases</p>
                 </div>
               </div>
