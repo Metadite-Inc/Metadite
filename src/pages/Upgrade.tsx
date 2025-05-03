@@ -15,41 +15,38 @@ const tiers = [
     price: 10,
     description: 'Perfect for casual users',
     features: [
-      'Access to basic models',
-      'Limited collection access',
-      'Monthly newsletter',
-      'Regular support'
+      '10 messages',
+      'One photo',
     ],
     recommended: false,
-    level: 'standard'
+    level: 'standard',
   },
   {
     name: 'VIP',
     price: 20,
     description: 'Enhanced experience for enthusiasts',
     features: [
-      'Access to all Standard features',
-      'Premium model collection',
-      'Early access to new releases',
-      'Priority support'
+      '30 messages',
+      'Access to 1 video of a premium model',
+      '3 photos',
     ],
     recommended: true,
-    level: 'vip'
+    level: 'vip',
   },
   {
     name: 'VVIP',
     price: 50,
     description: 'Ultimate experience for collectors',
     features: [
-      'Access to all VIP features',
-      'Exclusive limited-edition models',
-      'Custom model requests',
-      'Personal concierge service',
-      "Quarterly collector's magazine"
+      'Access to 2 videos of premium models',
+      'Access to 1 video of limited edition',
+      'Chances of winning freebies like toys',
+      '100 messages',
+      '5 photos',
     ],
     recommended: false,
-    level: 'vvip'
-  }
+    level: 'vvip',
+  },
 ];
 
 const Upgrade: React.FC = () => {
@@ -180,14 +177,6 @@ const Upgrade: React.FC = () => {
               </CardFooter>
             </Card>
           ))}
-        </div>
-        
-        <div className="mt-12 text-center">
-          <p className="text-gray-500 dark:text-gray-400 text-sm max-w-xl mx-auto">
-            All plans include a 14-day money-back guarantee. You can cancel or change your subscription at any time.
-            Need help choosing the right plan? <a href="/contact" className="text-metadite-primary hover:underline">Contact our team</a>.
-          </p>
-          <br />
         </div>
       </main>
       
