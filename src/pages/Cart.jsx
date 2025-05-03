@@ -109,8 +109,7 @@ const Cart = () => {
                   <div className="flex flex-wrap gap-2">
                     {/*<div className={`${theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-800'} rounded-md px-3 py-2 text-sm`}>Stripe</div>*/}
                     <div className={`${theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-800'} rounded-md px-3 py-2 text-sm`}>Crypto</div>
-                    <div className={`${theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-800'} rounded-md px-3 py-2 text-sm`}>Credit Card</div>
-                    <div className={`${theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-800'} rounded-md px-3 py-2 text-sm`}>Debit Card</div>
+                    <div className={`${theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-800'} rounded-md px-3 py-2 text-sm`}>Credit/Debit Card</div>
                   </div>
                 </div>
               </div>
