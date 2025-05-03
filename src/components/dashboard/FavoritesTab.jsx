@@ -11,42 +11,26 @@ const FavoritesTab = ({ user }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // In a real app, this would fetch from an API based on the user's ID
-    // For demo purposes, we'll use mock data
     const fetchFavorites = async () => {
       try {
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 800));
-        
-        // Mock favorite models
-        const mockFavorites = [
-          {
-            id: 'model-1',
-            name: 'Emma Watson',
-            description: 'Popular celebrity model with multiple looks and styles.',
-            price: 24.99,
-            image: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=688&auto=format&fit=crop'
-          },
-          {
-            id: 'model-2',
-            name: 'John Smith',
-            description: 'Professional fitness model for sports and activewear.',
-            price: 19.99,
-            image: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=687&auto=format&fit=crop'
-          },
-          // Add more mock data as needed
-        ];
-        
-        setFavorites(mockFavorites);
-        setIsLoading(false);
+        setIsLoading(true);
+        // Replace this endpoint with your actual backend API endpoint
+        const response = await fetch(`/api/users/${user.id}/favorites`);
+        if (!response.ok) throw new Error('Failed to fetch favorites');
+        const data = await response.json();
+        setFavorites(data); // Adjust if your API response structure is different
       } catch (error) {
-        console.error('Error fetching favorites:', error);
+        toast.error('Could not load favorites');
+        setFavorites([]);
+      } finally {
         setIsLoading(false);
       }
     };
-    
-    fetchFavorites();
-  }, [user?.id]);
+
+    if (user?.id) {
+      fetchFavorites();
+    }
+  }, [user]);
 
   const removeFromFavorites = (modelId) => {
     setFavorites(favorites.filter(model => model.id !== modelId));

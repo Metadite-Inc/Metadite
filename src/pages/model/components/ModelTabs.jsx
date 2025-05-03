@@ -63,7 +63,7 @@ const ModelTabs = ({ model, onReviewSubmitted }) => {
         {activeTab === 'description' && (
           <div className="prose max-w-none">
             <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : ''}`}>Product Description</h3>
-            <p className={`mb-4 ${isDark ? 'text-gray-300' : ''}`}>{model.longDescription}</p>
+            {/*<p className={`mb-4 ${isDark ? 'text-gray-300' : ''}`}>{model.longDescription}</p>*/}
             <p className={isDark ? 'text-gray-300' : ''}>{model.detailedDescription}</p>
           </div>
         )}
@@ -81,12 +81,12 @@ const ModelTabs = ({ model, onReviewSubmitted }) => {
               ))}
             </div>
             
-            <div className={`flex items-center mt-6 p-4 ${isDark ? 'bg-blue-900/20' : 'bg-blue-50'} rounded-lg`}>
+            {/*<div className={`flex items-center mt-6 p-4 ${isDark ? 'bg-blue-900/20' : 'bg-blue-50'} rounded-lg`}>
               <ShieldCheck className={`h-5 w-5 ${isDark ? 'text-blue-400' : 'text-blue-600'} mr-3`} />
               <p className={`text-sm ${isDark ? 'text-blue-300' : 'text-blue-800'}`}>
                 All our products come with a 1-year warranty against manufacturing defects.
               </p>
-            </div>
+            </div>*/}
           </div>
         )}
         
