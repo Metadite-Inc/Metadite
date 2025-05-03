@@ -16,17 +16,16 @@ const ModelsTab = ({ isLoaded }) => {
   const [newModelData, setNewModelData] = useState({
     name: '',
     description: '',
-    price: 0,
-    //stock: 0,
+    price: '',
     is_available: true,
     doll_category: 'standard',
-    doll_height: 0,
-    doll_vaginal_depth: 0,
+    doll_height: '',
+    doll_vaginal_depth: '',
     doll_material: '',
-    doll_anal_depth: 0,
-    doll_oral_depth: 0,
-    doll_weight: 0,
-    doll_gross_weight: 0,
+    doll_anal_depth: '',
+    doll_oral_depth: '',
+    doll_weight: '',
+    doll_gross_weight: '',
     doll_packing_size: '',
     doll_body_size: '',
     //doll_origin: '',
@@ -236,7 +235,7 @@ const ModelsTab = ({ isLoaded }) => {
                     <SelectContent className="bg-white">
                       <SelectItem value="premium">Premium</SelectItem>
                       <SelectItem value="standard">Standard</SelectItem>
-                      <SelectItem value="limited">Limited Edition</SelectItem>
+                      <SelectItem value="limited_edition">Limited Edition</SelectItem>
                       {/*<SelectItem value="custom">Custom</SelectItem>*/}
                     </SelectContent>
                   </Select>

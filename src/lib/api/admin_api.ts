@@ -211,7 +211,7 @@ class AdminApiService {
         return;
       }
 
-      const response = await fetch(`${API_URL}/api/admins/${adminId}`, {
+      const response = await fetch(`${API_URL}/api/admin/admins/${adminId}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
