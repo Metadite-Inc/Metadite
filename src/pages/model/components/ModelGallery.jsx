@@ -8,7 +8,7 @@ const ModelGallery = ({ images, mainImage, setMainImage }) => {
         <img 
           src={mainImage} 
           alt="Model" 
-          className="w-full h-full object-cover"
+          className="w-full h-full object-contain"
         />
       </div>
       

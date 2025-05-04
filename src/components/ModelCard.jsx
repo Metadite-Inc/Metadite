@@ -81,8 +81,8 @@ const ModelCard = ({ model, user, isFavorite, onRemoveFavorite }) => {
     setMessage(''); // Clear the input field
     setIsChatOpen(false); // Close the chat popup after sending
   };
-
-  return (//model card size
+ //model card size
+  return (
     <div className="glass-card rounded-xl overflow-hidden transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1">
       <div className="relative overflow-hidden h-100">
         {!imageLoaded && <div className="absolute inset-0 shimmer"></div>}

@@ -261,7 +261,7 @@ class ApiService {
         inStock: doll.is_available,
         category: doll.doll_category,
         specifications: [
-          { name: 'Height', value: `${doll.doll_height} cm` },
+          { name: 'Height', value: `${doll.doll_height} CM` },
           { name: "Material", value: doll.doll_material },
           { name: 'Age Range', value: 'Adult Collectors' },
           //{ name: 'Origin', value: doll.doll_origin },
@@ -272,18 +272,18 @@ class ApiService {
           { name: "Category", value: doll.doll_category },
           //{ name: 'Articulation', value: `${doll.doll_articulation || 'Fixed pose'}` },
           //{ name: 'Hair Type', value: doll.doll_hair_type }
-          { name: 'Vaginal Depth', value: `${doll.doll_vaginal_depth} cm` },
-          { name: 'Anal Depth', value: `${doll.doll_anal_depth} cm` },
-          { name: 'Oral Depth', value: `${doll.doll_oral_depth} cm` },
-          { name: 'Weight', value: `${doll.doll_weight} Kg` },
-          { name: 'Gross Weight', value: `${doll.doll_gross_weight} Kg` },
-          { name: 'Packing Size', value: `${doll.doll_packing_size} Kg` },
-          { name: 'Body Size', value: `${doll.doll_body_size} Kg` }
+          { name: 'Vaginal Depth', value: `${doll.doll_vaginal_depth} CM` },
+          { name: 'Anal Depth', value: `${doll.doll_anal_depth} CM` },
+          { name: 'Oral Depth', value: `${doll.doll_oral_depth} CM` },
+          { name: 'Weight', value: `${doll.doll_weight} KG` },
+          { name: 'Gross Weight', value: `${doll.doll_gross_weight} KG` },
+          { name: 'Packing Size', value: `${doll.doll_packing_size} CM` },
+          { name: 'Body Size', value: `${doll.doll_body_size} CM` }
         ],
         detailedDescription: doll.description,
         shippingInfo: {
-          dimensions: "20\" x 12\" x 8\"",
-          weight: `${doll.doll_gross_weight} Kg`,
+          dimensions: doll.doll_packing_size,
+          weight: `${doll.doll_gross_weight} KG`,
           handlingTime: "3-5 business days",
           shippingOptions: [
             { method: "Standard", time: "7-10 business days", price: "Free" },
