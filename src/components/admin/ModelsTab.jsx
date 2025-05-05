@@ -192,8 +192,8 @@ const ModelsTab = ({ isLoaded }) => {
                   </label>
                   <input
                     type="date"
-                    value={newModelData.release_date}
-                    onChange={e => setNewModelData({ ...newModelData, release_date: e.target.value })}
+                    value={newModelData.created_at}
+                    onChange={e => setNewModelData({ ...newModelData, created_at: e.target.value })}
                     className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary"
                     required
                   />
