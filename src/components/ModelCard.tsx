@@ -43,7 +43,7 @@ const ModelCard = ({ model }: ModelProps) => {
         <img
           src={model.image}
           alt={model.name}
-          className={`w-full h-full object-contain bg-gray-100 transition-transform duration-700 hover:scale-110 ${imageLoaded ? 'image-fade-in loaded' : 'image-fade-in'}`}
+          className={`w-full h-80% object-contain bg-gray-100 transition-transform duration-700 hover:scale-110 ${imageLoaded ? 'image-fade-in loaded' : 'image-fade-in'}`}
           onLoad={() => setImageLoaded(true)}
         />
         <button 

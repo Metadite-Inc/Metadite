@@ -28,9 +28,6 @@ const ModelsTab = ({ isLoaded }) => {
     doll_gross_weight: '',
     doll_packing_size: '',
     doll_body_size: '',
-    //doll_origin: '',
-    //doll_articulation: '',
-    //doll_hair_type: '',
   });
 
   const [primaryImageFile, setPrimaryImageFile] = useState(null);
@@ -140,9 +137,6 @@ const ModelsTab = ({ isLoaded }) => {
       is_available: true,
       doll_category: 'premium',
       doll_height: 0,
-      //doll_origin: '',
-      //doll_articulation: '',
-      //doll_hair_type: '',
       doll_vaginal_depth: 0,
       doll_anal_depth: 0,
       doll_oral_depth: 0,
@@ -236,7 +230,6 @@ const ModelsTab = ({ isLoaded }) => {
                       <SelectItem value="premium">Premium</SelectItem>
                       <SelectItem value="standard">Standard</SelectItem>
                       <SelectItem value="limited_edition">Limited Edition</SelectItem>
-                      {/*<SelectItem value="custom">Custom</SelectItem>*/}
                     </SelectContent>
                   </Select>
                 </div>

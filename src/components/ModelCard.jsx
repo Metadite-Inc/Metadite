@@ -84,12 +84,12 @@ const ModelCard = ({ model, user, isFavorite, onRemoveFavorite }) => {
 
   return (//model card size
     <div className="glass-card rounded-xl overflow-hidden transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1">
-      <div className="relative overflow-hidden h-100">
+      <div className="relative overflow-hidden h-80">
         {!imageLoaded && <div className="absolute inset-0 shimmer"></div>}
         <img
           src={model.image}
           alt={model.name}
-          className={`w-full h-full object-cover transition-transform duration-700 hover:scale-110 ${imageLoaded ? 'image-fade-in loaded' : 'image-fade-in'}`}
+          className={`w-full h-80% object-cover transition-transform duration-700 hover:scale-110 ${imageLoaded ? 'image-fade-in loaded' : 'image-fade-in'}`}
           onLoad={() => setImageLoaded(true)}
         />
         <button 
