@@ -188,6 +188,19 @@ const ModelsTab = ({ isLoaded }) => {
                 <div>
                   <label className={`block text-sm font-medium mb-1 
                     ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
+                    Release Date*
+                  </label>
+                  <input
+                    type="date"
+                    value={newModelData.release_date}
+                    onChange={e => setNewModelData({ ...newModelData, release_date: e.target.value })}
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className={`block text-sm font-medium mb-1 
+                    ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
                     Model Name*
                   </label>
                   <input
@@ -237,7 +250,7 @@ const ModelsTab = ({ isLoaded }) => {
                 <div>
                   <label className={`block text-sm font-medium mb-1 
                     ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
-                    Height (cm)*
+                    Height (CM)*
                   </label>
                   <input
                     type="number"
@@ -266,7 +279,7 @@ const ModelsTab = ({ isLoaded }) => {
                 <div>
                   <label className={`block text-sm font-medium mb-1 
                     ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
-                    Vaginal Depth (cm)*
+                    Vaginal Depth (CM)*
                   </label>
                   <input
                     type="number"
@@ -281,7 +294,7 @@ const ModelsTab = ({ isLoaded }) => {
                 <div>
                   <label className={`block text-sm font-medium mb-1 
                     ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
-                    Anal Depth (cm)*
+                    Anal Depth (CM)*
                   </label>
                   <input
                     type="number"
@@ -296,7 +309,7 @@ const ModelsTab = ({ isLoaded }) => {
                 <div>
                   <label className={`block text-sm font-medium mb-1 
                     ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
-                    Oral Depth (cm)*
+                    Oral Depth (CM)*
                   </label>
                   <input
                     type="number"
@@ -341,7 +354,7 @@ const ModelsTab = ({ isLoaded }) => {
                 <div>
                   <label className={`block text-sm font-medium mb-1 
                     ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
-                    Packing Size*
+                    Packing Size (CM)*
                   </label>
                   <input
                     type="text"
@@ -355,7 +368,7 @@ const ModelsTab = ({ isLoaded }) => {
                 <div>
                   <label className={`block text-sm font-medium mb-1 
                     ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
-                    Body Size(cm)*
+                    Body Size (CM)*
                   </label>
                   <input
                     type="text"
