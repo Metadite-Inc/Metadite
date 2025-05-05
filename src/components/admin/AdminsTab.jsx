@@ -8,19 +8,19 @@ import { adminApiService } from '../../lib/api/admin_api';
 // Admin types
 const adminTypes = [
   { 
-    id: 'super', 
+    id: 'super_admin', 
     name: 'Super Admin', 
     description: 'Complete access to all admin features',
     icon: <UserCog className="h-5 w-5 text-purple-500 dark:text-purple-200" />
   },
   { 
-    id: 'content', 
+    id: 'content_admin', 
     name: 'Content Admin', 
     description: 'Manages models and content moderation',
     icon: <FileText className="h-5 w-5 text-blue-500" />
   },
   { 
-    id: 'financial', 
+    id: 'financial_admin', 
     name: 'Financial Admin', 
     description: 'Manages payments and subscriptions',
     icon: <BanknoteIcon className="h-5 w-5 text-green-500" />
@@ -36,6 +36,7 @@ const AdminsTab = ({ isLoaded }) => {
     password: '',
     type: 'content'
   });
+  const [passwordError, setPasswordError] = useState('');
   
   const [admins, setAdmins] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -57,6 +58,17 @@ const AdminsTab = ({ isLoaded }) => {
     fetchAdmins();
   }, []);
   
+  const handlePasswordChange = (e) => {
+    const value = e.target.value;
+    setNewAdminData({...newAdminData, password: value});
+    
+    if (value.length > 0 && value.length < 8) {
+      setPasswordError('Password must be at least 8 characters');
+    } else {
+      setPasswordError('');
+    }
+  };
+
   const handleAddAdmin = async (e) => {
     e.preventDefault();
     
@@ -67,15 +79,20 @@ const AdminsTab = ({ isLoaded }) => {
       return;
     }
     
+    if (newAdminData.password.length < 8) {
+      setPasswordError('Password must be at least 8 characters');
+      return;
+    }
+    
     try {
       await adminApiService.createAdmin({
         email: newAdminData.email,
         full_name: newAdminData.name,
         region: "global",
-        role: newAdminData.type,
-        membership_level: "admin",
+        role: newAdminData.role,
+        membership_level: "standard",
         is_active: true,
-        video_access_count: 0,
+        admin_type: newAdminData.type,
         password: newAdminData.password
       });
       
@@ -157,10 +174,13 @@ const AdminsTab = ({ isLoaded }) => {
                 <input
                   type="password"
                   value={newAdminData.password}
-                  onChange={(e) => setNewAdminData({...newAdminData, password: e.target.value})}
-                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary"
+                  onChange={handlePasswordChange}
+                  className={`block w-full px-3 py-2 border ${passwordError ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary`}
                   required
                 />
+                {passwordError && (
+                  <p className="mt-1 text-sm text-red-500">{passwordError}</p>
+                )}
               </div>
               <div>
                 <label className={`block text-sm font-medium mb-1 
@@ -244,7 +264,7 @@ const AdminsTab = ({ isLoaded }) => {
                     <td className="px-6 py-4 font-medium">{admin.full_name}</td>
                     <td className="px-6 py-4">{admin.email}</td>
                     <td className="px-6 py-4">
-                      {adminTypes.find(type => type.id === admin.role)?.name || admin.role}
+                      {adminTypes.find(type => type.id === admin.admin_type)?.name || admin.admin_type}
                     </td>
                     <td className="px-6 py-4">
                       <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
