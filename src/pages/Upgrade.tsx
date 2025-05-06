@@ -17,9 +17,9 @@ const tiers = [
     price: 10,
     description: 'Perfect for casual users',
     features: [
-      '10 messages per day',
+      '10 messages',// per day',
       'Access to basic models',
-      'One photo per model',
+      'One photo',// per model',
       'Email support',
     ],
     recommended: false,
@@ -32,10 +32,10 @@ const tiers = [
     price: 20,
     description: 'Enhanced experience for enthusiasts',
     features: [
-      '30 messages per day',
+      '30 messages',// per day',
       'Access to premium models',
       'Access to 1 exclusive video',
-      '3 photos per model',
+      '3 photos',// per model',
       'Priority email support',
     ],
     recommended: true,
@@ -50,10 +50,11 @@ const tiers = [
     features: [
       'Unlimited messages',
       'Access to all premium models',
-      'Access to 3 exclusive videos',
+      'Access to 2 premium videos',
+      //'Access to 1 limited edition video',
       'Access to limited edition content',
       'Chances of winning collectible items',
-      '5 photos per model',
+      '5 photos',// per model',
       '24/7 priority support',
     ],
     recommended: false,
@@ -99,6 +100,7 @@ const Upgrade: React.FC = () => {
         theme === 'dark' ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' : ''
       }`}>
         <div className="text-center mb-16">
+          <br /> <br /><br /> <br /><br /> <br />
           <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-metadite-primary to-metadite-secondary text-transparent bg-clip-text">
             Choose Your Membership
           </h1>
@@ -108,7 +110,7 @@ const Upgrade: React.FC = () => {
           {currentPlan && (
             <div className="mt-6 inline-block bg-gray-100 dark:bg-gray-700 px-6 py-3 rounded-full">
               <span className="text-gray-600 dark:text-gray-300">Current plan: </span>
-              <Badge variant="outline" className={`ml-2 text-${currentPlan === 'vvip' ? 'purple' : currentPlan === 'vip' ? 'amber' : 'blue'}-500 bg-${currentPlan === 'vvip' ? 'purple' : currentPlan === 'vip' ? 'amber' : 'blue'}-100 dark:bg-${currentPlan === 'vvip' ? 'purple' : currentPlan === 'vip' ? 'amber' : 'blue'}-900/20 font-bold uppercase`}>
+              <Badge variant="outline" className={`ml-2 text-${currentPlan === 'vvip' ? 'purple' : currentPlan === 'vip' ? 'amber' : 'green'}-500 bg-${currentPlan === 'vvip' ? 'purple' : currentPlan === 'vip' ? 'amber' : 'green'}-100 dark:bg-${currentPlan === 'vvip' ? 'purple' : currentPlan === 'vip' ? 'amber' : 'green'}-900/20 font-bold uppercase`}>
                 {currentPlan}
               </Badge>
             </div>
