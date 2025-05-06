@@ -3,12 +3,19 @@ import React, { useState, useEffect } from 'react';
 import { Bell } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
+interface Chat {
+  id: string | number;
+  sender: string;
+  message: string;
+  timestamp: string;
+}
+
 interface NotificationPanelProps {
   chatOpen: boolean;
   toggleChat: () => void;
   setNewMessage: (value: boolean) => void;
   newMessage: boolean;
-  chats: any[];
+  chats: Chat[];
 }
 
 const NotificationPanel: React.FC<NotificationPanelProps> = ({ 
