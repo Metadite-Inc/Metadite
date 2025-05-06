@@ -2,10 +2,20 @@
 import { useState } from 'react';
 import { Play, Lock } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { Link } from 'react-router-dom';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 
 const VideoCard = ({ video, vipAccess = false }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
   const { theme } = useTheme();
+
+  const handlePreview = (e) => {
+    if (vipAccess) {
+      e.preventDefault();
+      setShowPreview(true);
+    }
+  };
 
   return (
     <div className={`glass-card rounded-xl overflow-hidden transition-all duration-300 hover:shadow-lg ${theme === 'dark' ? 'bg-gray-800/70' : ''}`}>
@@ -19,11 +29,23 @@ const VideoCard = ({ video, vipAccess = false }) => {
         />
         
         {vipAccess ? (
-          <button className="absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/50 transition-colors group">
-            <div className="bg-white/90 rounded-full p-3 transform transition-transform group-hover:scale-110">
-              <Play className="h-6 w-6 text-metadite-primary" fill="currentColor" />
-            </div>
-          </button>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Link 
+              to={`/video/${video.id}`} 
+              className="absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/50 transition-colors group"
+            >
+              <div className="bg-white/90 rounded-full p-3 transform transition-transform group-hover:scale-110">
+                <Play className="h-6 w-6 text-metadite-primary" fill="currentColor" />
+              </div>
+            </Link>
+            
+            <button 
+              onClick={handlePreview}
+              className="absolute bottom-4 right-4 bg-black/60 text-white text-xs font-medium px-2 py-1 rounded hover:bg-black/80 transition-colors"
+            >
+              Preview
+            </button>
+          </div>
         ) : (
           <div className="absolute inset-0 flex items-center justify-center bg-black/60">
             <div className="bg-white/80 rounded-full p-3 flex items-center space-x-2">
@@ -39,19 +61,50 @@ const VideoCard = ({ video, vipAccess = false }) => {
       </div>
       
       <div className="p-4">
-        <h3 className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-800'} mb-1`}>{video.title}</h3>
+        <h3 className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-800'} mb-1 truncate`}>{video.title}</h3>
         <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>{video.modelName}</p>
         
         {vipAccess ? (
           <div className={`mt-2 text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-400'}`}>Last watched: {video.lastWatched || 'Never'}</div>
         ) : (
           <div className="mt-3">
-            <button className="w-full bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white py-2 rounded-md hover:opacity-90 transition-opacity text-sm">
-              Upgrade to VIP
-            </button>
+            <Link to="/upgrade" className="block w-full">
+              <button className="w-full bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white py-2 rounded-md hover:opacity-90 transition-opacity text-sm">
+                Upgrade to VIP
+              </button>
+            </Link>
           </div>
         )}
       </div>
+
+      {/* Video Preview Dialog */}
+      <Dialog open={showPreview} onOpenChange={setShowPreview}>
+        <DialogContent className="sm:max-w-[600px] p-0 bg-black overflow-hidden">
+          <div className="relative aspect-video">
+            <video
+              className="w-full h-full object-contain"
+              autoPlay
+              loop
+              muted
+              controls
+              poster={video.thumbnail}
+            >
+              {/* In a real app, this would be a real preview video */}
+              Your browser does not support the video tag.
+            </video>
+            <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
+              <h3 className="text-white text-lg font-medium">{video.title} (Preview)</h3>
+              <Link 
+                to={`/video/${video.id}`}
+                className="inline-block mt-2 bg-metadite-primary text-white px-4 py-1.5 rounded-md hover:bg-opacity-90 transition-colors text-sm"
+                onClick={() => setShowPreview(false)}
+              >
+                Watch Full Video
+              </Link>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
