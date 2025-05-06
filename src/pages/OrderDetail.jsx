@@ -5,7 +5,7 @@ import {
   Package, 
   ArrowRight, 
   Trash2, 
-  Calendar as CalendarDays,
+  Calendar, 
   Clock,
   Info
 } from 'lucide-react';
@@ -199,7 +199,7 @@ const OrderDetail = () => {
       }`}>
         <div className="container mx-auto max-w-4xl">
           {/* Header with Back Button and Order Status */}
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <button 
               onClick={() => navigate('/dashboard')}
               className={`flex items-center gap-2 ${theme === 'dark' ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'} transition-colors`}
@@ -235,25 +235,24 @@ const OrderDetail = () => {
           {/* Order Overview Card */}
           <Card className={`mb-6 ${theme === 'dark' ? 'bg-gray-800/70 border-gray-700 text-white' : ''}`}>
             <CardHeader>
-              <div className="flex justify-between items-start">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div>
                   <CardTitle className="text-xl flex items-center gap-2">
                     Order #{order.orderNumber}
                     <Info className="h-4 w-4 text-muted-foreground cursor-help" title="Order ID" />
                   </CardTitle>
                   <CardDescription className={`${theme === 'dark' ? 'text-gray-400' : ''}`}>
-                    <div className="flex items-center mt-2 gap-1">
-                      <CalendarDays className="h-3.5 w-3.5 mr-1" /> 
-                      Order Date: {order.date}
-                      <span className="mx-2">•</span>
+                    <div className="flex flex-wrap items-center mt-2 gap-1">
+                      <Calendar className="h-3.5 w-3.5 mr-1" /> 
+                      <span className="mr-2">Order Date: {order.date}</span>
                       <Clock className="h-3.5 w-3.5 mr-1" /> 
-                      Order Time: {order.time}
+                      <span>Order Time: {order.time}</span>
                     </div>
                   </CardDescription>
                 </div>
                 
                 {order.status === 'shipped' && (
-                  <Button onClick={handleTrackOrder} className="gap-1">
+                  <Button onClick={handleTrackOrder} className="gap-1 mt-2 sm:mt-0">
                     <Package className="h-4 w-4" />
                     Track Order
                   </Button>
@@ -284,7 +283,7 @@ const OrderDetail = () => {
               <div className={`rounded-md overflow-hidden ${theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-50'} mb-6`}>
                 {order.items.map((item, index) => (
                   <div key={item.id}>
-                    <div className="p-4 flex gap-4">
+                    <div className="p-4 flex gap-3">
                       <div className="w-16 h-16 rounded-md overflow-hidden flex-shrink-0">
                         <img 
                           src={item.image} 
@@ -292,11 +291,11 @@ const OrderDetail = () => {
                           className="w-full h-full object-cover"
                         />
                       </div>
-                      <div className="flex-grow">
-                        <h4 className="font-medium">{item.name}</h4>
-                        <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>{item.description}</p>
+                      <div className="flex-grow min-w-0"> {/* Prevent text overflow */}
+                        <h4 className="font-medium truncate">{item.name}</h4>
+                        <div className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>{item.description}</div>
                       </div>
-                      <div className="flex flex-col items-end justify-between">
+                      <div className="flex flex-col items-end justify-between shrink-0">
                         <span className="font-medium">{formatCurrency(item.price)}</span>
                         <span className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                           Qty: {item.quantity}
@@ -313,29 +312,39 @@ const OrderDetail = () => {
               {/* Payment Details */}
               <h3 className={`font-medium mb-2 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>Payment Details</h3>
               <div className={`p-4 rounded-md ${theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}>Payment Time:</div>
-                  <div className="text-right">{order.date} {order.paymentTime}</div>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between items-center">
+                    <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}>Payment Time:</span>
+                    <span>{order.date} {order.paymentTime}</span>
+                  </div>
                   
-                  <div className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}>Payment Method:</div>
-                  <div className="text-right">{order.paymentMethod}</div>
+                  <div className="flex justify-between items-center">
+                    <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}>Payment Method:</span>
+                    <span className="text-right">{order.paymentMethod}</span>
+                  </div>
                   
-                  <div className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}>Products Amount:</div>
-                  <div className="text-right">{formatCurrency(order.productsAmount)}</div>
+                  <div className="flex justify-between items-center">
+                    <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}>Products Amount:</span>
+                    <span>{formatCurrency(order.productsAmount)}</span>
+                  </div>
                   
-                  <div className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}>Shipping Fee:</div>
-                  <div className="text-right">{order.shippingFee === 0 ? 'Free' : formatCurrency(order.shippingFee)}</div>
+                  <div className="flex justify-between items-center">
+                    <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}>Shipping Fee:</span>
+                    <span>{order.shippingFee === 0 ? 'Free' : formatCurrency(order.shippingFee)}</span>
+                  </div>
                   
                   {order.shippingDiscount > 0 && (
-                    <>
-                      <div className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}>Shipping Discount:</div>
-                      <div className="text-right text-green-600">-{formatCurrency(order.shippingDiscount)}</div>
-                    </>
+                    <div className="flex justify-between items-center">
+                      <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}>Shipping Discount:</span>
+                      <span className="text-green-600">-{formatCurrency(order.shippingDiscount)}</span>
+                    </div>
                   )}
                   
-                  <div className="font-medium pt-2 border-t border-dashed border-gray-300 dark:border-gray-600">Total Amount:</div>
-                  <div className="text-right font-medium pt-2 border-t border-dashed border-gray-300 dark:border-gray-600">
-                    {formatCurrency(order.paymentAmount)}
+                  <div className="pt-2 border-t border-dashed border-gray-300 dark:border-gray-600 flex justify-between items-center">
+                    <span className="font-medium">Total Amount:</span>
+                    <span className="font-medium">
+                      {formatCurrency(order.paymentAmount)}
+                    </span>
                   </div>
                 </div>
               </div>
