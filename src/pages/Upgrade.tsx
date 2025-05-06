@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckIcon, CreditCardIcon, StarIcon, ShieldCheck, Zap } from 'lucide-react';
@@ -99,25 +98,27 @@ const Upgrade: React.FC = () => {
       <main className={`flex-1 container mx-auto px-4 py-24 ${
         theme === 'dark' ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' : ''
       }`}>
-        <div className="text-center mb-16">
-          <br /> <br /><br /> <br /><br /> <br />
-          <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-metadite-primary to-metadite-secondary text-transparent bg-clip-text">
+        <div className="text-center mb-12">
+          <br /> <br /><br /> <br />
+          <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-metadite-primary to-metadite-secondary text-transparent bg-clip-text">
             Choose Your Membership
           </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+          <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
             Select the perfect plan to enhance your Metadite experience and unlock exclusive content.
           </p>
           {currentPlan && (
-            <div className="mt-6 inline-block bg-gray-100 dark:bg-gray-700 px-6 py-3 rounded-full">
-              <span className="text-gray-600 dark:text-gray-300">Current plan: </span>
-              <Badge variant="outline" className={`ml-2 text-${currentPlan === 'vvip' ? 'purple' : currentPlan === 'vip' ? 'amber' : 'green'}-500 bg-${currentPlan === 'vvip' ? 'purple' : currentPlan === 'vip' ? 'amber' : 'green'}-100 dark:bg-${currentPlan === 'vvip' ? 'purple' : currentPlan === 'vip' ? 'amber' : 'green'}-900/20 font-bold uppercase`}>
-                {currentPlan}
-              </Badge>
+            <div className="mt-4 inline-block bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-full text-sm font-medium dark:text-gray-200">
+              Your current plan:
+              <span className="font-bold italic text-green-500 uppercase">
+                <Badge className={`text-${currentPlan === 'vvip' ? 'purple' : currentPlan === 'vip' ? 'amber' : 'green'}-500 bg-${currentPlan === 'vvip' ? 'purple' : currentPlan === 'vip' ? 'amber' : 'green'}-100 dark:bg-${currentPlan === 'vvip' ? 'purple' : currentPlan === 'vip' ? 'amber' : 'green'}-900/20`}>
+                  {currentPlan}
+                </Badge>
+              </span>
             </div>
           )}
         </div>
         
-        <div className="grid md:grid-cols-3 gap-10 max-w-7xl mx-auto">
+        <div className="grid md:grid-cols-3 gap-16 max-w-7xl mx-auto">
           {tiers.map((tier) => (
             <Card 
               key={tier.name} 
@@ -195,6 +196,7 @@ const Upgrade: React.FC = () => {
             </Card>
           ))}
         </div>
+        <br /> <br /><br />
       </main>
       
       <Footer />
