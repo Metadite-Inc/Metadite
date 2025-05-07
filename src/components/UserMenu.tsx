@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { User, LogOut, LayoutDashboard, MessageSquare, Crown } from 'lucide-react';
@@ -20,6 +21,9 @@ const UserMenu = () => {
   
   // Check if user has VIP access
   const hasVipAccess = user?.membershipLevel === 'vip' || user?.membershipLevel === 'vvip';
+  
+  // Check if user is regular (not admin or moderator)
+  const isRegularUser = user?.role === 'user';
 
   if (!user) {
     return (
@@ -62,7 +66,7 @@ const UserMenu = () => {
           </Link>
         </DropdownMenuItem>
         
-        {!hasVipAccess && (
+        {isRegularUser && !hasVipAccess && (
           <DropdownMenuItem className={theme === 'dark' ? 'hover:bg-gray-700 focus:bg-gray-700' : ''}>
             <Link to="/upgrade" className="flex items-center w-full">
               <Crown className="mr-2 h-4 w-4" />
