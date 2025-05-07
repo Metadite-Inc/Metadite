@@ -79,8 +79,8 @@ const HeroSection = ({ isLoaded, user, hasVipAccess, theme }) => {
           
           <div className={`pt-5 pb-5 md:pl-10 md:w-1/2 transition-all duration-700 delay-300 ${isLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'} flex justify-center md:block`}>
             <div className="relative">
-              {/* Slideshow Start */}
-              <div className="relative w-11/18 max-w-sm sm:max-w-10 md:max-w-xl lg:max-w-2xl mx-auto md:w-full aspect-[4/3] h-auto rounded-xl z-10 min-h-[250px] max-h-[400px] md:min-h-[250px] md:max-h-[400px] overflow-hidden">
+              {/* Slideshow Start - Increased height */}
+              <div className="relative w-11/18 max-w-sm sm:max-w-10 md:max-w-xl lg:max-w-2xl mx-auto md:w-full aspect-[4/3] h-auto rounded-xl z-10 min-h-[300px] max-h-[450px] md:min-h-[350px] md:max-h-[500px] overflow-hidden">
                 {/* Navigation Buttons */}
                 <button
                   className="absolute left-2 top-1/2 -translate-y-1/2 z-30 bg-white/80 hover:bg-metadite-primary/90 text-metadite-primary hover:text-white rounded-full p-2 shadow transition-colors focus:outline-none"
@@ -103,12 +103,12 @@ const HeroSection = ({ isLoaded, user, hasVipAccess, theme }) => {
                 </svg>
               </button>
                 {loading && (
-                  <div className="flex items-center justify-center w-full h-full min-h-[200px] bg-gray-100 rounded-xl animate-pulse">
+                  <div className="flex items-center justify-center w-full h-full min-h-[250px] bg-gray-100 rounded-xl animate-pulse">
                     <span className="text-gray-400">Loading images...</span>
                   </div>
                 )}
                 {error && (
-                  <div className="flex items-center justify-center w-full h-full min-h-[180px] bg-red-50 rounded-xl">
+                  <div className="flex items-center justify-center w-full h-full min-h-[250px] bg-red-50 rounded-xl">
                     <span className="text-red-500">{error}</span>
                   </div>
                 )}
@@ -141,8 +141,14 @@ const HeroSection = ({ isLoaded, user, hasVipAccess, theme }) => {
                         <img
                           src={img}
                           alt={`Model ${idx + 1}`}
-                          className="w-full h-full object-cover rounded-lg drop-shadow-xl"
-                          style={{ display: 'block', transition: 'transform 0.7s, filter 0.7s', filter: currentSlide === idx ? 'brightness(1) contrast(1.1)' : 'brightness(0.8) blur(2px)' }}
+                          className="w-full h-full object-contain rounded-lg drop-shadow-xl"
+                          style={{ 
+                            display: 'block', 
+                            transition: 'transform 0.7s, filter 0.7s', 
+                            filter: currentSlide === idx ? 'brightness(1) contrast(1.1)' : 'brightness(0.8) blur(2px)',
+                            maxHeight: '100%'
+                          }}
+                          loading="lazy"
                         />
                       </div>
                     </div>
