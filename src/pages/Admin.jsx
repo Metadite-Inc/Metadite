@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
@@ -16,6 +17,7 @@ import SubscriptionsTab from '../components/admin/SubscriptionsTab';
 import PaymentsTab from '../components/admin/PaymentsTab';
 import FlaggedMessagesTab from '../components/admin/FlaggedMessagesTab';
 import SettingsTab from '../components/admin/SettingsTab';
+import VideosTab from '../components/admin/VideosTab'; // Import the new VideosTab component
 
 // Mock data for flagged messages count
 const flaggedMessagesCount = 2;
@@ -80,6 +82,9 @@ const Admin = () => {
               
               {/* Models Management */}
               {activeTab === 'models' && <ModelsTab isLoaded={isLoaded} />}
+              
+              {/* Videos Management */}
+              {activeTab === 'videos' && <VideosTab isLoaded={isLoaded} />}
               
               {/* Admins Management */}
               {activeTab === 'admins' && <AdminsTab isLoaded={isLoaded} />}
