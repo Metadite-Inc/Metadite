@@ -77,10 +77,10 @@ const HeroSection = ({ isLoaded, user, hasVipAccess, theme }) => {
             </div>
           </div>
           
-          <div className={`pt-5 pb-10 md:pl-10 md:w-1/2 transition-all duration-700 delay-300 ${isLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'} flex justify-center md:block`}>
+          <div className={`pt-5 pb-5 md:pl-10 md:w-1/2 transition-all duration-700 delay-300 ${isLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'} flex justify-center md:block`}>
             <div className="relative">
               {/* Slideshow Start */}
-              <div className="relative w-full max-w-[97vw] px-1 sm:w-96 sm:max-w-full sm:px-0 mx-auto aspect-[3/4.3] rounded-xl z-10 min-h-[450px] max-h-[600px] overflow-hidden">
+              <div className="relative w-11/18 max-w-sm sm:max-w-10 md:max-w-xl lg:max-w-2xl mx-auto md:w-full aspect-[4/3] h-auto rounded-xl z-10 min-h-[250px] max-h-[400px] md:min-h-[250px] md:max-h-[400px] overflow-hidden">
                 {/* Navigation Buttons */}
                 <button
                   className="absolute left-2 top-1/2 -translate-y-1/2 z-30 bg-white/80 hover:bg-metadite-primary/90 text-metadite-primary hover:text-white rounded-full p-2 shadow transition-colors focus:outline-none"
@@ -134,14 +134,14 @@ const HeroSection = ({ isLoaded, user, hasVipAccess, theme }) => {
                   return (
                     <div
                       key={img}
-                      className={`absolute top-0 left-0 w-50 h-50 flex items-center justify-center ${effect} ${loveShadow}`}
+                      className={`absolute top-0 left-0 w-full h-full flex items-center justify-center ${effect} ${loveShadow}`}
                       style={{ position: 'absolute' }}
                     >
-                      <div className={`w-full h-full p-1 bg-white/80 dark:bg-gray-900/60 rounded-xl border-2 border-metadite-primary/40 flex items-center justify-center shadow-2xl ${loveShadow}`}>
+                      <div className={`w-[97%] h-[97%] p-1 bg-white/80 dark:bg-gray-900/60 rounded-xl border-2 border-metadite-primary/40 flex items-center justify-center shadow-2xl ${loveShadow}`}>
                         <img
                           src={img}
                           alt={`Model ${idx + 1}`}
-                          className="w-full h-full object-contain rounded-lg drop-shadow-xl scale-90"
+                          className="w-full h-full object-cover rounded-lg drop-shadow-xl"
                           style={{ display: 'block', transition: 'transform 0.7s, filter 0.7s', filter: currentSlide === idx ? 'brightness(1) contrast(1.1)' : 'brightness(0.8) blur(2px)' }}
                         />
                       </div>
