@@ -1,5 +1,5 @@
 
-import { ShoppingCart, Video, Users } from 'lucide-react';
+import { Video,ScanEye, Users } from 'lucide-react';
 
 const FeaturesSection = ({ theme }) => {
   return (
@@ -14,22 +14,22 @@ const FeaturesSection = ({ theme }) => {
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <FeatureCard 
-            icon={<ShoppingCart className="h-8 w-8 text-white" />} 
-            title="Premium Quality" 
-            description="Each model is crafted with exceptional attention to detail and made from high-quality materials."
+            icon={<ScanEye className="h-8 w-8 text-white" />} 
+            title="Premium Visual Experience" 
+            description="Every model is captured in stunning, high-definition detail to deliver a captivating and sensual viewing experience."
           />
           
           <FeatureCard 
             icon={<Video className="h-8 w-8 text-white" />} 
-            title="Exclusive Content" 
-            description="VIP members get access to exclusive videos, tutorials, and behind-the-scenes content."
+            title="Exclusive Member Access" 
+            description="Get access to private videos and photo sets reserved only for subscribers-content that goes beyond the surface."
             delay="0.3s"
           />
           
           <FeatureCard 
             icon={<Users className="h-8 w-8 text-white" />} 
-            title="Community" 
-            description="Join a vibrant community of collectors and enthusiasts sharing their passion."
+            title="Real Interaction, Real Connection" 
+            description="Use your messages to connect with models on a deeper level before making a purchase. It's more than content-it's conversation, chemistry, and choice."
             delay="0.6s"
           />
         </div>

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -114,9 +113,6 @@ const Navbar = () => {
                 <>
                   <Link to="/" className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors">Home</Link>
                   <Link to="/models" className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors">Models</Link>
-                  {!user && (
-                    <Link to="/upgrade" className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors">Pricing</Link>
-                  )}
                   {user?.role === 'regular' && (
                     <button
                       onClick={() => navigate('/chat')}
@@ -171,6 +167,8 @@ const Navbar = () => {
         </div>
 
         <div className="md:hidden flex items-center space-x-4">
+          {/* Dark/Light toggle for small screens */}
+          <ThemeToggle />
           {(user?.role === 'user' || user?.role === 'moderator') && (
             <button
               onClick={() => navigate('/chat')}
@@ -211,9 +209,6 @@ const Navbar = () => {
                 <>
                   <Link to="/" className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors py-2" onClick={toggleMobileMenu}>Home</Link>
                   <Link to="/models" className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors py-2" onClick={toggleMobileMenu}>Models</Link>
-                  {!user && (
-                    <Link to="/upgrade" className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors py-2" onClick={toggleMobileMenu}>Pricing</Link>
-                  )}
                   {user?.role === 'regular' && (
                     <Link to="/chat" className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors py-2" onClick={toggleMobileMenu}>Chat</Link>
                   )}
