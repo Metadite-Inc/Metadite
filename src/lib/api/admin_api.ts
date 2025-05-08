@@ -102,7 +102,7 @@ class AdminApiService {
         return [];
       }
       
-      return await this.request<Moderator[]>('/api/admin/moderators', {
+      return await this.request<Moderator[]>('api/moderators/moderators?skip=0&limit=5', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
