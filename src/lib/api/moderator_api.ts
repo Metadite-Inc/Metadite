@@ -47,6 +47,12 @@ class ModeratorApiService {
 
 /* backend apis
 
+GET DOLLS NOT ASSIGNED TO MODERATORS
+curl -X 'GET' \
+  'http://127.0.0.1:8000/api/dolls/assigned/false?skip=0&limit=10' \
+  -H 'accept: application/json'
+  -H 'Authorization: Bearer eyJhbGo04DN7KvPY' \
+
 CRREATE MODERATOR = IMPLEMENTED IN src/lib/api/admin_api
 curl -X 'POST' \
   'http://127.0.0.1:8000/api/admin/moderators' \
