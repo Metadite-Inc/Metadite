@@ -45,21 +45,6 @@ class ModeratorApiService {
     }
   }
 
-  /*
-  GET ALL MODERATORS
-  curl -X 'GET' \
-  'http://127.0.0.1:8000/api/moderators/moderators?skip=0&limit=5' \
-  -H 'accept: application/json' \
-  -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzd'
-
-  DELETE MODERATOR
-  curl -X 'DELETE' \
-  'http://127.0.0.1:8000/api/moderators/1' \
-  -H 'accept: application/json' \
-  -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIs'
-  
-  */
-
   // Get unassigned models/dolls
   async getUnassignedDolls(skip = 0, limit = 10): Promise<Model[]> {
     try {
