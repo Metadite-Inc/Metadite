@@ -1,5 +1,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { cartApiService } from '../lib/api/cart_api';
+import { toast } from 'sonner';
 
 export interface Model {
   id: number | string;
@@ -28,7 +30,7 @@ interface CartContextType {
 // Create a context for cart
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-// Sample model data for demo purposes
+// Sample model data for demo or fallback purposes
 const sampleModels: Model[] = [
   {
     id: 1,
@@ -57,18 +59,50 @@ interface CartProviderProps {
   children: ReactNode;
 }
 
-// Provider component that wraps your app and makes cart object available to any child component that calls useCart().
+// Provider component that wraps your app and makes cart object available
 export function CartProvider({ children }: CartProviderProps) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Fetch cart items on component mount
   useEffect(() => {
-    // Load cart from localStorage
-    const storedCart = localStorage.getItem('metaditeCart');
-    if (storedCart) {
-      setItems(JSON.parse(storedCart));
-    }
-    setLoading(false);
+    const fetchCartItems = async () => {
+      try {
+        // Try to get cart items from API
+        const cartItems = await cartApiService.getCartItems();
+        
+        if (cartItems.length > 0) {
+          // Transform API cart items to our CartItem format
+          const transformedItems = cartItems.map(item => ({
+            id: item.doll_id,
+            name: item.doll?.name || 'Unknown Model',
+            price: item.doll?.price || 0,
+            description: item.doll?.description || '',
+            image: item.doll?.image_url || '',
+            quantity: item.quantity
+          }));
+          
+          setItems(transformedItems);
+        } else {
+          // If API returns empty or fails, try to load from localStorage
+          const storedCart = localStorage.getItem('metaditeCart');
+          if (storedCart) {
+            setItems(JSON.parse(storedCart));
+          }
+        }
+      } catch (error) {
+        // If API fails, load from localStorage as fallback
+        const storedCart = localStorage.getItem('metaditeCart');
+        if (storedCart) {
+          setItems(JSON.parse(storedCart));
+        }
+        console.error("Error fetching cart:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCartItems();
   }, []);
 
   // Save cart to localStorage whenever it changes
@@ -90,40 +124,100 @@ export function CartProvider({ children }: CartProviderProps) {
   );
 
   // Add item to cart
-  const addToCart = (item: Model) => {
-    // Check if item is already in cart
-    const itemIndex = items.findIndex(cartItem => cartItem.id === item.id);
-    
-    if (itemIndex !== -1) {
-      // Item exists, update quantity
-      const updatedItems = [...items];
-      updatedItems[itemIndex].quantity += 1;
-      setItems(updatedItems);
-    } else {
-      // Item doesn't exist, add it with quantity 1
-      setItems([...items, { ...item, quantity: 1 }]);
+  const addToCart = async (item: Model) => {
+    try {
+      // Try to add to API first
+      await cartApiService.addToCart(Number(item.id), 1);
+      
+      // If successful, update local state
+      const itemIndex = items.findIndex(cartItem => cartItem.id === item.id);
+      
+      if (itemIndex !== -1) {
+        // Item exists, update quantity
+        const updatedItems = [...items];
+        updatedItems[itemIndex].quantity += 1;
+        setItems(updatedItems);
+      } else {
+        // Item doesn't exist, add it with quantity 1
+        setItems([...items, { ...item, quantity: 1 }]);
+      }
+    } catch (error) {
+      // Fallback to local cart if API fails
+      const itemIndex = items.findIndex(cartItem => cartItem.id === item.id);
+      
+      if (itemIndex !== -1) {
+        const updatedItems = [...items];
+        updatedItems[itemIndex].quantity += 1;
+        setItems(updatedItems);
+      } else {
+        setItems([...items, { ...item, quantity: 1 }]);
+      }
+      
+      console.error("Error adding to cart:", error);
     }
   };
 
   // Remove item from cart
-  const removeFromCart = (itemId: number | string) => {
-    setItems(items.filter(item => item.id !== itemId));
+  const removeFromCart = async (itemId: number | string) => {
+    try {
+      // Find the cart item with this model ID
+      const cartItem = items.find(item => item.id === itemId);
+      if (!cartItem) return;
+      
+      // Try to remove via API
+      const apiItemId = Number(itemId);
+      await cartApiService.removeFromCart(apiItemId);
+      
+      // Update local state
+      setItems(items.filter(item => item.id !== itemId));
+    } catch (error) {
+      // Fallback to local cart if API fails
+      setItems(items.filter(item => item.id !== itemId));
+      console.error("Error removing from cart:", error);
+    }
   };
 
   // Update item quantity
-  const updateQuantity = (itemId: number | string, quantity: number) => {
-    setItems(
-      items.map(item => 
-        item.id === itemId 
-          ? { ...item, quantity: quantity } 
-          : item
-      )
-    );
+  const updateQuantity = async (itemId: number | string, quantity: number) => {
+    try {
+      // Try to update via API
+      const apiItemId = Number(itemId);
+      await cartApiService.updateCartItemQuantity(apiItemId, quantity);
+      
+      // Update local state
+      setItems(
+        items.map(item => 
+          item.id === itemId 
+            ? { ...item, quantity: quantity } 
+            : item
+        )
+      );
+    } catch (error) {
+      // Fallback to local cart if API fails
+      setItems(
+        items.map(item => 
+          item.id === itemId 
+            ? { ...item, quantity: quantity } 
+            : item
+        )
+      );
+      console.error("Error updating cart:", error);
+    }
   };
 
   // Clear cart
-  const clearCart = () => {
-    setItems([]);
+  const clearCart = async () => {
+    try {
+      // Try to clear via API
+      await cartApiService.clearCart();
+      
+      // Clear local state
+      setItems([]);
+    } catch (error) {
+      // Clear local state even if API fails
+      setItems([]);
+      console.error("Error clearing cart:", error);
+    }
   };
 
   // Get model by ID

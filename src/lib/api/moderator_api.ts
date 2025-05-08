@@ -45,67 +45,106 @@ class ModeratorApiService {
     }
   }
 
-/* backend apis
+  // Get unassigned models/dolls
+  async getUnassignedDolls(skip = 0, limit = 10): Promise<Model[]> {
+    try {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        toast.error('Authentication required');
+        return [];
+      }
+      
+      return await this.request<Model[]>(`/api/dolls/assigned/false?skip=${skip}&limit=${limit}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    } catch (error) {
+      console.error('Failed to fetch unassigned dolls:', error);
+      return [];
+    }
+  }
 
-GET DOLLS NOT ASSIGNED TO MODERATORS
-curl -X 'GET' \
-  'http://127.0.0.1:8000/api/dolls/assigned/false?skip=0&limit=10' \
-  -H 'accept: application/json'
-  -H 'Authorization: Bearer eyJhbGo04DN7KvPY' \
+  // Get models for assignment (this might be the same as unassigned dolls or could be all dolls)
+  async getModelsForAssignment(): Promise<Model[]> {
+    // For now, use the unassigned dolls endpoint
+    return this.getUnassignedDolls(0, 100);
+  }
 
-CRREATE MODERATOR = IMPLEMENTED IN src/lib/api/admin_api
-curl -X 'POST' \
-  'http://127.0.0.1:8000/api/admin/moderators' \
-  -H 'accept: application/json' \
-  -H 'Authorization: Bearer eyJhbGciDN7KvPY' \
-  -H 'Content-Type: application/json' \
-  -d '{
-  "email": "user@example.com",
-  "full_name": "string",
-  "region": "string",
-  "role": "user",
-  "membership_level": "standard",
-  "is_active": true,
-  "video_access_count": 0,
-  "assigned_dolls": [],
-  "password": "string"
-}'
+  // Assign a doll to moderator
+  async assignDollToModerator(moderatorId: number, dollId: number): Promise<void> {
+    try {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        toast.error('Authentication required');
+        return;
+      }
+      
+      await this.request(`/api/moderators/${moderatorId}/dolls/${dollId}`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      
+      toast.success('Doll assigned to moderator successfully');
+    } catch (error) {
+      toast.error('Failed to assign doll to moderator', {
+        description: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  }
 
-ASSIGN A DOLL TO MODERATOR
-curl -X 'POST' \
-  'http://127.0.0.1:8000/api/moderators/1/dolls/1' \
-  -H 'accept: application/json' \
-  -H 'Authorization: Bearer eyJhbGo04DN7KvPY' \
-  -d ''
+  // Get dolls assigned to a moderator
+  async getDollsAssignedToModerator(moderatorId: number): Promise<Model[]> {
+    try {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        toast.error('Authentication required');
+        return [];
+      }
+      
+      return await this.request<Model[]>(`/api/moderators/${moderatorId}/dolls`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    } catch (error) {
+      console.error('Failed to fetch assigned dolls:', error);
+      return [];
+    }
+  }
 
-GET DOLLS ASSIGNED TO MODERATOR
-curl -X 'GET' \
-  'http://127.0.0.1:8000/api/moderators/1/dolls' \
-  -H 'accept: application/json' \
-  -H 'Authorization: Bearer eyJhbGciOiJIUzI1'
-
-DELETE MODERATOR
-curl -X 'DELETE' \
-  'http://127.0.0.1:8000/api/moderators/1' \
-  -H 'accept: application/json' \
-  -H 'Authorization: Bearer eyJhbGciOiJIUzI1N'
-
-ALLOW MODERATORS TO UPDATE THERE PROFILE
-curl -X 'PUT' \
-  'http://127.0.0.1:8000/api/moderators/moderators/1' \
-  -H 'accept: application/json' \
-  -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIstaF0y-eo04DN7KvPY' \
-  -H 'Content-Type: application/json' \
-  -d '{
-  "email": "user@example.com",
-  "full_name": "string",
-  "region": "string",
-  "is_active": true,
-  "password": "string"
-}'
-
-*/
+  // Update moderator profile
+  async updateModeratorProfile(moderatorId: number, data: {
+    email: string;
+    full_name: string;
+    region: string;
+    is_active: boolean;
+    password?: string;
+  }): Promise<void> {
+    try {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        toast.error('Authentication required');
+        return;
+      }
+      
+      await this.request(`/api/moderators/moderators/${moderatorId}`, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+      });
+      
+      toast.success('Moderator profile updated successfully');
+    } catch (error) {
+      toast.error('Failed to update moderator profile', {
+        description: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  }
+}
 
 export const moderatorApiService = new ModeratorApiService();
-
-
