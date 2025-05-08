@@ -6,14 +6,34 @@ import { useCart } from '../context/CartContext';
 const CartItem = ({ item }) => {
   const { updateQuantity, removeFromCart } = useCart();
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
-  const handleIncrease = () => {
-    updateQuantity(item.id, item.quantity + 1);
+  const handleIncrease = async () => {
+    setIsUpdating(true);
+    try {
+      await updateQuantity(item.id, item.quantity + 1);
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
-  const handleDecrease = () => {
+  const handleDecrease = async () => {
     if (item.quantity > 1) {
-      updateQuantity(item.id, item.quantity - 1);
+      setIsUpdating(true);
+      try {
+        await updateQuantity(item.id, item.quantity - 1);
+      } finally {
+        setIsUpdating(false);
+      }
+    }
+  };
+
+  const handleRemove = async () => {
+    setIsUpdating(true);
+    try {
+      await removeFromCart(item.id);
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -37,16 +57,19 @@ const CartItem = ({ item }) => {
           <button 
             onClick={handleDecrease}
             className="p-1 rounded-md bg-gray-100 hover:bg-gray-200 transition-colors"
-            disabled={item.quantity <= 1}
+            disabled={item.quantity <= 1 || isUpdating}
           >
             <Minus className="h-4 w-4 text-gray-600" />
           </button>
           
-          <span className="text-gray-800 w-6 text-center">{item.quantity}</span>
+          <span className="text-gray-800 w-6 text-center">
+            {isUpdating ? '...' : item.quantity}
+          </span>
           
           <button 
             onClick={handleIncrease}
             className="p-1 rounded-md bg-gray-100 hover:bg-gray-200 transition-colors"
+            disabled={isUpdating}
           >
             <Plus className="h-4 w-4 text-gray-600" />
           </button>
@@ -57,8 +80,9 @@ const CartItem = ({ item }) => {
         <span className="font-medium">${(item.price * item.quantity).toFixed(2)}</span>
         
         <button 
-          onClick={() => removeFromCart(item.id)}
+          onClick={handleRemove}
           className="text-gray-400 hover:text-red-500 transition-colors mt-2"
+          disabled={isUpdating}
         >
           <X className="h-5 w-5" />
         </button>

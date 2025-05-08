@@ -29,7 +29,7 @@ export interface CreateModelRequest {
   doll_gross_weight: number;
   doll_packing_size: string;
   doll_body_size: string;
-  created_at: date;
+  created_at: Date; // Fixed: date to Date
 }
 
 export interface ModelDetail extends ModelBasic {

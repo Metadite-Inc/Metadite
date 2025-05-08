@@ -7,18 +7,29 @@ import CartItem from '../components/CartItem';
 import { useCart } from '../context/CartContext';
 import { useTheme } from '../context/ThemeContext';
 import { ShoppingBag, CreditCard, ArrowRight } from 'lucide-react';
+import { toast } from 'sonner';
 
 const Cart = () => {
   const { items, clearCart, totalAmount, totalItems } = useCart();
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
   const { theme } = useTheme();
   
   useEffect(() => {
     setIsLoaded(true);
   }, []);
   
-  const handleProceedToCheckout = () => {
-    // Navigate to checkout page
+  const handleClearCart = async () => {
+    if (window.confirm('Are you sure you want to clear your cart?')) {
+      setIsClearing(true);
+      try {
+        await clearCart();
+      } catch (error) {
+        toast.error('Failed to clear cart');
+      } finally {
+        setIsClearing(false);
+      }
+    }
   };
 
   return (
@@ -45,10 +56,11 @@ const Cart = () => {
                 
                 <div className="mt-6 flex justify-between">
                   <button 
-                    onClick={clearCart}
-                    className="text-red-500 hover:text-red-600 transition-colors"
+                    onClick={handleClearCart}
+                    className="text-red-500 hover:text-red-600 transition-colors disabled:opacity-50"
+                    disabled={isClearing}
                   >
-                    Clear Cart
+                    {isClearing ? 'Clearing...' : 'Clear Cart'}
                   </button>
                   <Link 
                     to="/models"
@@ -107,7 +119,6 @@ const Cart = () => {
                 <div className="glass-card rounded-xl overflow-hidden mt-6 p-4">
                   <h3 className={`font-medium mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>Accepted Payment Methods</h3>
                   <div className="flex flex-wrap gap-2">
-                    {/*<div className={`${theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-800'} rounded-md px-3 py-2 text-sm`}>Stripe</div>*/}
                     <div className={`${theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-800'} rounded-md px-3 py-2 text-sm`}>Crypto</div>
                     <div className={`${theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-800'} rounded-md px-3 py-2 text-sm`}>Credit/Debit Card</div>
                   </div>
