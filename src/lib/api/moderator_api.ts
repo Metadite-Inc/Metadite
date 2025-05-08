@@ -33,7 +33,7 @@ class ModeratorApiService extends BaseApiService {
     try {
       const token = this.validateAuth();
       
-      return await this.request<Moderator[]>('api/moderators/moderators?skip=0&limit=5', {
+      return await this.request<Moderator[]>('/api/moderators/moderators?skip=0&limit=5', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
