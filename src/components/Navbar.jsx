@@ -171,6 +171,7 @@ const Navbar = () => {
         </div>
 
         <div className="md:hidden flex items-center space-x-4">
+  <ThemeToggle />
           {(user?.role === 'user' || user?.role === 'moderator') && (
             <button
               onClick={() => navigate('/chat')}

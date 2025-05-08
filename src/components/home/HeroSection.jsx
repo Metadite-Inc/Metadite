@@ -43,13 +43,13 @@ const HeroSection = ({ isLoaded, user, hasVipAccess, theme }) => {
         <div className="flex flex-col md:flex-row items-center">
           <div className={`md:w-1/2 md:pr-8 mb-8 md:mb-0 transition-all duration-700 ${isLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10'}`}>
             <span className="inline-block px-3 py-1 bg-metadite-primary/10 text-metadite-primary rounded-full text-sm font-medium mb-4">
-              Premium Collectibles
+              Curated intimacy
             </span>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 bg-gradient-to-r from-metadite-dark via-metadite-primary to-metadite-secondary bg-clip-text text-transparent">
-              Discover Exquisite Model Dolls
+              A New Era of Connection
             </h1>
             <p className="text-gray-600 text-lg mb-6">
-              Explore our collection of beautifully crafted model dolls with premium quality and attention to detail. Join our VIP membership for exclusive content.
+            Where every glance lingers a little longer, every word touches a little deeper, and intimacy, access, and interaction blend into an irresistible experience that leaves you wanting more.
             </p>
             <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
               <Link 
@@ -77,10 +77,10 @@ const HeroSection = ({ isLoaded, user, hasVipAccess, theme }) => {
             </div>
           </div>
           
-          <div className={`pt-5 pb-5 md:pl-10 md:w-1/2 transition-all duration-700 delay-300 ${isLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'} flex justify-center md:block`}>
+          <div className={`pt-5 pb-10 md:pl-10 md:w-1/2 transition-all duration-700 delay-300 ${isLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'} flex justify-center md:block`}>
             <div className="relative">
-              {/* Slideshow Start - Increased height */}
-              <div className="relative w-11/18 max-w-sm sm:max-w-10 md:max-w-xl lg:max-w-2xl mx-auto md:w-full aspect-[4/3] h-auto rounded-xl z-10 min-h-[300px] max-h-[450px] md:min-h-[350px] md:max-h-[500px] overflow-hidden">
+              {/* Slideshow Start */}
+              <div className="relative w-full max-w-[97vw] px-1 sm:w-96 sm:max-w-full sm:px-0 mx-auto aspect-[3/4.3] rounded-xl z-10 min-h-[420px] max-h-[480px] overflow-hidden">
                 {/* Navigation Buttons */}
                 <button
                   className="absolute left-2 top-1/2 -translate-y-1/2 z-30 bg-white/80 hover:bg-metadite-primary/90 text-metadite-primary hover:text-white rounded-full p-2 shadow transition-colors focus:outline-none"
@@ -103,12 +103,12 @@ const HeroSection = ({ isLoaded, user, hasVipAccess, theme }) => {
                 </svg>
               </button>
                 {loading && (
-                  <div className="flex items-center justify-center w-full h-full min-h-[250px] bg-gray-100 rounded-xl animate-pulse">
+                  <div className="flex items-center justify-center w-full h-full min-h-[200px] bg-gray-100 rounded-xl animate-pulse">
                     <span className="text-gray-400">Loading images...</span>
                   </div>
                 )}
                 {error && (
-                  <div className="flex items-center justify-center w-full h-full min-h-[250px] bg-red-50 rounded-xl">
+                  <div className="flex items-center justify-center w-full h-full min-h-[180px] bg-red-50 rounded-xl">
                     <span className="text-red-500">{error}</span>
                   </div>
                 )}
@@ -134,21 +134,15 @@ const HeroSection = ({ isLoaded, user, hasVipAccess, theme }) => {
                   return (
                     <div
                       key={img}
-                      className={`absolute top-0 left-0 w-full h-full flex items-center justify-center ${effect} ${loveShadow}`}
+                      className={`absolute top-0 left-0 w-50 h-50 flex items-center justify-center ${effect} ${loveShadow}`}
                       style={{ position: 'absolute' }}
                     >
-                      <div className={`w-[97%] h-[97%] p-1 bg-white/80 dark:bg-gray-900/60 rounded-xl border-2 border-metadite-primary/40 flex items-center justify-center shadow-2xl ${loveShadow}`}>
+                      <div className={`w-full h-full p-1 bg-white/80 dark:bg-gray-900/60 rounded-xl border-2 border-metadite-primary/40 flex items-center justify-center shadow-2xl ${loveShadow}`}>
                         <img
                           src={img}
                           alt={`Model ${idx + 1}`}
-                          className="w-full h-full object-contain rounded-lg drop-shadow-xl"
-                          style={{ 
-                            display: 'block', 
-                            transition: 'transform 0.7s, filter 0.7s', 
-                            filter: currentSlide === idx ? 'brightness(1) contrast(1.1)' : 'brightness(0.8) blur(2px)',
-                            maxHeight: '100%'
-                          }}
-                          loading="lazy"
+                          className="w-full h-full object-contain rounded-lg drop-shadow-xl scale-90"
+                          style={{ display: 'block', transition: 'transform 0.7s, filter 0.7s', filter: currentSlide === idx ? 'brightness(1) contrast(1.1)' : 'brightness(0.8) blur(2px)' }}
                         />
                       </div>
                     </div>
@@ -169,8 +163,8 @@ const HeroSection = ({ isLoaded, user, hasVipAccess, theme }) => {
                 )}
               </div>
               {/* Slideshow End */}
-              <div className="text-sm absolute top-0 right-6 bg-white/70 backdrop-blur-sm rounded-full py-0 px-1 shadow-lg z-10">
-                <span className="text-metadite-primary font-bold">New Collection</span>
+              <div className="text-sm absolute top-0 right-10 bg-white/70 backdrop-blur-sm rounded-full py-0 px-1 shadow-lg z-10">
+                <span className="text-metadite-primary font-bold">Our Models</span>
               </div>
             </div>
           </div>
