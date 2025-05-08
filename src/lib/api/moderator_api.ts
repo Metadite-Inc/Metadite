@@ -45,58 +45,61 @@ class ModeratorApiService {
     }
   }
 
-  // Method to get all models for assignment
-  async getModelsForAssignment(): Promise<Model[]> {
-    try {
-      const token = localStorage.getItem('access_token');
-      if (!token) {
-        toast.error('Authentication required', {
-          description: 'You must be logged in as an admin to view models.',
-        });
-        return [];
-      }
-      
-      return await this.request<Model[]>('/api/admin/models', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-    } catch (error) {
-      toast.error('Failed to fetch models', {
-        description: error instanceof Error ? error.message : 'Unknown error occurred',
-      });
-      console.error(error);
-      return [];
-    }
-  }
+/* backend apis
 
-  // Method to assign models to moderator
-  async assignModelsToModerator(moderatorId: number, modelIds: number[]): Promise<void> {
-    try {
-      const token = localStorage.getItem('access_token');
-      if (!token) {
-        toast.error('Authentication required', {
-          description: 'You must be logged in as an admin to assign models.',
-        });
-        return;
-      }
-      
-      await this.request(`/api/admin/moderators/${moderatorId}/assign-models`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ model_ids: modelIds }),
-      });
-      
-      toast.success('Models assigned successfully');
-    } catch (error) {
-      toast.error('Failed to assign models', {
-        description: error instanceof Error ? error.message : 'Unknown error occurred',
-      });
-      console.error(error);
-    }
-  }
-}
+CRREATE MODERATOR = IMPLEMENTED IN src/lib/api/admin_api
+curl -X 'POST' \
+  'http://127.0.0.1:8000/api/admin/moderators' \
+  -H 'accept: application/json' \
+  -H 'Authorization: Bearer eyJhbGciDN7KvPY' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "email": "user@example.com",
+  "full_name": "string",
+  "region": "string",
+  "role": "user",
+  "membership_level": "standard",
+  "is_active": true,
+  "video_access_count": 0,
+  "assigned_dolls": [],
+  "password": "string"
+}'
+
+ASSIGN A DOLL TO MODERATOR
+curl -X 'POST' \
+  'http://127.0.0.1:8000/api/moderators/1/dolls/1' \
+  -H 'accept: application/json' \
+  -H 'Authorization: Bearer eyJhbGo04DN7KvPY' \
+  -d ''
+
+GET DOLLS ASSIGNED TO MODERATOR
+curl -X 'GET' \
+  'http://127.0.0.1:8000/api/moderators/1/dolls' \
+  -H 'accept: application/json' \
+  -H 'Authorization: Bearer eyJhbGciOiJIUzI1'
+
+DELETE MODERATOR
+curl -X 'DELETE' \
+  'http://127.0.0.1:8000/api/moderators/1' \
+  -H 'accept: application/json' \
+  -H 'Authorization: Bearer eyJhbGciOiJIUzI1N'
+
+ALLOW MODERATORS TO UPDATE THERE PROFILE
+curl -X 'PUT' \
+  'http://127.0.0.1:8000/api/moderators/moderators/1' \
+  -H 'accept: application/json' \
+  -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIstaF0y-eo04DN7KvPY' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "email": "user@example.com",
+  "full_name": "string",
+  "region": "string",
+  "is_active": true,
+  "password": "string"
+}'
+
+*/
 
 export const moderatorApiService = new ModeratorApiService();
+
+
