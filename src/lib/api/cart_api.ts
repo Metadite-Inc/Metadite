@@ -1,9 +1,10 @@
 
 import { toast } from "sonner";
+import { BaseApiService } from "./base_api";
 
 const API_URL = import.meta.env.VITE_API_BASE_URL;
 
-interface CartItem {
+export interface CartItem {
   id: number;
   user_id: number;
   doll_id: number;
@@ -17,52 +18,32 @@ interface CartItem {
   };
 }
 
-class CartApiService {
-  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-    try {
-      const token = localStorage.getItem('access_token');
-      if (!token) {
-        throw new Error('Authentication required');
-      }
-      
-      const response = await fetch(`${API_URL}${endpoint}`, {
-        ...options,
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-          ...options.headers,
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('Cart API Error:', response.status, errorData);
-        throw new Error(`API Error: ${response.status} - ${errorData.detail || 'Unknown error'}`);
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('Cart request error:', error);
-      throw error;
-    }
-  }
-
+class CartApiService extends BaseApiService {
   // Add item to cart
-  async addToCart(userID: number, dollId: number, quantity = 1): Promise<void> {
+  async addToCart(dollId: number, quantity = 1): Promise<void> {
     try {
+      // Get user ID from JWT token
+      const token = this.validateAuth();
+      const userId = this.getUserIdFromToken(token);
+      
       await this.request('/api/cart/', {
         method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({
-          user_id: userID,
+          user_id: userId,
           doll_id: dollId,
           quantity: quantity
         }),
       });
+      
       toast.success('Item added to cart');
     } catch (error) {
       toast.error('Failed to add item to cart', {
         description: error instanceof Error ? error.message : 'Unknown error',
       });
+      console.error('Error adding to cart:', error);
       throw error;
     }
   }
@@ -70,11 +51,18 @@ class CartApiService {
   // Get cart items
   async getCartItems(): Promise<CartItem[]> {
     try {
-      return await this.request<CartItem[]>('/api/cart/?skip=0&limit=100');
+      const token = this.validateAuth();
+      
+      return await this.request<CartItem[]>('/api/cart/?skip=0&limit=100', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
     } catch (error) {
       toast.error('Failed to fetch cart items', {
         description: error instanceof Error ? error.message : 'Unknown error',
       });
+      console.error('Failed to fetch cart:', error);
       return [];
     }
   }
@@ -82,17 +70,24 @@ class CartApiService {
   // Update cart item quantity
   async updateCartItemQuantity(cartItemId: number, quantity: number): Promise<void> {
     try {
+      const token = this.validateAuth();
+      
       await this.request(`/api/cart/${cartItemId}`, {
         method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({
           quantity: quantity
         }),
       });
+      
       toast.success('Cart updated');
     } catch (error) {
       toast.error('Failed to update cart', {
         description: error instanceof Error ? error.message : 'Unknown error',
       });
+      console.error('Failed to update cart:', error);
       throw error;
     }
   }
@@ -100,14 +95,21 @@ class CartApiService {
   // Remove item from cart
   async removeFromCart(cartItemId: number): Promise<void> {
     try {
+      const token = this.validateAuth();
+      
       await this.request(`/api/cart/${cartItemId}`, {
         method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
+      
       toast.success('Item removed from cart');
     } catch (error) {
       toast.error('Failed to remove item from cart', {
         description: error instanceof Error ? error.message : 'Unknown error',
       });
+      console.error('Failed to remove from cart:', error);
       throw error;
     }
   }
@@ -115,15 +117,46 @@ class CartApiService {
   // Clear cart
   async clearCart(): Promise<void> {
     try {
+      const token = this.validateAuth();
+      
       await this.request('/api/cart/', {
         method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
+      
       toast.success('Cart cleared');
     } catch (error) {
       toast.error('Failed to clear cart', {
         description: error instanceof Error ? error.message : 'Unknown error',
       });
+      console.error('Failed to clear cart:', error);
       throw error;
+    }
+  }
+
+  // Helper method to extract user ID from JWT token
+  private getUserIdFromToken(token: string): number {
+    try {
+      // JWT tokens consist of three parts separated by dots
+      const parts = token.split('.');
+      if (parts.length !== 3) {
+        throw new Error('Invalid token format');
+      }
+      
+      // Decode the payload (middle part)
+      const payload = JSON.parse(atob(parts[1]));
+      
+      // Extract the 'sub' claim which contains the user ID
+      if (payload && payload.sub) {
+        return Number(payload.sub);
+      } else {
+        throw new Error('User ID not found in token');
+      }
+    } catch (error) {
+      console.error('Failed to extract user ID from token:', error);
+      throw new Error('Failed to extract user ID from token');
     }
   }
 }
