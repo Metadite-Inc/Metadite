@@ -1,96 +1,190 @@
-import axios from 'axios';
-import { MessageCreate, MessageInDB, ChatRoom, MessageStatus, MessageType } from '../types/chat';
+import { getAuth } from 'firebase/auth';
+import {
+  addDoc,
+  collection,
+  doc,
+  onSnapshot,
+  orderBy,
+  query,
+  serverTimestamp,
+  setDoc,
+  updateDoc,
+  where,
+} from 'firebase/firestore';
+import { deleteObject, getDownloadURL, ref, uploadBytes } from 'firebase/storage';
+import { v4 as uuidv4 } from 'uuid';
+import { db, storage } from '../firebase';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;//|| "http://127.0.0.1:8000";
+// Function to send a message
+export const sendMessage = async (
+  currentUserId: string,
+  otherUserId: string,
+  message: string,
+  name: string
+): Promise<void> => {
+  try {
+    const chatRoomId =
+      currentUserId > otherUserId
+        ? `${currentUserId}-${otherUserId}`
+        : `${otherUserId}-${currentUserId}`;
 
-// WebSocket connection
-let ws: WebSocket | null = null;
+    // Reference to the messages collection in Firestore
+    const messagesRef = collection(db, 'chatRooms', chatRoomId, 'messages');
 
-export const connectWebSocket = (userId: string, onMessage: (data: any) => void) => {
-    ws = new WebSocket(`${API_BASE_URL.replace('http', 'ws')}/ws/${userId}`);
-    
-    ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        onMessage(data);
-    };
-    
-    ws.onclose = () => {
-        console.log('WebSocket connection closed');
-    };
-    
-    return ws;
-};
-
-export const sendMessage = async (message: MessageCreate, token: string) => {
-    const response = await axios.post(`${API_BASE_URL}/messages`, message, {
-        headers: { Authorization: `Bearer ${token}` }
+    // Add the new message to the messages collection
+    await addDoc(messagesRef, {
+      senderId: currentUserId,
+      receiverId: otherUserId,
+      message: message,
+      name: name,
+      timestamp: serverTimestamp(),
     });
-    return response.data;
-};
 
-export const sendFileMessage = async (file: File, dollId: string, token: string) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('doll_id', dollId);
-    
-    const response = await axios.post(`${API_BASE_URL}/messages/file`, formData, {
-        headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data'
-        }
-    });
-    return response.data;
-};
-
-export const getMessages = async (dollId: string, limit: number = 50, before?: Date, token: string) => {
-    //edited to use URLSearchParams for query parameters
-    const params = new URLSearchParams();
-    params.append('limit', limit.toString());
-    if (before) params.append('before', before.toISOString());
-
-    
-    const response = await axios.get(`${API_BASE_URL}/messages/${dollId}?${params}`, {
-        headers: { Authorization: `Bearer ${token}` }
-    });
-    return response.data;
-};
-
-export const getModeratorMessages = async (limit: number = 50, token: string) => {
-    const response = await axios.get(`${API_BASE_URL}/moderator/messages?limit=${limit}`, {
-        headers: { Authorization: `Bearer ${token}` }
-    });
-    return response.data;
-};
-
-export const updateMessageStatus = async (messageId: string, status: MessageStatus, token: string) => {
-    const response = await axios.put(
-        `${API_BASE_URL}/messages/${messageId}/status`,
-        { status },
-        { headers: { Authorization: `Bearer ${token}` } }
+    // Update the last message in the chatRooms collection
+    const chatRoomRef = doc(db, 'chatRooms', chatRoomId);
+    await setDoc(
+      chatRoomRef,
+      {
+        lastMessage: message,
+        lastMessageTime: serverTimestamp(),
+      },
+      { merge: true }
     );
-    return response.data;
+  } catch (error) {
+    console.error('Error sending message:', error);
+    throw error;
+  }
 };
 
-export const deleteMessage = async (messageId: string, token: string) => {
-    const response = await axios.delete(`${API_BASE_URL}/messages/${messageId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-    });
-    return response.data;
-};
+// Function to stream messages
+export const streamMessages = (
+  currentUserId: string,
+  otherUserId: string,
+  setMessages: any
+) => {
+  const chatRoomId =
+    currentUserId > otherUserId
+      ? `${currentUserId}-${otherUserId}`
+      : `${otherUserId}-${currentUserId}`;
 
-export const getUnreadCount = async (token: string) => {
-    const response = await axios.get(`${API_BASE_URL}/unread/count`, {
-        headers: { Authorization: `Bearer ${token}` }
-    });
-    return response.data;
-};
+  const messagesRef = collection(db, 'chatRooms', chatRoomId, 'messages');
 
-export const sendTypingIndicator = (dollId: string, isTyping: boolean) => {
-    if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({
-            type: 'typing',
-            doll_id: dollId,
-            is_typing: isTyping
-        }));
+  const q = query(messagesRef, orderBy('timestamp'));
+
+  // Subscribe to real-time updates
+  const unsubscribe = onSnapshot(
+    q,
+    (querySnapshot) => {
+      const messages = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setMessages(messages);
+    },
+    (error) => {
+      console.error('Error streaming messages:', error);
     }
-}; 
+  );
+
+  return unsubscribe;
+};
+
+// Function to create or get chat room
+export const createOrGetChatRoom = async (
+  currentUserId: string,
+  otherUserId: string
+): Promise<string> => {
+  try {
+    const chatRoomId =
+      currentUserId > otherUserId
+        ? `${currentUserId}-${otherUserId}`
+        : `${otherUserId}-${currentUserId}`;
+
+    const chatRoomRef = doc(db, 'chatRooms', chatRoomId);
+    await setDoc(chatRoomRef, {
+      users: [currentUserId, otherUserId],
+    });
+
+    return chatRoomId;
+  } catch (error) {
+    console.error('Error creating or getting chat room:', error);
+    throw error;
+  }
+};
+
+// Function to upload image
+export const uploadImage = async (image: File, setImageURL: any): Promise<void> => {
+  try {
+    const imageId = uuidv4();
+    const storageRef = ref(storage, `images/${imageId}`);
+
+    // Upload the image to Firebase Storage
+    const snapshot = await uploadBytes(storageRef, image);
+
+    // Get the download URL of the uploaded image
+    const downloadURL = await getDownloadURL(snapshot.ref);
+
+    setImageURL(downloadURL);
+  } catch (error) {
+    console.error('Error uploading image:', error);
+    throw error;
+  }
+};
+
+// Function to send image message
+export const sendImageMessage = async (
+  currentUserId: string,
+  otherUserId: string,
+  imageURL: string,
+  name: string
+): Promise<void> => {
+  try {
+    const chatRoomId =
+      currentUserId > otherUserId
+        ? `${currentUserId}-${otherUserId}`
+        : `${otherUserId}-${currentUserId}`;
+
+    // Reference to the messages collection in Firestore
+    const messagesRef = collection(db, 'chatRooms', chatRoomId, 'messages');
+
+    // Add the new message to the messages collection
+    await addDoc(messagesRef, {
+      senderId: currentUserId,
+      receiverId: otherUserId,
+      imageURL: imageURL,
+      name: name,
+      timestamp: serverTimestamp(),
+    });
+
+    // Update the last message in the chatRooms collection
+    const chatRoomRef = doc(db, 'chatRooms', chatRoomId);
+    await setDoc(
+      chatRoomRef,
+      {
+        lastMessage: 'Sent an image',
+        lastMessageTime: serverTimestamp(),
+      },
+      { merge: true }
+    );
+  } catch (error) {
+    console.error('Error sending image message:', error);
+    throw error;
+  }
+};
+
+// Function to delete image
+export const deleteImage = async (imageURL: string): Promise<void> => {
+  try {
+    // Extract the image ID from the URL
+    const imageId = imageURL.split('/images%2F')[1].split('?')[0];
+
+    // Create a reference to the image in Firebase Storage
+    const storageRef = ref(storage, `images/${imageId}`);
+
+    // Delete the image from Firebase Storage
+    await deleteObject(storageRef);
+  } catch (error) {
+    console.error('Error deleting image:', error);
+    throw error;
+  }
+};
