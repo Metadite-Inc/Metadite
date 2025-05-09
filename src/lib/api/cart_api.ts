@@ -48,11 +48,12 @@ class CartApiService {
   }
 
   // Add item to cart
-  async addToCart(dollId: number, quantity = 1): Promise<void> {
+  async addToCart(userID: number, dollId: number, quantity = 1): Promise<void> {
     try {
       await this.request('/api/cart/', {
         method: 'POST',
         body: JSON.stringify({
+          user_id: userID,
           doll_id: dollId,
           quantity: quantity
         }),
