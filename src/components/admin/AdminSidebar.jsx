@@ -64,6 +64,21 @@ const AdminSidebar = ({ activeTab, setActiveTab, flaggedMessagesCount }) => {
           </li>
           <li>
             <button 
+              onClick={() => setActiveTab('slideshow')}
+              className={`flex items-center w-full px-4 py-3 rounded-lg transition-colors ${
+                activeTab === 'slideshow' 
+                ? 'bg-metadite-primary/10 text-metadite-primary' 
+                : theme === 'dark' 
+                  ? 'text-gray-300 hover:bg-gray-700/50' 
+                  : 'text-gray-700 hover:bg-gray-100'
+            }`}
+            >
+              <Settings className="h-5 w-5 mr-3" />
+              <span>Slideshow</span>
+            </button>
+          </li>
+          <li>
+            <button 
               onClick={() => setActiveTab('admins')}
               className={`flex items-center w-full px-4 py-3 rounded-lg transition-colors ${
                 activeTab === 'admins' 

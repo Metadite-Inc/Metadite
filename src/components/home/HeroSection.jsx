@@ -1,42 +1,26 @@
 
 import { Link } from 'react-router-dom';
 import React, { useState, useEffect } from 'react';
-import { apiService } from '../../lib/api';
+
+const STORAGE_KEY = 'slideshowItems';
 
 const HeroSection = ({ isLoaded, user, hasVipAccess, theme }) => {
-  const [modelImages, setModelImages] = useState([]);
+  const [slideshowItems, setSlideshowItems] = useState([]);
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
-    let isMounted = true;
-    setLoading(true);
-    apiService.getModels()
-      .then(models => {
-        if (!isMounted) return;
-        const images = models
-          .map(m => m.image)
-          .filter(Boolean)
-          .slice(0, 5);
-        setModelImages(images);
-        setLoading(false);
-      })
-      .catch(err => {
-        if (!isMounted) return;
-        setError('Failed to load images');
-        setLoading(false);
-      });
-    return () => { isMounted = false; };
+    // Load slideshow items from localStorage
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) setSlideshowItems(JSON.parse(saved));
   }, []);
 
   useEffect(() => {
-    if (!modelImages.length) return;
+    if (!slideshowItems.length) return;
     const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % modelImages.length);
+      setCurrentSlide((prev) => (prev + 1) % slideshowItems.length);
     }, 3000);
     return () => clearInterval(interval);
-  }, [modelImages]);
+  }, [slideshowItems]);
   return (
     <section className={`pt-24 px-2 ${theme === 'dark' ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' : 'bg-gradient-to-br from-white via-metadite-light to-white'}`}>
       <div className="container mx-auto max-w-6xl">
@@ -94,7 +78,7 @@ const HeroSection = ({ isLoaded, user, hasVipAccess, theme }) => {
               </button>
               <button
                 className="absolute right-2 top-1/2 -translate-y-1/2 z-30 bg-white/80 hover:bg-metadite-primary/90 text-metadite-primary hover:text-white rounded-full p-2 shadow transition-colors focus:outline-none"
-                onClick={() => setCurrentSlide((prev) => (prev + 1) % modelImages.length)}
+                onClick={() => setCurrentSlide((prev) => (prev + 1) % (slideshowItems.length || 1))}
                 aria-label="Next slide"
                 style={{ backdropFilter: 'blur(4px)' }}
               >
@@ -102,17 +86,12 @@ const HeroSection = ({ isLoaded, user, hasVipAccess, theme }) => {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                 </svg>
               </button>
-                {loading && (
+                {slideshowItems.length === 0 && (
                   <div className="flex items-center justify-center w-full h-full min-h-[200px] bg-gray-100 rounded-xl animate-pulse">
-                    <span className="text-gray-400">Loading images...</span>
+                    <span className="text-gray-400">Welcome to metadite </span>
                   </div>
                 )}
-                {error && (
-                  <div className="flex items-center justify-center w-full h-full min-h-[180px] bg-red-50 rounded-xl">
-                    <span className="text-red-500">{error}</span>
-                  </div>
-                )}
-                {!loading && !error && modelImages.map((img, idx) => {
+                {slideshowItems.map((item, idx) => {
                   // More creative effects: drop, water, love, etc. (width/aspect unchanged)
                   const effects = [
                     // Drop-in (slide from top)
@@ -133,25 +112,37 @@ const HeroSection = ({ isLoaded, user, hasVipAccess, theme }) => {
                   const loveShadow = (idx % effects.length === 2 && currentSlide === idx) ? 'shadow-pink-400/70' : '';
                   return (
                     <div
-                      key={img}
+                      key={item.url || idx}
                       className={`absolute top-0 left-0 w-50 h-50 flex items-center justify-center ${effect} ${loveShadow}`}
                       style={{ position: 'absolute' }}
                     >
                       <div className={`w-full h-full p-1 bg-white/80 dark:bg-gray-900/60 rounded-xl border-2 border-metadite-primary/40 flex items-center justify-center shadow-2xl ${loveShadow}`}>
-                        <img
-                          src={img}
-                          alt={`Model ${idx + 1}`}
-                          className="w-full h-full object-contain rounded-lg drop-shadow-xl scale-90"
-                          style={{ display: 'block', transition: 'transform 0.7s, filter 0.7s', filter: currentSlide === idx ? 'brightness(1) contrast(1.1)' : 'brightness(0.8) blur(2px)' }}
-                        />
+                        {item.type === 'video' ? (
+                          <video
+                            src={item.url}
+                            className="w-full h-full object-contain rounded-lg drop-shadow-xl scale-90"
+                            style={{ display: 'block', transition: 'transform 0.7s, filter 0.7s', filter: currentSlide === idx ? 'brightness(1) contrast(1.1)' : 'brightness(0.8) blur(2px)' }}
+                            autoPlay
+                            loop
+                            muted
+                            playsInline
+                          />
+                        ) : (
+                          <img
+                            src={item.url}
+                            alt={item.name || `Slide ${idx + 1}`}
+                            className="w-full h-full object-contain rounded-lg drop-shadow-xl scale-90"
+                            style={{ display: 'block', transition: 'transform 0.7s, filter 0.7s', filter: currentSlide === idx ? 'brightness(1) contrast(1.1)' : 'brightness(0.8) blur(2px)' }}
+                          />
+                        )}
                       </div>
                     </div>
                   );
                 })}
                 {/* Dots Navigation */}
-                {!loading && !error && modelImages.length > 1 && (
+                {slideshowItems.length > 1 && (
                   <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 flex space-x-2 z-30">
-                    {modelImages.map((_, idx) => (
+                    {slideshowItems.map((_, idx) => (
                       <button
                         key={idx}
                         className={`w-2 h-2 rounded-full ${currentSlide === idx ? 'bg-metadite-primary' : 'bg-gray-300'} focus:outline-none`}
