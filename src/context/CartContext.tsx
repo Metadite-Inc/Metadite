@@ -1,7 +1,8 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { cartApiService } from '../lib/api/cart_api';
+import { cartApiService, CartItem as ApiCartItem } from '../lib/api/cart_api';
 import { toast } from 'sonner';
+import { useAuth } from './AuthContext';
 
 export interface Model {
   id: number | string;
@@ -63,31 +64,48 @@ interface CartProviderProps {
 export function CartProvider({ children }: CartProviderProps) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
-  // Fetch cart items on component mount
+  // Transform API cart items to our CartItem format
+  const transformApiCartItems = (apiItems: ApiCartItem[]): CartItem[] => {
+    return apiItems.map(item => ({
+      id: item.doll_id,
+      name: item.doll?.name || 'Unknown Model',
+      price: item.doll?.price || 0,
+      description: item.doll?.description || '',
+      image: item.doll?.image_url || '',
+      quantity: item.quantity
+    }));
+  };
+
+  // Fetch cart items on component mount or when user changes
   useEffect(() => {
     const fetchCartItems = async () => {
+      if (!user) {
+        // If no user is logged in, try to load from localStorage
+        const storedCart = localStorage.getItem(LOCAL_STORAGE_CART_KEY);
+        if (storedCart) {
+          setItems(JSON.parse(storedCart));
+        }
+        setLoading(false);
+        return;
+      }
+
       try {
         // Try to get cart items from API
         const cartItems = await cartApiService.getCartItems();
         
         if (cartItems.length > 0) {
           // Transform API cart items to our CartItem format
-          const transformedItems = cartItems.map(item => ({
-            id: item.doll_id,
-            name: item.doll?.name || 'Unknown Model',
-            price: item.doll?.price || 0,
-            description: item.doll?.description || '',
-            image: item.doll?.image_url || '',
-            quantity: item.quantity
-          }));
-          
+          const transformedItems = transformApiCartItems(cartItems);
           setItems(transformedItems);
         } else {
-          // If API returns empty or fails, try to load from localStorage
+          // If API returns empty but we have local cart, sync it to backend
           const storedCart = localStorage.getItem('metaditeCart');
           if (storedCart) {
-            setItems(JSON.parse(storedCart));
+            const localItems = JSON.parse(storedCart);
+            setItems(localItems);
+            // Optional: could sync local cart to backend here
           }
         }
       } catch (error) {
@@ -103,7 +121,7 @@ export function CartProvider({ children }: CartProviderProps) {
     };
 
     fetchCartItems();
-  }, []);
+  }, [user]);
 
   // Save cart to localStorage whenever it changes
   useEffect(() => {
@@ -126,10 +144,12 @@ export function CartProvider({ children }: CartProviderProps) {
   // Add item to cart
   const addToCart = async (item: Model) => {
     try {
-      // Try to add to API first
-      await cartApiService.addToCart(Number(item.id), 1);
+      if (user) {
+        // Try to add to API if user is logged in
+        await cartApiService.addToCart(Number(item.id), 1);
+      }
       
-      // If successful, update local state
+      // Update local state regardless of API success
       const itemIndex = items.findIndex(cartItem => cartItem.id === item.id);
       
       if (itemIndex !== -1) {
@@ -142,7 +162,8 @@ export function CartProvider({ children }: CartProviderProps) {
         setItems([...items, { ...item, quantity: 1 }]);
       }
     } catch (error) {
-      // Fallback to local cart if API fails
+      console.error("Error adding to cart:", error);
+      // Still update local cart even if API fails
       const itemIndex = items.findIndex(cartItem => cartItem.id === item.id);
       
       if (itemIndex !== -1) {
@@ -152,8 +173,6 @@ export function CartProvider({ children }: CartProviderProps) {
       } else {
         setItems([...items, { ...item, quantity: 1 }]);
       }
-      
-      console.error("Error adding to cart:", error);
     }
   };
 
@@ -164,25 +183,27 @@ export function CartProvider({ children }: CartProviderProps) {
       const cartItem = items.find(item => item.id === itemId);
       if (!cartItem) return;
       
-      // Try to remove via API
-      const apiItemId = Number(itemId);
-      await cartApiService.removeFromCart(apiItemId);
+      if (user) {
+        // Try to remove via API if user is logged in
+        await cartApiService.removeFromCart(Number(itemId));
+      }
       
       // Update local state
       setItems(items.filter(item => item.id !== itemId));
     } catch (error) {
+      console.error("Error removing from cart:", error);
       // Fallback to local cart if API fails
       setItems(items.filter(item => item.id !== itemId));
-      console.error("Error removing from cart:", error);
     }
   };
 
   // Update item quantity
   const updateQuantity = async (itemId: number | string, quantity: number) => {
     try {
-      // Try to update via API
-      const apiItemId = Number(itemId);
-      await cartApiService.updateCartItemQuantity(apiItemId, quantity);
+      if (user) {
+        // Try to update via API if user is logged in
+        await cartApiService.updateCartItemQuantity(Number(itemId), quantity);
+      }
       
       // Update local state
       setItems(
@@ -193,6 +214,7 @@ export function CartProvider({ children }: CartProviderProps) {
         )
       );
     } catch (error) {
+      console.error("Error updating cart:", error);
       // Fallback to local cart if API fails
       setItems(
         items.map(item => 
@@ -201,22 +223,23 @@ export function CartProvider({ children }: CartProviderProps) {
             : item
         )
       );
-      console.error("Error updating cart:", error);
     }
   };
 
   // Clear cart
   const clearCart = async () => {
     try {
-      // Try to clear via API
-      await cartApiService.clearCart();
+      if (user) {
+        // Try to clear via API if user is logged in
+        await cartApiService.clearCart();
+      }
       
       // Clear local state
       setItems([]);
     } catch (error) {
+      console.error("Error clearing cart:", error);
       // Clear local state even if API fails
       setItems([]);
-      console.error("Error clearing cart:", error);
     }
   };
 
