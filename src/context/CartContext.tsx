@@ -83,7 +83,7 @@ export function CartProvider({ children }: CartProviderProps) {
     const fetchCartItems = async () => {
       if (!user) {
         // If no user is logged in, try to load from localStorage
-        const storedCart = localStorage.getItem('metaditeCart');
+        const storedCart = localStorage.getItem(LOCAL_STORAGE_CART_KEY);
         if (storedCart) {
           setItems(JSON.parse(storedCart));
         }
