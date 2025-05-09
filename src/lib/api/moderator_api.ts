@@ -74,18 +74,13 @@ class ModeratorApiService extends BaseApiService {
     try {
       const token = this.validateAuth();
 
-      const response = await fetch(`${API_URL}/api/moderators/${moderatorId}`, {
+      await this.request(`/api/moderators/${moderatorId}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
+          "Authorization": `Bearer ${token}`,
         },
       });
-
-      if (!response.ok) {
-        throw new Error(`Failed to delete moderator with ID ${moderatorId}`);
-      }
-
       toast.success('Moderator deleted successfully');
     } catch (error) {
       toast.error('Failed to delete moderator', {
