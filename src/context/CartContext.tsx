@@ -1,6 +1,6 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { cartApiService } from '../lib/api/cart_api';
+import { cartApiService, CartItem as ApiCartItem } from '../lib/api/cart_api';
 import { toast } from 'sonner';
 import { useAuth } from './AuthContext';
 
@@ -66,6 +66,18 @@ export function CartProvider({ children }: CartProviderProps) {
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
+  // Transform API cart items to our CartItem format
+  const transformApiCartItems = (apiItems: ApiCartItem[]): CartItem[] => {
+    return apiItems.map(item => ({
+      id: item.doll_id,
+      name: item.doll?.name || 'Unknown Model',
+      price: item.doll?.price || 0,
+      description: item.doll?.description || '',
+      image: item.doll?.image_url || '',
+      quantity: item.quantity
+    }));
+  };
+
   // Fetch cart items on component mount or when user changes
   useEffect(() => {
     const fetchCartItems = async () => {
@@ -85,15 +97,7 @@ export function CartProvider({ children }: CartProviderProps) {
         
         if (cartItems.length > 0) {
           // Transform API cart items to our CartItem format
-          const transformedItems = cartItems.map(item => ({
-            id: item.doll_id,
-            name: item.doll?.name || 'Unknown Model',
-            price: item.doll?.price || 0,
-            description: item.doll?.description || '',
-            image: item.doll?.image_url || '',
-            quantity: item.quantity
-          }));
-          
+          const transformedItems = transformApiCartItems(cartItems);
           setItems(transformedItems);
         } else {
           // If API returns empty but we have local cart, sync it to backend

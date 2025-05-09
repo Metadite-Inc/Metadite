@@ -1,6 +1,7 @@
 
 import { toast } from "sonner";
 import { BaseApiService } from "./base_api";
+import { apiService } from "../api";
 
 const API_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -48,16 +49,48 @@ class CartApiService extends BaseApiService {
     }
   }
 
-  // Get cart items
+  // Get cart items with full doll details
   async getCartItems(): Promise<CartItem[]> {
     try {
       const token = this.validateAuth();
       
-      return await this.request<CartItem[]>('/api/cart/?skip=0&limit=100', {
+      // First get the basic cart items from API
+      const cartItems = await this.request<CartItem[]>('/api/cart/?skip=0&limit=100', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
+
+      // If we have cart items, fetch the full details for each doll
+      if (cartItems.length > 0) {
+        // For each cart item, fetch the doll details
+        const itemsWithDetails = await Promise.all(cartItems.map(async (item) => {
+          try {
+            // Get the full doll details from the API
+            const dollDetails = await apiService.getModelDetails(item.doll_id);
+            
+            // Merge the doll details with the cart item
+            return {
+              ...item,
+              doll: {
+                id: dollDetails?.id || item.doll_id,
+                name: dollDetails?.name || 'Unknown Model',
+                price: dollDetails?.price || 0,
+                description: dollDetails?.description || '',
+                image_url: dollDetails?.image || ''
+              }
+            };
+          } catch (error) {
+            console.error(`Failed to fetch details for doll ID ${item.doll_id}:`, error);
+            // Return the original cart item if we couldn't fetch details
+            return item;
+          }
+        }));
+        
+        return itemsWithDetails;
+      }
+      
+      return cartItems;
     } catch (error) {
       toast.error('Failed to fetch cart items', {
         description: error instanceof Error ? error.message : 'Unknown error',
