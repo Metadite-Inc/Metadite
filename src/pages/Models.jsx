@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -5,6 +6,14 @@ import ModelCard from '../components/ModelCard';
 import { Search, Filter, Bookmark, Grid, Tag } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { apiService } from '../lib/api';
+import { 
+  Pagination, 
+  PaginationContent, 
+  PaginationItem, 
+  PaginationLink, 
+  PaginationNext, 
+  PaginationPrevious 
+} from "@/components/ui/pagination";
 
 const Models = () => {
   const [models, setModels] = useState([]);
@@ -13,6 +22,10 @@ const Models = () => {
   const [priceFilter, setPriceFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const { theme } = useTheme();
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const modelsPerPage = 12;
 
   useEffect(() => {
     const fetchModels = async () => {
@@ -28,6 +41,7 @@ const Models = () => {
     fetchModels();
   }, []);
 
+  // Filter models based on search and filters
   const filteredModels = models.filter((model) => {
     const matchesSearch =
       model.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -43,6 +57,32 @@ const Models = () => {
 
     return matchesSearch && matchesCategory && matchesPrice;
   });
+
+  // Calculate pagination values
+  const totalPages = Math.ceil(filteredModels.length / modelsPerPage);
+  const indexOfLastModel = currentPage * modelsPerPage;
+  const indexOfFirstModel = indexOfLastModel - modelsPerPage;
+  const currentModels = filteredModels.slice(indexOfFirstModel, indexOfLastModel);
+
+  // Page change handler
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+    // Scroll to top when changing pages
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Previous and next page handlers
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      handlePageChange(currentPage - 1);
+    }
+  };
+
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      handlePageChange(currentPage + 1);
+    }
+  };
 
   // Get available categories from model data
   const categories = ['all', ...new Set(models.map((model) => model.category))];
@@ -226,12 +266,67 @@ const Models = () => {
           </div>
 
           {isLoaded ? (
-            filteredModels.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {filteredModels.map((model) => (
-                  <ModelCard key={model.id} model={model} />
-                ))}
-              </div>
+            currentModels.length > 0 ? (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {currentModels.map((model) => (
+                    <ModelCard key={model.id} model={model} />
+                  ))}
+                </div>
+                
+                {/* Pagination Controls */}
+                {filteredModels.length > modelsPerPage && (
+                  <div className="mt-8">
+                    <Pagination>
+                      <PaginationContent>
+                        <PaginationItem>
+                          <PaginationPrevious 
+                            onClick={goToPreviousPage} 
+                            className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                          />
+                        </PaginationItem>
+                        
+                        {/* Dynamic Page Numbers */}
+                        {[...Array(totalPages)].map((_, index) => {
+                          const pageNumber = index + 1;
+                          
+                          // Display limited page numbers with ellipsis for better UX
+                          if (
+                            pageNumber === 1 || 
+                            pageNumber === totalPages || 
+                            (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                          ) {
+                            return (
+                              <PaginationItem key={pageNumber}>
+                                <PaginationLink 
+                                  onClick={() => handlePageChange(pageNumber)}
+                                  isActive={pageNumber === currentPage}
+                                >
+                                  {pageNumber}
+                                </PaginationLink>
+                              </PaginationItem>
+                            );
+                          } else if (
+                            (pageNumber === currentPage - 2 && currentPage > 3) || 
+                            (pageNumber === currentPage + 2 && currentPage < totalPages - 2)
+                          ) {
+                            return <PaginationItem key={pageNumber}>...</PaginationItem>;
+                          } else {
+                            return null;
+                          }
+                        })}
+                        
+                        <PaginationItem>
+                          <PaginationNext 
+                            onClick={goToNextPage} 
+                            className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                          />
+                        </PaginationItem>
+                      </PaginationContent>
+                    </Pagination>
+                  </div>
+                )}
+              </>
             ) : (
               <div className="text-center py-16">
                 <p
