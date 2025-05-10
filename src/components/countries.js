@@ -1,3 +1,4 @@
+
 const countries = [
     { code: "AF", name: "Afghanistan" },
     { code: "AX", name: "Åland Islands" },
@@ -253,4 +254,6 @@ const countries = [
     { code: "ZW", name: "Zimbabwe" },
 ];
 
+// Export countries as both a named export and default export
+export { countries };
 export default countries;
