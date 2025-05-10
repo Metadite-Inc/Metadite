@@ -140,16 +140,4 @@ export default function SlideshowManager({ isLoaded }) {
   );
 }
 
-// --- Handler functions for upload and cancel ---
-function handleUpload() {
-  // TODO: Implement upload logic (API call)
-  alert('Uploading files... (implement actual upload logic)');
-}
-
-function handleCancel() {
-  // TODO: Reset items state (clear selection)
-  if (window.confirm('Are you sure you want to clear all selected files?')) {
-    // This will be replaced by setItems([]) in component scope
-  }
-}
-
+// (Removed duplicate handler functions outside the component)
