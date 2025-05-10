@@ -1,19 +1,9 @@
 
 export interface Message {
-  id: number | string;
-  senderId: string;
-  senderName?: string;
-  recipientId?: string;
+  id: string;
   content: string;
+  senderId: string;
+  recipientId: string;
   timestamp: string;
-  flagged?: boolean;
-  modelId?: string;
-}
-
-export interface Chat {
-  id: number | string;
-  participants: string[];
-  messages: Message[];
-  lastMessageTime: string;
-  unread?: boolean;
+  read: boolean;
 }

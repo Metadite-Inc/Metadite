@@ -3,8 +3,6 @@ import { Link } from 'react-router-dom';
 import { ShoppingCart, Heart } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { toast } from 'sonner';
-
-// Import the Model type directly from CartContext
 import type { Model } from '../context/CartContext';
 
 interface ModelProps {
@@ -12,12 +10,12 @@ interface ModelProps {
 }
 
 const ModelCard = ({ model }: ModelProps) => {
-  const { addToCart } = useCart();
+  const { addItem } = useCart();
   const [imageLoaded, setImageLoaded] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   
   const handleAddToCart = () => {
-    addToCart(model);
+    addItem(model);
     toast.success("Added to cart!", {
       description: `${model.name} has been added to your cart.`,
     });

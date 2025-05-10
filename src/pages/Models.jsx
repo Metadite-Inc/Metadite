@@ -118,11 +118,15 @@ const Models = () => {
             filteredModels.length > 0 ? (
               <>
                 <ModelGrid models={currentModels} isLoaded={isLoaded} />
-                <ModelPagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  handlePageChange={handlePageChange}
-                />
+                
+                {/* Make sure pagination is rendered and visible with proper styling */}
+                <div className="mt-8 flex justify-center">
+                  <ModelPagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    handlePageChange={handlePageChange}
+                  />
+                </div>
               </>
             ) : (
               <NoResults resetFilters={resetFilters} />
