@@ -19,9 +19,21 @@ const Index = () => {
   const { theme } = useTheme();
   const hasVipAccess = user?.membershipLevel === 'vip' || user?.membershipLevel === 'vvip';
 
+  // Load featured models
   useEffect(() => {
-    setIsLoaded(true);
-    fetchFeaturedModels().then(setFeaturedModels);
+    const loadModels = async () => {
+      try {
+        const models = await fetchFeaturedModels();
+        setFeaturedModels(models || []);
+      } catch (error) {
+        console.error("Error fetching featured models:", error);
+        setFeaturedModels([]);
+      } finally {
+        setIsLoaded(true);
+      }
+    };
+    
+    loadModels();
   }, []);
 
   return (

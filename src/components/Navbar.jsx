@@ -7,7 +7,6 @@ import { useTheme } from '../context/ThemeContext';
 import UserMenu from './UserMenu';
 import ThemeToggle from './ThemeToggle';
 import MobileMenu from './navbar/MobileMenu';
-import ChatPanel from './navbar/ChatPanel';
 import DesktopNav from './navbar/DesktopNav';
 import NotificationIcon from './navbar/NotificationIcon';
 
@@ -16,14 +15,11 @@ const Navbar = () => {
   const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [chatOpen, setChatOpen] = useState(false);
-  const [chats, setChats] = useState([]);
   const [newMessage, setNewMessage] = useState(false);
   const { theme } = useTheme();
 
   const toggleMobileMenu = () => setMobileMenuOpen(!mobileMenuOpen);
-  const toggleChat = () => setChatOpen(!chatOpen);
-
+  
   const hasVipAccess = user?.membershipLevel === 'vip' || user?.membershipLevel === 'vvip';
 
   useEffect(() => {
@@ -38,20 +34,10 @@ const Navbar = () => {
     }
   }, [user, navigate]);
 
-  useEffect(() => {
-    setChats([
-      { id: 1, sender: 'Moderator', message: 'Hello! How can I assist you?', timestamp: '10:30 AM' },
-      { id: 2, sender: 'You', message: 'I need help with my subscription.', timestamp: '10:32 AM' },
-    ]);
-  }, []);
-
+  // Set new message notification after a delay
   useEffect(() => {
     const timer = setTimeout(() => {
       setNewMessage(true);
-      setChats((prevChats) => [
-        ...prevChats,
-        { id: 3, sender: 'Moderator', message: 'Sure! Let me check that for you.', timestamp: '10:35 AM' },
-      ]);
     }, 10000);
     return () => clearTimeout(timer);
   }, []);
@@ -78,8 +64,11 @@ const Navbar = () => {
       style={{ height: '74px' }}
     >
       <div className="container mx-auto px-4 flex justify-between items-center h-full">
+        {/* Only show notification icon on mobile for regular users */}
         {user?.role === 'regular' && (
-          <NotificationIcon newMessage={newMessage} />
+          <div className="md:hidden">
+            <NotificationIcon newMessage={newMessage} />
+          </div>
         )}
 
         <Link
@@ -103,7 +92,6 @@ const Navbar = () => {
         <DesktopNav 
           user={user} 
           hasVipAccess={hasVipAccess} 
-          toggleChat={toggleChat} 
           newMessage={newMessage}
           theme={theme}
         />
@@ -111,22 +99,7 @@ const Navbar = () => {
         {/* Desktop User Menu & Buttons */}
         <div className="hidden md:flex items-center space-x-4">
           {user ? (
-            <>
-              {user?.role !== 'admin' && (
-                <button
-                  onClick={toggleChat}
-                  className="relative p-2 text-gray-700 dark:text-gray-300 hover:text-metadite-primary transition-colors"
-                >
-                  <Bell className="h-5 w-5" />
-                  {newMessage && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                      1
-                    </span>
-                  )}
-                </button>
-              )}
-              <UserMenu />
-            </>
+            <UserMenu />
           ) : (
             <Link
               to="/login"
@@ -141,9 +114,6 @@ const Navbar = () => {
         {/* Mobile Controls */}
         <div className="md:hidden flex items-center space-x-4">
           <ThemeToggle />
-          {(user?.role === 'user' || user?.role === 'moderator') && (
-            <NotificationIcon newMessage={newMessage} />
-          )}
           <button className="text-gray-700 dark:text-gray-300" onClick={toggleMobileMenu}>
             {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
@@ -157,13 +127,6 @@ const Navbar = () => {
         user={user} 
         handleLogout={handleLogout}
         hasVipAccess={hasVipAccess} 
-      />
-
-      {/* Chat Panel */}
-      <ChatPanel 
-        isOpen={chatOpen} 
-        chats={chats} 
-        setNewMessage={setNewMessage} 
       />
     </nav>
   );
