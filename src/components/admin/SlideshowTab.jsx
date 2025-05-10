@@ -7,7 +7,7 @@ import { Search, Edit, Trash2, PackagePlus } from 'lucide-react';
 import { toast } from 'sonner';
 
 const SlideshowTab = ({ isLoaded }) => {
-  const { user } = useAuth ? useAuth() : { user: null };
+  const { user } = useAuth();
   const { theme } = useTheme();
   const [models, setModels] = useState([]);
   const [loading, setLoading] = useState(true);
