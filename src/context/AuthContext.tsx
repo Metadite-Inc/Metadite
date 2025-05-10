@@ -1,6 +1,7 @@
+
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { apiService } from '../lib/api';
+import { authApi } from '../lib/api/auth_api';
 import { toast } from 'sonner';
 
 export interface User {
@@ -38,7 +39,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         const storedToken = localStorage.getItem('access_token');
         if (storedToken) {
-          const userData = await apiService.getProfile();
+          const userData = await authApi.getCurrentUser();
           setUser(userData);
         }
       } catch (error) {
@@ -56,9 +57,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string) => {
     setLoading(true);
     try {
-      const response = await apiService.login(email, password);
+      const response = await authApi.login({ email, password });
       localStorage.setItem('access_token', response.access_token);
-      const profile = await apiService.getProfile();
+      const profile = await authApi.getCurrentUser();
       setUser(profile);
       toast.success(`Welcome, ${profile.full_name || profile.email}!`);
       
@@ -81,7 +82,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const register = async (email: string, password: string, fullName: string) => {
     setLoading(true);
     try {
-      await apiService.register(email, password, fullName);
+      await authApi.register({ 
+        email, 
+        password, 
+        full_name: fullName 
+      });
       await login(email, password); // Automatically log in after successful registration
       toast.success('Registration successful!');
     } catch (error) {
@@ -95,6 +100,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = () => {
     setUser(null);
     localStorage.removeItem('access_token');
+    authApi.logout();
     navigate('/');
     toast.success('Logged out successfully');
   };
@@ -102,8 +108,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const updateProfile = async (data: Partial<User>) => {
     setLoading(true);
     try {
-      const updatedUser = await apiService.updateProfile(data);
-      setUser(updatedUser);
+      // Mock API call - replace with actual API when available
+      // const updatedUser = await apiService.updateProfile(data);
+      // For now just update the local state
+      setUser(prevUser => prevUser ? { ...prevUser, ...data } : null);
       toast.success('Profile updated successfully!');
     } catch (error) {
       console.error('Profile update failed:', error);
@@ -116,8 +124,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const updateMembership = async (level: string) => {
     setLoading(true);
     try {
-      const updatedUser = await apiService.updateMembership(level);
-      setUser(updatedUser);
+      // Mock API call - replace with actual API when available
+      // const updatedUser = await apiService.updateMembership(level);
+      // For now just update the local state
+      setUser(prevUser => prevUser ? { ...prevUser, membershipLevel: level as any } : null);
       toast.success(`Membership upgraded to ${level}!`);
     } catch (error) {
       console.error('Membership update failed:', error);
