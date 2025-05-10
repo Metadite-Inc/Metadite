@@ -70,7 +70,13 @@ const Models = () => {
     setSearchTerm('');
     setPriceFilter('all');
     setCategoryFilter('all');
+    setCurrentPage(1); // Also reset to first page when filters change
   };
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, priceFilter, categoryFilter]);
 
   // Get available categories from model data
   const categories = ['all', ...new Set(models.map((model) => model.category))];

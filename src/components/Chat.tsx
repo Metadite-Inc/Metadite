@@ -31,24 +31,24 @@ const Chat: React.FC = () => {
             {
               id: '1',
               content: 'Hello! How can I help you with your model selection today?',
-              sender_id: 'moderator',
-              recipient_id: 'user',
+              senderId: 'moderator',
+              recipientId: 'user',
               timestamp: new Date(Date.now() - 3600000).toISOString(),
               read: true
             },
             {
               id: '2',
               content: 'I am looking for a model with specific dimensions, can you help?',
-              sender_id: 'user',
-              recipient_id: 'moderator',
+              senderId: 'user',
+              recipientId: 'moderator',
               timestamp: new Date(Date.now() - 3500000).toISOString(),
               read: true
             },
             {
               id: '3',
               content: 'Of course! Could you tell me what dimensions you\'re looking for?',
-              sender_id: 'moderator',
-              recipient_id: 'user',
+              senderId: 'moderator',
+              recipientId: 'user',
               timestamp: new Date(Date.now() - 3400000).toISOString(),
               read: true
             }
@@ -78,8 +78,8 @@ const Chat: React.FC = () => {
     const tempMessage: Message = {
       id: Date.now().toString(),
       content: newMessage,
-      sender_id: user?.id || 'user',
-      recipient_id: modelId || 'moderator',
+      senderId: user?.id || 'user',
+      recipientId: modelId || 'moderator',
       timestamp: new Date().toISOString(),
       read: false
     };
@@ -99,8 +99,8 @@ const Chat: React.FC = () => {
         const responseMessage: Message = {
           id: (Date.now() + 1).toString(),
           content: "Thank you for your message. A moderator will respond shortly.",
-          sender_id: 'moderator',
-          recipient_id: user?.id || 'user',
+          senderId: 'moderator',
+          recipientId: user?.id || 'user',
           timestamp: new Date().toISOString(),
           read: false
         };
@@ -122,18 +122,18 @@ const Chat: React.FC = () => {
           messages.map((message) => (
             <div 
               key={message.id}
-              className={`flex ${message.sender_id === (user?.id || 'user') ? 'justify-end' : 'justify-start'}`}
+              className={`flex ${message.senderId === (user?.id || 'user') ? 'justify-end' : 'justify-start'}`}
             >
               <div 
                 className={`max-w-[75%] rounded-lg px-4 py-3 ${
-                  message.sender_id === (user?.id || 'user') 
+                  message.senderId === (user?.id || 'user') 
                     ? 'bg-metadite-primary text-white' 
                     : theme === 'dark' ? 'bg-gray-800' : 'bg-gray-100'
                 }`}
               >
                 <p>{message.content}</p>
                 <span className={`text-xs mt-1 block ${
-                  message.sender_id === (user?.id || 'user') ? 'text-gray-200' : 'text-gray-500'
+                  message.senderId === (user?.id || 'user') ? 'text-gray-200' : 'text-gray-500'
                 }`}>
                   {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </span>
