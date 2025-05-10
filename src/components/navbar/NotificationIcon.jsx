@@ -1,11 +1,9 @@
 
 import React, { useState } from 'react';
 import { Bell } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import ChatPanel from './ChatPanel';
 
 const NotificationIcon = ({ newMessage }) => {
-  const navigate = useNavigate();
   const [chatOpen, setChatOpen] = useState(false);
   const [chats, setChats] = useState([
     { id: 1, sender: 'Moderator', message: 'Hello! How can I assist you?', timestamp: '10:30 AM' },

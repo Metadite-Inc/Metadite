@@ -39,11 +39,13 @@ const Index = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <HeroSection isLoaded={isLoaded} user={user} hasVipAccess={hasVipAccess} theme={theme} />
-      <FeaturesSection theme={theme} />
-      <FeaturedModelsSection models={featuredModels} theme={theme} />
-      <TestimonialsSection testimonials={testimonials} theme={theme} />
-      <CtaSection user={user} hasVipAccess={hasVipAccess} />
+      <div className="pt-[74px]"> {/* Add padding to account for fixed navbar height */}
+        <HeroSection isLoaded={isLoaded} user={user} hasVipAccess={hasVipAccess} theme={theme} />
+        <FeaturesSection theme={theme} />
+        <FeaturedModelsSection models={featuredModels} theme={theme} />
+        <TestimonialsSection testimonials={testimonials} theme={theme} />
+        <CtaSection user={user} hasVipAccess={hasVipAccess} />
+      </div>
       <Footer />
     </div>
   );

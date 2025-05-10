@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Menu, X } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
@@ -13,6 +13,7 @@ import NotificationIcon from './navbar/NotificationIcon';
 const Navbar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [newMessage, setNewMessage] = useState(false);
@@ -23,16 +24,16 @@ const Navbar = () => {
   const hasVipAccess = user?.membershipLevel === 'vip' || user?.membershipLevel === 'vvip';
 
   useEffect(() => {
-    if (user?.role === 'admin' && window.location.pathname === '/') {
+    if (user?.role === 'admin' && location.pathname === '/') {
       navigate('/admin', { replace: true });
     }
-  }, [user, navigate]);
+  }, [user, navigate, location.pathname]);
 
   useEffect(() => {
-    if (user?.role === 'moderator' && window.location.pathname === '/') {
+    if (user?.role === 'moderator' && location.pathname === '/') {
       navigate('/moderator', { replace: true });
     }
-  }, [user, navigate]);
+  }, [user, navigate, location.pathname]);
 
   // Set new message notification after a delay
   useEffect(() => {

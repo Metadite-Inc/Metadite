@@ -40,7 +40,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const storedToken = localStorage.getItem('access_token');
         if (storedToken) {
           const userData = await authApi.getCurrentUser();
-          setUser(userData);
+          // Convert API response to our User type
+          setUser({
+            id: userData.id,
+            email: userData.email,
+            full_name: userData.name,
+            role: userData.role as 'user' | 'admin' | 'moderator' | 'regular',
+            membershipLevel: userData.membershipLevel as 'free' | 'basic' | 'premium' | 'vip' | 'vvip',
+            region: userData.region
+          });
         }
       } catch (error) {
         console.error('Authentication check failed:', error);
@@ -60,8 +68,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const response = await authApi.login({ email, password });
       localStorage.setItem('access_token', response.access_token);
       const profile = await authApi.getCurrentUser();
-      setUser(profile);
-      toast.success(`Welcome, ${profile.full_name || profile.email}!`);
+      // Convert API response to our User type
+      setUser({
+        id: profile.id,
+        email: profile.email,
+        full_name: profile.name,
+        role: profile.role as 'user' | 'admin' | 'moderator' | 'regular',
+        membershipLevel: profile.membershipLevel as 'free' | 'basic' | 'premium' | 'vip' | 'vvip',
+        region: profile.region
+      });
+      toast.success(`Welcome, ${profile.name || profile.email}!`);
       
       // Redirect based on role
       if (profile.role === 'admin') {
