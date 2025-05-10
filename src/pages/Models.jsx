@@ -80,6 +80,8 @@ const Models = () => {
   // Get available categories from model data
   const categories = ['all', ...new Set(models.map((model) => model.category))];
 
+  console.log("Pagination info:", { currentPage, totalPages, modelsPerPage, filteredModelsCount: filteredModels.length });
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -118,12 +120,19 @@ const Models = () => {
               <>
                 <ModelGrid models={currentModels} isLoaded={isLoaded} />
                 
-                {/* Pagination with improved visibility */}
-                <ModelPagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  handlePageChange={handlePageChange}
-                />
+                {totalPages > 1 && (
+                  <ModelPagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    handlePageChange={handlePageChange}
+                  />
+                )}
+
+                {/* Display info about pagination for debugging */}
+                <div className="text-center text-sm text-gray-500 mt-4">
+                  Page {currentPage} of {totalPages} | 
+                  Showing {(currentPage - 1) * modelsPerPage + 1} - {Math.min(currentPage * modelsPerPage, filteredModels.length)} of {filteredModels.length} models
+                </div>
               </>
             ) : (
               <NoResults resetFilters={resetFilters} />

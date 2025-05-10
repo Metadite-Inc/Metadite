@@ -64,16 +64,17 @@ const ModelPagination = ({ currentPage, totalPages, handlePageChange }) => {
   };
 
   return (
-    <div className="w-full flex justify-center mt-8">
-      <Pagination className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-2">
-        <PaginationContent>
+    <div className="w-full flex justify-center mt-10 mb-6">
+      <Pagination className="bg-metadite-primary/10 border border-metadite-primary/20 shadow-lg rounded-lg p-3">
+        <PaginationContent className="gap-2">
           {/* Previous Button */}
           <PaginationItem>
             <PaginationPrevious 
               onClick={goToPreviousPage} 
               className={`${currentPage === 1 
                 ? "pointer-events-none opacity-50" 
-                : "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"}`}
+                : "cursor-pointer hover:bg-metadite-primary/20 dark:hover:bg-metadite-primary/30"} 
+                font-medium`}
             >
               <ChevronLeft className="h-4 w-4 mr-2" />
               <span>Previous</span>
@@ -95,7 +96,9 @@ const ModelPagination = ({ currentPage, totalPages, handlePageChange }) => {
                 <PaginationLink
                   onClick={() => handlePageChange(page)}
                   isActive={page === currentPage}
-                  className="cursor-pointer"
+                  className={`cursor-pointer hover:bg-metadite-primary/20 ${
+                    page === currentPage ? 'font-bold' : ''
+                  }`}
                 >
                   {page}
                 </PaginationLink>
@@ -109,7 +112,8 @@ const ModelPagination = ({ currentPage, totalPages, handlePageChange }) => {
               onClick={goToNextPage} 
               className={`${currentPage === totalPages 
                 ? "pointer-events-none opacity-50" 
-                : "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"}`}
+                : "cursor-pointer hover:bg-metadite-primary/20 dark:hover:bg-metadite-primary/30"}
+                font-medium`}
             >
               <span>Next</span>
               <ChevronRight className="h-4 w-4 ml-2" />
