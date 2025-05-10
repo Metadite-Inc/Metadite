@@ -19,19 +19,33 @@ const Index = () => {
   const { theme } = useTheme();
   const hasVipAccess = user?.membershipLevel === 'vip' || user?.membershipLevel === 'vvip';
 
+  // Load featured models
   useEffect(() => {
-    setIsLoaded(true);
-    fetchFeaturedModels().then(setFeaturedModels);
+    const loadModels = async () => {
+      try {
+        const models = await fetchFeaturedModels();
+        setFeaturedModels(models || []);
+      } catch (error) {
+        console.error("Error fetching featured models:", error);
+        setFeaturedModels([]);
+      } finally {
+        setIsLoaded(true);
+      }
+    };
+    
+    loadModels();
   }, []);
 
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <HeroSection isLoaded={isLoaded} user={user} hasVipAccess={hasVipAccess} theme={theme} />
-      <FeaturesSection theme={theme} />
-      <FeaturedModelsSection models={featuredModels} theme={theme} />
-      <TestimonialsSection testimonials={testimonials} theme={theme} />
-      <CtaSection user={user} hasVipAccess={hasVipAccess} />
+      <div className="pt-[74px]"> {/* Add padding to account for fixed navbar height */}
+        <HeroSection isLoaded={isLoaded} user={user} hasVipAccess={hasVipAccess} theme={theme} />
+        <FeaturesSection theme={theme} />
+        <FeaturedModelsSection models={featuredModels} theme={theme} />
+        <TestimonialsSection testimonials={testimonials} theme={theme} />
+        <CtaSection user={user} hasVipAccess={hasVipAccess} />
+      </div>
       <Footer />
     </div>
   );
