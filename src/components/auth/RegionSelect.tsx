@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { countries } from '../countries';
+import countries from '../countries';
 
 export interface RegionSelectProps {
   value: string;
