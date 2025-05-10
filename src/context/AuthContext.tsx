@@ -1,48 +1,32 @@
-
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { auth } from '../firebase';
+import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { apiService } from '../lib/api';
 import { toast } from 'sonner';
-import { v4 as uuidv4 } from 'uuid';
 
-interface User {
+export interface User {
   id: string;
   email: string;
-  role: string;
-  full_name: string;
-  membershipLevel?: string;
-  created_at?: string;
-  updated_at?: string;
+  full_name?: string;
+  role: 'user' | 'admin' | 'moderator' | 'regular';
+  membershipLevel?: 'free' | 'basic' | 'premium' | 'vip' | 'vvip';
+  createdAt?: string;
+  lastLogin?: string;
+  region?: string;
+  vip?: boolean;
+  uuid?: string;
 }
 
-interface UserResponse {
-  id: string;
-  email: string;
-  role: string;
-  name: string; // API returns name but we use full_name in our app
-  membershipLevel?: string;
-  created_at?: string;
-  updated_at?: string;
-}
-
-interface AuthContextProps {
+export interface AuthContextProps {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, name: string) => Promise<void>;
-  logout: () => Promise<void>;
-  isAuthenticated: boolean;
+  logout: () => void;
+  register: (email: string, password: string, fullName: string) => Promise<void>;
+  updateProfile: (data: Partial<User>) => Promise<void>;
+  updateMembership: (level: string) => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextProps | undefined>(undefined);
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
+export const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -50,129 +34,120 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const navigate = useNavigate();
 
   useEffect(() => {
-    const checkUserSession = async () => {
-      const token = localStorage.getItem('access_token');
-      const storedUser = localStorage.getItem('user');
-      
-      if (token && storedUser) {
-        try {
-          const userData = JSON.parse(storedUser);
-          // Transform API response to our User type
-          setUser({
-            id: userData.id,
-            email: userData.email,
-            role: userData.role,
-            full_name: userData.name || 'Unknown User',
-            membershipLevel: userData.membershipLevel,
-            created_at: userData.created_at,
-            updated_at: userData.updated_at
-          });
-        } catch (error) {
-          console.error("Failed to parse user data:", error);
-          localStorage.removeItem('access_token');
-          localStorage.removeItem('user');
+    const checkAuth = async () => {
+      try {
+        const storedToken = localStorage.getItem('access_token');
+        if (storedToken) {
+          const userData = await apiService.getProfile();
+          setUser(userData);
         }
+      } catch (error) {
+        console.error('Authentication check failed:', error);
+        // Optionally clear the token if it's invalid
+        localStorage.removeItem('access_token');
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
-    
-    checkUserSession();
+
+    checkAuth();
   }, []);
 
   const login = async (email: string, password: string) => {
+    setLoading(true);
     try {
-      // Call your login API, store token in localStorage
-      const mockResponse: UserResponse = {
-        id: uuidv4(),
-        email,
-        name: email.split('@')[0],
-        role: email.includes('admin') ? 'admin' : email.includes('moderator') ? 'moderator' : 'user'
-      };
+      const response = await apiService.login(email, password);
+      localStorage.setItem('access_token', response.access_token);
+      const profile = await apiService.getProfile();
+      setUser(profile);
+      toast.success(`Welcome, ${profile.full_name || profile.email}!`);
       
-      localStorage.setItem('access_token', 'mock-token');
-      localStorage.setItem('user', JSON.stringify(mockResponse));
-      
-      // Transform API response to our User type
-      setUser({
-        id: mockResponse.id,
-        email: mockResponse.email,
-        role: mockResponse.role,
-        full_name: mockResponse.name || 'Unknown User',
-        membershipLevel: mockResponse.membershipLevel,
-        created_at: mockResponse.created_at,
-        updated_at: mockResponse.updated_at
-      });
-
-      toast.success('Login successful!');
-      navigate('/');
+      // Redirect based on role
+      if (profile.role === 'admin') {
+        navigate('/admin');
+      } else if (profile.role === 'moderator') {
+        navigate('/moderator');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (error) {
-      console.error('Login error:', error);
-      toast.error('Login failed. Please check your credentials.');
-      throw error;
+      console.error('Login failed:', error);
+      toast.error('Invalid credentials');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const register = async (email: string, password: string, name: string) => {
+  const register = async (email: string, password: string, fullName: string) => {
+    setLoading(true);
     try {
-      // Call your registration API, store token in localStorage
-      const mockResponse: UserResponse = {
-        id: uuidv4(),
-        email,
-        name,
-        role: 'user'
-      };
-      
-      localStorage.setItem('access_token', 'mock-token');
-      localStorage.setItem('user', JSON.stringify(mockResponse));
-      
-      // Transform API response to our User type
-      setUser({
-        id: mockResponse.id,
-        email: mockResponse.email,
-        role: mockResponse.role,
-        full_name: mockResponse.name,
-        membershipLevel: mockResponse.membershipLevel,
-        created_at: mockResponse.created_at,
-        updated_at: mockResponse.updated_at
-      });
-
+      await apiService.register(email, password, fullName);
+      await login(email, password); // Automatically log in after successful registration
       toast.success('Registration successful!');
-      navigate('/');
     } catch (error) {
-      console.error('Registration error:', error);
-      toast.error('Registration failed. Please try again.');
-      throw error;
+      console.error('Registration failed:', error);
+      toast.error('Registration failed');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const logout = async () => {
+  const logout = () => {
+    setUser(null);
+    localStorage.removeItem('access_token');
+    navigate('/');
+    toast.success('Logged out successfully');
+  };
+
+  const updateProfile = async (data: Partial<User>) => {
+    setLoading(true);
     try {
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('user');
-      setUser(null);
-      toast.success('Logged out successfully');
-      navigate('/');
+      const updatedUser = await apiService.updateProfile(data);
+      setUser(updatedUser);
+      toast.success('Profile updated successfully!');
     } catch (error) {
-      console.error('Logout error:', error);
-      toast.error('Logout failed. Please try again.');
-      throw error;
+      console.error('Profile update failed:', error);
+      toast.error('Failed to update profile');
+    } finally {
+      setLoading(false);
     }
+  };
+  
+  const updateMembership = async (level: string) => {
+    setLoading(true);
+    try {
+      const updatedUser = await apiService.updateMembership(level);
+      setUser(updatedUser);
+      toast.success(`Membership upgraded to ${level}!`);
+    } catch (error) {
+      console.error('Membership update failed:', error);
+      toast.error('Failed to update membership');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const value: AuthContextProps = {
+    user,
+    loading,
+    login,
+    logout,
+    register,
+    updateProfile,
+    updateMembership,
   };
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        loading,
-        login,
-        register,
-        logout,
-        isAuthenticated: !!user
-      }}
-    >
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-export default AuthContext;
+export const useAuth = (): AuthContextProps => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
