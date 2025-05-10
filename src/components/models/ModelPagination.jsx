@@ -65,8 +65,8 @@ const ModelPagination = ({ currentPage, totalPages, handlePageChange }) => {
 
   return (
     <div className="w-full flex justify-center mt-10 mb-6">
-      <Pagination className="bg-metadite-primary/10 border border-metadite-primary/20 shadow-lg rounded-lg p-3">
-        <PaginationContent className="gap-2">
+      <Pagination className="bg-metadite-primary/10 border-2 border-metadite-primary/20 shadow-lg rounded-lg p-4">
+        <PaginationContent className="gap-3">
           {/* Previous Button */}
           <PaginationItem>
             <PaginationPrevious 
@@ -76,8 +76,8 @@ const ModelPagination = ({ currentPage, totalPages, handlePageChange }) => {
                 : "cursor-pointer hover:bg-metadite-primary/20 dark:hover:bg-metadite-primary/30"} 
                 font-medium`}
             >
-              <ChevronLeft className="h-4 w-4 mr-2" />
-              <span>Previous</span>
+              <ChevronLeft className="h-5 w-5 mr-2" />
+              <span className="text-base">Previous</span>
             </PaginationPrevious>
           </PaginationItem>
           
@@ -96,8 +96,8 @@ const ModelPagination = ({ currentPage, totalPages, handlePageChange }) => {
                 <PaginationLink
                   onClick={() => handlePageChange(page)}
                   isActive={page === currentPage}
-                  className={`cursor-pointer hover:bg-metadite-primary/20 ${
-                    page === currentPage ? 'font-bold' : ''
+                  className={`cursor-pointer hover:bg-metadite-primary/20 text-lg ${
+                    page === currentPage ? 'font-bold bg-metadite-primary text-white hover:bg-metadite-primary/90' : ''
                   }`}
                 >
                   {page}
@@ -115,8 +115,8 @@ const ModelPagination = ({ currentPage, totalPages, handlePageChange }) => {
                 : "cursor-pointer hover:bg-metadite-primary/20 dark:hover:bg-metadite-primary/30"}
                 font-medium`}
             >
-              <span>Next</span>
-              <ChevronRight className="h-4 w-4 ml-2" />
+              <span className="text-base">Next</span>
+              <ChevronRight className="h-5 w-5 ml-2" />
             </PaginationNext>
           </PaginationItem>
         </PaginationContent>

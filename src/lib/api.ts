@@ -50,6 +50,14 @@ export interface ModelDetail extends ModelBasic {
   customerReviews: { rating: number; date: string; comment: string }[];
 }
 
+// Pagination response interface
+export interface PaginationResponse<T> {
+  data: T[];
+  total: number;
+  skip: number;
+  limit: number;
+}
+
 const API_URL = import.meta.env.VITE_API_BASE_URL;
 
 class ApiService {
@@ -76,14 +84,15 @@ class ApiService {
     }
   }
 
-  // Get all models (dolls)
-  async getModels(): Promise<ModelBasic[]> {
+  // Get all models (dolls) with pagination
+  async getModels(skip = 0, limit = 10): Promise<PaginationResponse<ModelBasic>> {
     try {
-      const dolls = await this.request<any[]>("/api/dolls");
+      // Add pagination parameters to the API request
+      const dolls = await this.request<any[]>(`/api/dolls?skip=${skip}&limit=${limit}`);
       const backendUrl = import.meta.env.VITE_API_BASE_URL;
 
       // Transform the API response to match our ModelBasic interface
-      return dolls.map(doll => {
+      const transformedData = dolls.map(doll => {
         let mainImage = '';
         if (Array.isArray(doll.images)) {
           const primary = doll.images.find((img: any) => img.is_primary);
@@ -98,8 +107,24 @@ class ApiService {
           category: doll.doll_category,
         };
       });
+
+      // For now, estimate the total from what we have
+      // In a real API, this would come from the backend
+      const total = Math.max(skip + dolls.length + (dolls.length === limit ? 10 : 0), dolls.length);
+
+      return {
+        data: transformedData,
+        total: total,
+        skip: skip,
+        limit: limit
+      };
     } catch (error) {
-      return [];
+      return {
+        data: [],
+        total: 0,
+        skip: skip,
+        limit: limit
+      };
     }
   }
 
