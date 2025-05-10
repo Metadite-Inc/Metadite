@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -86,7 +85,7 @@ const Models = () => {
       <Navbar />
 
       <div
-        className={`flex-1 pt-24 pb-12 px-4 ${
+        className={`flex-1 pt-24 pb-16 px-4 ${
           theme === 'dark'
             ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900'
             : 'bg-gradient-to-br from-white via-metadite-light to-white'
@@ -119,14 +118,12 @@ const Models = () => {
               <>
                 <ModelGrid models={currentModels} isLoaded={isLoaded} />
                 
-                {/* Make sure pagination is rendered and visible with proper styling */}
-                <div className="mt-8 flex justify-center">
-                  <ModelPagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    handlePageChange={handlePageChange}
-                  />
-                </div>
+                {/* Pagination with improved visibility */}
+                <ModelPagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  handlePageChange={handlePageChange}
+                />
               </>
             ) : (
               <NoResults resetFilters={resetFilters} />

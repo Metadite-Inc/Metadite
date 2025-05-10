@@ -8,6 +8,7 @@ import {
   PaginationPrevious,
   PaginationEllipsis
 } from "@/components/ui/pagination";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const ModelPagination = ({ currentPage, totalPages, handlePageChange }) => {
   const goToPreviousPage = () => {
@@ -63,17 +64,20 @@ const ModelPagination = ({ currentPage, totalPages, handlePageChange }) => {
   };
 
   return (
-    <div className="w-full">
-      <Pagination>
+    <div className="w-full flex justify-center mt-8">
+      <Pagination className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-2">
         <PaginationContent>
           {/* Previous Button */}
           <PaginationItem>
             <PaginationPrevious 
               onClick={goToPreviousPage} 
-              className={currentPage === 1 
+              className={`${currentPage === 1 
                 ? "pointer-events-none opacity-50" 
-                : "cursor-pointer hover:bg-gray-100"} 
-            />
+                : "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"}`}
+            >
+              <ChevronLeft className="h-4 w-4 mr-2" />
+              <span>Previous</span>
+            </PaginationPrevious>
           </PaginationItem>
           
           {/* Page Numbers */}
@@ -103,10 +107,13 @@ const ModelPagination = ({ currentPage, totalPages, handlePageChange }) => {
           <PaginationItem>
             <PaginationNext 
               onClick={goToNextPage} 
-              className={currentPage === totalPages 
+              className={`${currentPage === totalPages 
                 ? "pointer-events-none opacity-50" 
-                : "cursor-pointer hover:bg-gray-100"}
-            />
+                : "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"}`}
+            >
+              <span>Next</span>
+              <ChevronRight className="h-4 w-4 ml-2" />
+            </PaginationNext>
           </PaginationItem>
         </PaginationContent>
       </Pagination>
