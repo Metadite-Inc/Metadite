@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -34,11 +33,11 @@ const App = () => {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <ThemeProvider>
-          <BrowserRouter>
-            <AuthProvider>
-              <CartProvider>
-                <Toaster />
-                <Sonner />
+          <AuthProvider>
+            <CartProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/login" element={<Login />} />
@@ -59,9 +58,9 @@ const App = () => {
                   <Route path="/chat" element={<ChatPage />} /> {/* New Chat Page Route */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
-              </CartProvider>
-            </AuthProvider>
-          </BrowserRouter>
+              </BrowserRouter>
+            </CartProvider>
+          </AuthProvider>
         </ThemeProvider>
       </TooltipProvider>
     </QueryClientProvider>
