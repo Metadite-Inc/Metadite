@@ -1,234 +1,180 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { 
-    sendMessage, 
-    sendFileMessage, 
-    getMessages, 
-    connectWebSocket, 
-    sendTypingIndicator,
-    updateMessageStatus,
-    deleteMessage
-} from '../services/chatService';
-import { MessageCreate, MessageInDB, MessageType, MessageStatus, WebSocketMessage } from '../types/chat';
-import { useAuth } from '../contexts/AuthContext';
-import { format } from 'date-fns';
+import React, { useState, useEffect, useRef } from 'react';
+import { useParams } from 'react-router-dom';
+import '../components/Chat.css';
+import { Send } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
+import ChatService from '../services/ChatService';
+import { Message } from '../types/chat';
+import { useAuth } from '../context/AuthContext';
 
-interface ChatProps {
-    dollId: string;
-    moderatorId: string;
-}
+const Chat: React.FC = () => {
+  const { theme } = useTheme();
+  const { user } = useAuth();
+  const { modelId } = useParams<{ modelId: string }>();
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [newMessage, setNewMessage] = useState('');
+  const [loading, setLoading] = useState(true);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-const Chat: React.FC<ChatProps> = ({ dollId, moderatorId }) => {
-    const [messages, setMessages] = useState<MessageInDB[]>([]);
-    const [newMessage, setNewMessage] = useState('');
-    const [isTyping, setIsTyping] = useState(false);
-    const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
-    const [isLoading, setIsLoading] = useState(false);
-    const [hasMore, setHasMore] = useState(true);
-    const messagesEndRef = useRef<HTMLDivElement>(null);
-    const { user, token } = useAuth();
-    const typingTimeoutRef = useRef<NodeJS.Timeout>();
-
-    // Scroll to bottom when new messages arrive
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  // Mock initial chat messages
+  useEffect(() => {
+    const fetchMessages = async () => {
+      setLoading(true);
+      try {
+        if (user) {
+          // If we have a real user, fetch real messages
+          const fetchedMessages = await ChatService.fetchMessages(user.id);
+          setMessages(fetchedMessages);
+        } else {
+          // Otherwise use demo messages
+          setMessages([
+            {
+              id: '1',
+              content: 'Hello! How can I help you with your model selection today?',
+              sender_id: 'moderator',
+              recipient_id: 'user',
+              timestamp: new Date(Date.now() - 3600000).toISOString(),
+              read: true
+            },
+            {
+              id: '2',
+              content: 'I am looking for a model with specific dimensions, can you help?',
+              sender_id: 'user',
+              recipient_id: 'moderator',
+              timestamp: new Date(Date.now() - 3500000).toISOString(),
+              read: true
+            },
+            {
+              id: '3',
+              content: 'Of course! Could you tell me what dimensions you\'re looking for?',
+              sender_id: 'moderator',
+              recipient_id: 'user',
+              timestamp: new Date(Date.now() - 3400000).toISOString(),
+              read: true
+            }
+          ]);
+        }
+      } finally {
+        setLoading(false);
+      }
     };
 
-    // Load initial messages
-    useEffect(() => {
-        loadMessages();
-    }, [dollId]);
+    fetchMessages();
+  }, [user]);
 
-    // Setup WebSocket connection
-    useEffect(() => {
-        if (!user) return;
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
-        const ws = connectWebSocket(user.uid, handleWebSocketMessage);
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
-        return () => {
-            ws.close();
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMessage.trim()) return;
+
+    // Create a new message object
+    const tempMessage: Message = {
+      id: Date.now().toString(),
+      content: newMessage,
+      sender_id: user?.id || 'user',
+      recipient_id: modelId || 'moderator',
+      timestamp: new Date().toISOString(),
+      read: false
+    };
+
+    // Optimistically update UI
+    setMessages(prevMessages => [...prevMessages, tempMessage]);
+    setNewMessage('');
+
+    try {
+      if (user) {
+        // If we have a real user, send the message to the API
+        await ChatService.sendMessage(user.id, newMessage, modelId);
+      }
+      
+      // Simulate a response after a delay
+      setTimeout(() => {
+        const responseMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          content: "Thank you for your message. A moderator will respond shortly.",
+          sender_id: 'moderator',
+          recipient_id: user?.id || 'user',
+          timestamp: new Date().toISOString(),
+          read: false
         };
-    }, [user]);
+        setMessages(prevMessages => [...prevMessages, responseMessage]);
+      }, 1000);
+    } catch (error) {
+      console.error('Failed to send message:', error);
+    }
+  };
 
-    const handleWebSocketMessage = (data: WebSocketMessage) => {
-        switch (data.type) {
-            case 'new_message':
-                if (data.message) {
-                    setMessages(prev => [...prev, data.message!]);
-                    scrollToBottom();
-                }
-                break;
-            case 'status_update':
-                if (data.message_id && data.status) {
-                    setMessages(prev => prev.map(msg => 
-                        msg.id === data.message_id 
-                            ? { ...msg, status: data.status! }
-                            : msg
-                    ));
-                }
-                break;
-            case 'typing':
-                if (data.user_id && data.is_typing !== undefined) {
-                    setTypingUsers(prev => {
-                        const newSet = new Set(prev);
-                        if (data.is_typing) {
-                            newSet.add(data.user_id!);
-                        } else {
-                            newSet.delete(data.user_id!);
-                        }
-                        return newSet;
-                    });
-                }
-                break;
-        }
-    };
-
-    const loadMessages = async (before?: Date) => {
-        if (!token || isLoading || !hasMore) return;
-
-        setIsLoading(true);
-        try {
-            const newMessages = await getMessages(dollId, 50, before, token);
-            setMessages(prev => [...newMessages, ...prev]);
-            setHasMore(newMessages.length === 50);
-        } catch (error) {
-            console.error('Error loading messages:', error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleSendMessage = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!newMessage.trim() || !token) return;
-
-        const message: MessageCreate = {
-            content: newMessage.trim(),
-            message_type: MessageType.TEXT,
-            doll_id: dollId
-        };
-
-        try {
-            await sendMessage(message, token);
-            setNewMessage('');
-        } catch (error) {
-            console.error('Error sending message:', error);
-        }
-    };
-
-    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (!e.target.files?.length || !token) return;
-
-        const file = e.target.files[0];
-        try {
-            await sendFileMessage(file, dollId, token);
-        } catch (error) {
-            console.error('Error uploading file:', error);
-        }
-    };
-
-    const handleTyping = useCallback(() => {
-        if (!isTyping) {
-            setIsTyping(true);
-            sendTypingIndicator(dollId, true);
-        }
-
-        if (typingTimeoutRef.current) {
-            clearTimeout(typingTimeoutRef.current);
-        }
-
-        typingTimeoutRef.current = setTimeout(() => {
-            setIsTyping(false);
-            sendTypingIndicator(dollId, false);
-        }, 3000);
-    }, [dollId, isTyping]);
-
-    const handleMessageStatus = async (messageId: string, status: MessageStatus) => {
-        if (!token) return;
-        try {
-            await updateMessageStatus(messageId, status, token);
-        } catch (error) {
-            console.error('Error updating message status:', error);
-        }
-    };
-
-    const handleDeleteMessage = async (messageId: string) => {
-        if (!token) return;
-        try {
-            await deleteMessage(messageId, token);
-            setMessages(prev => prev.filter(msg => msg.id !== messageId));
-        } catch (error) {
-            console.error('Error deleting message:', error);
-        }
-    };
-
-    return (
-        <div className="chat-container">
-            <div className="messages-container">
-                {messages.map(message => (
-                    <div 
-                        key={message.id} 
-                        className={`message ${message.sender_id === user?.uid ? 'sent' : 'received'}`}
-                    >
-                        <div className="message-content">
-                            {message.message_type === MessageType.IMAGE ? (
-                                <img src={message.content} alt="Shared image" />
-                            ) : message.message_type === MessageType.FILE ? (
-                                <a href={message.content} target="_blank" rel="noopener noreferrer">
-                                    Download File
-                                </a>
-                            ) : (
-                                message.content
-                            )}
-                        </div>
-                        <div className="message-meta">
-                            <span className="time">
-                                {format(new Date(message.created_at), 'HH:mm')}
-                            </span>
-                            {message.sender_id === user?.uid && (
-                                <button 
-                                    onClick={() => handleDeleteMessage(message.id)}
-                                    className="delete-button"
-                                >
-                                    Delete
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                ))}
-                <div ref={messagesEndRef} />
+  return (
+    <div className={`flex flex-col h-full ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-white text-gray-800'}`}>
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {loading ? (
+          <div className="flex justify-center items-center h-full">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-metadite-primary"></div>
+          </div>
+        ) : messages.length > 0 ? (
+          messages.map((message) => (
+            <div 
+              key={message.id}
+              className={`flex ${message.sender_id === (user?.id || 'user') ? 'justify-end' : 'justify-start'}`}
+            >
+              <div 
+                className={`max-w-[75%] rounded-lg px-4 py-3 ${
+                  message.sender_id === (user?.id || 'user') 
+                    ? 'bg-metadite-primary text-white' 
+                    : theme === 'dark' ? 'bg-gray-800' : 'bg-gray-100'
+                }`}
+              >
+                <p>{message.content}</p>
+                <span className={`text-xs mt-1 block ${
+                  message.sender_id === (user?.id || 'user') ? 'text-gray-200' : 'text-gray-500'
+                }`}>
+                  {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              </div>
             </div>
-
-            {typingUsers.size > 0 && (
-                <div className="typing-indicator">
-                    {Array.from(typingUsers).map(userId => (
-                        <span key={userId}>{userId} is typing...</span>
-                    ))}
-                </div>
-            )}
-
-            <form onSubmit={handleSendMessage} className="message-form">
-                <input
-                    type="text"
-                    value={newMessage}
-                    onChange={(e) => {
-                        setNewMessage(e.target.value);
-                        handleTyping();
-                    }}
-                    placeholder="Type a message..."
-                    className="message-input"
-                />
-                <input
-                    type="file"
-                    onChange={handleFileUpload}
-                    accept="image/*,.pdf,.doc,.docx"
-                    className="file-input"
-                />
-                <button type="submit" className="send-button">
-                    Send
-                </button>
-            </form>
+          ))
+        ) : (
+          <div className="flex justify-center items-center h-full">
+            <p className="text-gray-500">No messages yet. Start a conversation!</p>
+          </div>
+        )}
+        <div ref={messagesEndRef} />
+      </div>
+      
+      <form 
+        onSubmit={handleSubmit} 
+        className={`p-4 border-t ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}
+      >
+        <div className="flex space-x-2">
+          <input
+            type="text"
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            placeholder="Type a message..."
+            className={`flex-1 px-4 py-2 rounded-full focus:outline-none focus:ring-2 focus:ring-metadite-primary ${
+              theme === 'dark' 
+                ? 'bg-gray-800 border-gray-700 text-white' 
+                : 'bg-gray-100 border-gray-200 text-gray-800'
+            }`}
+          />
+          <button
+            type="submit"
+            className="bg-metadite-primary hover:bg-metadite-secondary text-white p-2 rounded-full transition duration-200"
+            disabled={!newMessage.trim()}
+          >
+            <Send className="h-5 w-5" />
+          </button>
         </div>
-    );
+      </form>
+    </div>
+  );
 };
 
-export default Chat; 
+export default Chat;

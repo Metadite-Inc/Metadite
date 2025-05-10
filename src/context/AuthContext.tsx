@@ -1,153 +1,178 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { auth } from '../firebase';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { authApi } from '../lib/api/auth_api';
+import { v4 as uuidv4 } from 'uuid';
 
 interface User {
-  //name: string;
   id: string;
   email: string;
+  role: string;
   full_name: string;
-  role: 'admin' | 'moderator' | 'user';
-  membershipLevel?: 'standard' | 'vip' | 'vvip';
-  region?: string;
+  membershipLevel?: string;
   created_at?: string;
+  updated_at?: string;
 }
 
-interface AuthContextType {
+interface UserResponse {
+  id: string;
+  email: string;
+  role: string;
+  name: string; // API returns name but we use full_name in our app
+  membershipLevel?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+interface AuthContextProps {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, name: string, region?: string) => Promise<void>;
-  logout: () => void;
+  register: (email: string, password: string, name: string) => Promise<void>;
+  logout: () => Promise<void>;
   isAuthenticated: boolean;
-  updateMembership: (level: 'standard' | 'vip' | 'vvip') => void;
 }
 
-// Create a context for authentication
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 
-interface AuthProviderProps {
-  children: ReactNode;
-}
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
 
-// Provider component that wraps your app and makes auth object available to any child component that calls useAuth().
-export function AuthProvider({ children }: AuthProviderProps) {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const initializeAuth = async () => {
-      try {
-        const token = localStorage.getItem('access_token');
-        if (token) {
-          const userData = await authApi.getCurrentUser();
-          setUser(userData);
+    const checkUserSession = async () => {
+      const token = localStorage.getItem('access_token');
+      const storedUser = localStorage.getItem('user');
+      
+      if (token && storedUser) {
+        try {
+          const userData = JSON.parse(storedUser);
+          // Transform API response to our User type
+          setUser({
+            id: userData.id,
+            email: userData.email,
+            role: userData.role,
+            full_name: userData.name || 'Unknown User',
+            membershipLevel: userData.membershipLevel,
+            created_at: userData.created_at,
+            updated_at: userData.updated_at
+          });
+        } catch (error) {
+          console.error("Failed to parse user data:", error);
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('user');
         }
-      } catch (error) {
-        console.error('Failed to initialize auth:', error);
-        authApi.logout();
-      } finally {
-        setLoading(false);
       }
+      setLoading(false);
     };
-
-    initializeAuth();
+    
+    checkUserSession();
   }, []);
 
-  const login = async (email: string, password: string): Promise<void> => {
+  const login = async (email: string, password: string) => {
     try {
-      await authApi.login({ email, password });
-      const userData = await authApi.getCurrentUser();
-      setUser(userData);
-      toast.success('Login successful');
+      // Call your login API, store token in localStorage
+      const mockResponse: UserResponse = {
+        id: uuidv4(),
+        email,
+        name: email.split('@')[0],
+        role: email.includes('admin') ? 'admin' : email.includes('moderator') ? 'moderator' : 'user'
+      };
+      
+      localStorage.setItem('access_token', 'mock-token');
+      localStorage.setItem('user', JSON.stringify(mockResponse));
+      
+      // Transform API response to our User type
+      setUser({
+        id: mockResponse.id,
+        email: mockResponse.email,
+        role: mockResponse.role,
+        full_name: mockResponse.name || 'Unknown User',
+        membershipLevel: mockResponse.membershipLevel,
+        created_at: mockResponse.created_at,
+        updated_at: mockResponse.updated_at
+      });
+
+      toast.success('Login successful!');
+      navigate('/');
     } catch (error) {
+      console.error('Login error:', error);
       toast.error('Login failed. Please check your credentials.');
       throw error;
     }
   };
 
-  const validatePassword = (password: string): string => {
-    if (password.length < 8) {
-      return "Password must be at least 8 characters long";
-    }
-    if (!/[A-Z]/.test(password)) {
-      return "Password must contain at least one uppercase letter";
-    }
-    if (!/[a-z]/.test(password)) {
-      return "Password must contain at least one lowercase letter";
-    }
-    if (!/[0-9]/.test(password)) {
-      return "Password must contain at least one digit";
-    }
-    return "";
-  };
-
-  const register = async (email: string, password: string, name: string, region?: string): Promise<void> => {
+  const register = async (email: string, password: string, name: string) => {
     try {
-      // Validate password complexity
-      const validationError = validatePassword(password);
-      if (validationError) {
-        toast.error(validationError);
-        throw new Error(validationError);
-      }
-
-      await authApi.register({ 
-        email, 
-        password, 
-        full_name: name,
-        role: 'user',
-        membership_level: 'standard',
-        is_active: true,
-        assigned_dolls: [],
-        video_access_count: 0,
-        region 
+      // Call your registration API, store token in localStorage
+      const mockResponse: UserResponse = {
+        id: uuidv4(),
+        email,
+        name,
+        role: 'user'
+      };
+      
+      localStorage.setItem('access_token', 'mock-token');
+      localStorage.setItem('user', JSON.stringify(mockResponse));
+      
+      // Transform API response to our User type
+      setUser({
+        id: mockResponse.id,
+        email: mockResponse.email,
+        role: mockResponse.role,
+        full_name: mockResponse.name,
+        membershipLevel: mockResponse.membershipLevel,
+        created_at: mockResponse.created_at,
+        updated_at: mockResponse.updated_at
       });
-      toast.success('Registration successful. Please login.');
+
+      toast.success('Registration successful!');
+      navigate('/');
     } catch (error) {
+      console.error('Registration error:', error);
       toast.error('Registration failed. Please try again.');
       throw error;
     }
   };
 
-  const updateMembership = async (level: 'standard' | 'vip' | 'vvip') => {
-    if (!user) return;
-    
+  const logout = async () => {
     try {
-      // TODO: Implement membership update API call
-      const updatedUser = { ...user, membershipLevel: level };
-      setUser(updatedUser);
-      toast.success('Membership updated successfully');
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('user');
+      setUser(null);
+      toast.success('Logged out successfully');
+      navigate('/');
     } catch (error) {
-      toast.error('Failed to update membership');
+      console.error('Logout error:', error);
+      toast.error('Logout failed. Please try again.');
       throw error;
     }
   };
 
-  const logout = () => {
-    authApi.logout();
-    setUser(null);
-    toast.success("You've been logged out");
-  };
-
-  // Context value
-  const value = {
-    user,
-    loading,
-    login,
-    register,
-    logout,
-    isAuthenticated: !!user,
-    updateMembership
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
-
-// Hook for components to get the auth object and re-render when it changes
-export const useAuth = (): AuthContextType => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        login,
+        register,
+        logout,
+        isAuthenticated: !!user
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 };
+
+export default AuthContext;
