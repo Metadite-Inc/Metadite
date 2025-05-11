@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -158,6 +157,11 @@ const Navbar = () => {
                   )}
                 </button>
               )}
+              {user?.role === "user" && (
+                <Link to="/cart" className="text-gray-700 dark:text-gray-300 hover:text-metadite-primary transition-colors">
+                  <ShoppingCart className="h-5 w-5" />
+                </Link>
+              )}
               <UserMenu />
             </>
           ) : (
@@ -172,7 +176,7 @@ const Navbar = () => {
         </div>
 
         <div className="md:hidden flex items-center space-x-4">
-  <ThemeToggle />
+          <ThemeToggle />
           {(user?.role === 'user' || user?.role === 'moderator') && (
             <button
               onClick={() => navigate('/chat')}

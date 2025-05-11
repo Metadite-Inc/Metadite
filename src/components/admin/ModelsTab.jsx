@@ -45,15 +45,20 @@ const ModelsTab = ({ isLoaded }) => {
   useEffect(() => {
     const fetchModels = async () => {
       try {
-        const filters = searchTerm ? { search: searchTerm } : {};
-        const result = await apiService.getModels(
-          currentPage, 
-          modelsPerPage,
-          filters
-        );
-        setModels(result.models);
-        setTotalModels(result.total);
-        setTotalPages(result.totalPages);
+        setLoading(true);
+        const skip = (currentPage - 1) * modelsPerPage;
+
+        // Properly include search term in API request
+        const filters = {};
+        if (searchTerm) {
+          filters.search = searchTerm;
+        }
+
+        const response = await apiService.getModels(skip, modelsPerPage, filters);
+
+        setModels(response.data);
+        setTotalModels(response.total);
+        setTotalPages(Math.max(1, Math.ceil(response.total / modelsPerPage)));
         setLoading(false);
       } catch (error) {
         console.error("Error fetching models:", error);
@@ -164,10 +169,11 @@ const ModelsTab = ({ isLoaded }) => {
     setCurrentPage(1);
     setLoading(true);
     try {
-      const { models: fetchedModels, total, totalPages: pages } = await apiService.getModels(1, modelsPerPage);
-      setModels(fetchedModels);
-      setTotalModels(total);
-      setTotalPages(pages);
+      const skip = 0; // First page
+      const response = await apiService.getModels(skip, modelsPerPage, searchTerm); // Pass searchTerm to the API
+      setModels(response.data);
+      setTotalModels(response.total);
+      setTotalPages(Math.ceil(response.total / modelsPerPage));
     } catch (error) {
       console.error("Error fetching models:", error);
     } finally {
@@ -184,16 +190,16 @@ const ModelsTab = ({ isLoaded }) => {
       
       // Refresh the current page
       setLoading(true);
-      const filters = searchTerm ? { search: searchTerm } : {};
-      const result = await apiService.getModels(currentPage, modelsPerPage, filters);
+      const skip = (currentPage - 1) * modelsPerPage;
+      const response = await apiService.getModels(skip, modelsPerPage, searchTerm); // Pass searchTerm to the API
       
       // If the current page is now empty (except for the last page), go to the previous page
-      if (result.models.length === 0 && currentPage > 1) {
-        setCurrentPage(prev => prev - 1);
+      if (response.data.length === 0 && currentPage > 1) {
+        setCurrentPage(Math.max(currentPage - 1, 1)); // Ensure currentPage doesn't go below 1
       } else {
-        setModels(result.models);
-        setTotalModels(result.total);
-        setTotalPages(result.totalPages);
+        setModels(response.data);
+        setTotalModels(response.total);
+        setTotalPages(Math.ceil(response.total / modelsPerPage));
         setLoading(false);
       }
       
@@ -207,13 +213,13 @@ const ModelsTab = ({ isLoaded }) => {
   // Change page handlers
   const goToNextPage = () => {
     if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
+      setCurrentPage(prev => Math.min(prev + 1, totalPages));
     }
   };
 
   const goToPreviousPage = () => {
     if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
+      setCurrentPage(prev => Math.max(prev - 1, 1));
     }
   };
 
@@ -658,9 +664,9 @@ const ModelsTab = ({ isLoaded }) => {
             <div className="flex space-x-2">
               <button
                 onClick={goToPreviousPage}
-                disabled={currentPage === 1}
+                disabled={currentPage <= 1}
                 className={`flex items-center px-3 py-1 rounded-md ${
-                  currentPage === 1 
+                  currentPage <= 1 
                   ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
                   : 'bg-metadite-primary bg-opacity-10 text-metadite-primary hover:bg-opacity-20'
                 } transition-colors`}

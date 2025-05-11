@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { FileVideo, Search, Edit, Trash2, Plus, X } from 'lucide-react';
 import { toast } from 'sonner';
@@ -29,8 +28,9 @@ const VideosTab = ({ isLoaded }) => {
   useEffect(() => {
     const fetchModels = async () => {
       try {
-        const modelsData = await apiService.getModels();
-        setModels(modelsData);
+        // Using the new pagination API
+        const response = await apiService.getModels(0, 100); // Get up to 100 models
+        setModels(response.data);
         setLoading(false);
       } catch (error) {
         console.error("Error fetching models:", error);

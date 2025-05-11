@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ChevronLeft, MessageSquare, Send, AlertTriangle } from 'lucide-react';
@@ -8,8 +7,8 @@ import { useTheme } from '../context/ThemeContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import MessageItem from '../components/MessageItem';
-import { getModelData } from './model/api/modelData';
 import { Textarea } from "@/components/ui/textarea";
+import { apiService } from '../lib/api'; // Import the API service
 
 const ModelChat = () => {
   const { id } = useParams();
@@ -20,30 +19,46 @@ const ModelChat = () => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const messageEndRef = useRef(null);
+  const [fetchError, setFetchError] = useState(false);
   
-  // Fetch model data
+  // Fetch model data using our API service
   useEffect(() => {
-    // Simulate fetching the model
-    setTimeout(() => {
-      const fetchedModel = getModelData(id);
-      setModel(fetchedModel);
-      setIsLoaded(true);
-      
-      // Initial message from moderator
-      if (fetchedModel) {
-        const moderatorMessage = {
-          id: model.id,
-          modelId: fetchedModel.id,
-          senderId: 'moderator.id',
-          senderName: model.name,
-          content: `Hello! I'm ${fetchedModel.name}. How are you today?`,
+    const fetchModelDetails = async () => {
+      try {
+        setIsLoaded(false);
+        setFetchError(false);
+        
+        const modelDetails = await apiService.getModelDetails(parseInt(id));
+        
+        if (!modelDetails) {
+          setFetchError(true);
+          setIsLoaded(true);
+          return;
+        }
+        
+        setModel(modelDetails);
+        
+        // Initial message from model
+        const modelMessage = {
+          id: 1,
+          modelId: modelDetails.id,
+          senderId: 'model.id',
+          senderName: modelDetails.name,
+          content: `Hello! I'm ${modelDetails.name}. How are you today?`,
           timestamp: new Date().toISOString(),
           flagged: false
         };
         
-        setMessages([moderatorMessage]);
+        setMessages([modelMessage]);
+        setIsLoaded(true);
+      } catch (error) {
+        console.error("Failed to fetch model details:", error);
+        setFetchError(true);
+        setIsLoaded(true);
       }
-    }, 800);
+    };
+
+    fetchModelDetails();
   }, [id]);
   
   // Scroll to bottom when messages change
@@ -83,7 +98,7 @@ const ModelChat = () => {
         modelId: model.id,
         senderId: 'moderator-1',
         senderName: 'Support Team',
-        content: `Thank you for your message about ${model.name}. A moderator will get back to you soon.`,
+        content: `Thank you for your message about ${model.name}. I'll get back to you soon.`,
         timestamp: new Date().toISOString(),
         flagged: false
       };
@@ -135,7 +150,7 @@ const ModelChat = () => {
     );
   }
 
-  if (!model) {
+  if (!model || fetchError) {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
@@ -181,7 +196,7 @@ const ModelChat = () => {
               <div>
                 <h2 className={`font-medium ${theme === 'dark' ? 'text-white' : ''}`}>Chat about {model.name}</h2>
                 <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                  Our team will respond as soon as possible
+                  {model.description.substring(0, 10)}
                 </p>
               </div>
             </div>
