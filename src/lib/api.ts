@@ -19,9 +19,6 @@ export interface CreateModelRequest {
   doll_category: string;
   doll_height: number;
   doll_material: string;
-  //doll_origin: string;
-  //doll_articulation: string;
-  //doll_hair_type: string;
   doll_vaginal_depth: number;
   doll_anal_depth: number;
   doll_oral_depth: number;
