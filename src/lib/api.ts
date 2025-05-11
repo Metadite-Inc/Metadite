@@ -85,7 +85,7 @@ class ApiService {
   }
 
   // Get all models (dolls) with pagination and filters
-  async getModels(skip = 0, limit = 10, filters = {}): Promise<PaginationResponse<ModelBasic>> {
+  async getModels(skip = 0, limit = 10): Promise<PaginationResponse<ModelBasic>> {
     try {
       // Build query string from filters
       const queryParams = new URLSearchParams({
