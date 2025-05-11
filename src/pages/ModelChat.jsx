@@ -98,7 +98,7 @@ const ModelChat = () => {
         modelId: model.id,
         senderId: 'moderator-1',
         senderName: 'Support Team',
-        content: `Thank you for your message about ${model.name}. I'll will get back to you soon.`,
+        content: `Thank you for your message about ${model.name}. I'll get back to you soon.`,
         timestamp: new Date().toISOString(),
         flagged: false
       };
