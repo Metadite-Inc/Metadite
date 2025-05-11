@@ -48,13 +48,7 @@ const ModelsTab = ({ isLoaded }) => {
         setLoading(true);
         const skip = (currentPage - 1) * modelsPerPage;
 
-        // Properly include search term in API request
-        const filters = {};
-        if (searchTerm) {
-          filters.search = searchTerm;
-        }
-
-        const response = await apiService.getModels(skip, modelsPerPage, filters);
+        const response = await apiService.getModels(skip, modelsPerPage);
 
         setModels(response.data);
         setTotalModels(response.total);

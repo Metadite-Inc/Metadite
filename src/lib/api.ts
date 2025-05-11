@@ -19,9 +19,6 @@ export interface CreateModelRequest {
   doll_category: string;
   doll_height: number;
   doll_material: string;
-  //doll_origin: string;
-  //doll_articulation: string;
-  //doll_hair_type: string;
   doll_vaginal_depth: number;
   doll_anal_depth: number;
   doll_oral_depth: number;
@@ -84,30 +81,13 @@ class ApiService {
     }
   }
 
-  // Get all models (dolls) with pagination and filters
-  async getModels(skip = 0, limit = 10, filters = {}): Promise<PaginationResponse<ModelBasic>> {
+  // Get all models (dolls) with pagination
+  async getModels(skip = 0, limit = 10): Promise<PaginationResponse<ModelBasic>> {
     try {
-      // Build query string from filters
-      const queryParams = new URLSearchParams({
-        skip: skip.toString(),
-        limit: limit.toString()
-      });
-      
-      // Add any additional filters to the query params
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value !== undefined && value !== null && value !== '') {
-          queryParams.append(key, String(value));
-        }
-      });
-      
-      const endpoint = `/api/dolls?${queryParams.toString()}`;
-      const response = await this.request<any>(endpoint);
+      // Add pagination parameters to the API request
+      const dolls = await this.request<any[]>(`/api/dolls?skip=${skip}&limit=${limit}`);
       const backendUrl = import.meta.env.VITE_API_BASE_URL;
 
-      // Handle both array response and paginated response formats
-      const dolls = response.items || response;
-      const total = response.total || dolls.length;
-      
       // Transform the API response to match our ModelBasic interface
       const transformedData = dolls.map(doll => {
         let mainImage = '';
@@ -124,6 +104,10 @@ class ApiService {
           category: doll.doll_category,
         };
       });
+
+      // For now, estimate the total from what we have
+      // In a real API, this would come from the backend
+      const total = Math.max(skip + dolls.length + (dolls.length === limit ? 10 : 0), dolls.length);
 
       return {
         data: transformedData,
