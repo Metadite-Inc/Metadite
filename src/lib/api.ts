@@ -19,6 +19,9 @@ export interface CreateModelRequest {
   doll_category: string;
   doll_height: number;
   doll_material: string;
+  //doll_origin: string;
+  //doll_articulation: string;
+  //doll_hair_type: string;
   doll_vaginal_depth: number;
   doll_anal_depth: number;
   doll_oral_depth: number;
@@ -26,7 +29,7 @@ export interface CreateModelRequest {
   doll_gross_weight: number;
   doll_packing_size: string;
   doll_body_size: string;
-  created_at: Date;
+  created_at: Date; // Fixed: date to Date
 }
 
 export interface ModelDetail extends ModelBasic {
@@ -47,13 +50,12 @@ export interface ModelDetail extends ModelBasic {
   customerReviews: { rating: number; date: string; comment: string }[];
 }
 
-// Add pagination response interface
-export interface PaginatedResponse<T> {
-  items: T[];
+// Pagination response interface
+export interface PaginationResponse<T> {
+  data: T[];
   total: number;
-  page: number;
+  skip: number;
   limit: number;
-  totalPages: number;
 }
 
 const API_URL = import.meta.env.VITE_API_BASE_URL;
@@ -83,27 +85,14 @@ class ApiService {
   }
 
   // Get all models (dolls) with pagination
-  async getModels(page = 1, limit = 10, filters = {}): Promise<{ models: ModelBasic[], total: number, totalPages: number }> {
+  async getModels(skip = 0, limit = 10): Promise<PaginationResponse<ModelBasic>> {
     try {
-      const skip = (page - 1) * limit;
-      
-      // Build query parameters including skip and limit
-      const queryParams = new URLSearchParams({
-        skip: skip.toString(),
-        limit: limit.toString(),
-        ...filters // Additional filters like category, price range, etc.
-      });
-      
-      const response = await this.request<any>(`/api/dolls/?${queryParams.toString()}`);
+      // Add pagination parameters to the API request
+      const dolls = await this.request<any[]>(`/api/dolls?skip=${skip}&limit=${limit}`);
       const backendUrl = import.meta.env.VITE_API_BASE_URL;
-      
-      // Check if response has items and count (for pagination)
-      const dolls = response.items || response;
-      const total = response.total || dolls.length;
-      const totalPages = Math.ceil(total / limit);
 
       // Transform the API response to match our ModelBasic interface
-      const models = dolls.map((doll: any) => {
+      const transformedData = dolls.map(doll => {
         let mainImage = '';
         if (Array.isArray(doll.images)) {
           const primary = doll.images.find((img: any) => img.is_primary);
@@ -119,9 +108,23 @@ class ApiService {
         };
       });
 
-      return { models, total, totalPages };
+      // For now, estimate the total from what we have
+      // In a real API, this would come from the backend
+      const total = Math.max(skip + dolls.length + (dolls.length === limit ? 10 : 0), dolls.length);
+
+      return {
+        data: transformedData,
+        total: total,
+        skip: skip,
+        limit: limit
+      };
     } catch (error) {
-      return { models: [], total: 0, totalPages: 0 };
+      return {
+        data: [],
+        total: 0,
+        skip: skip,
+        limit: limit
+      };
     }
   }
 
