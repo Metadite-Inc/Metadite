@@ -16,14 +16,15 @@ const SlideshowTab = ({ isLoaded }) => {
   useEffect(() => {
     const fetchModels = async () => {
       try {
-        const modelsData = await apiService.getModels();
-        setModels(modelsData);
+        const response = await apiService.getModels(0, 100); // Get up to 100 models for the slideshow
+        setModels(response.data);
       } catch (error) {
         toast.error('Failed to fetch models');
       } finally {
         setLoading(false);
       }
     };
+
     fetchModels();
   }, []);
 

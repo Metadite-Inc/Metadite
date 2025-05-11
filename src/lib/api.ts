@@ -50,6 +50,14 @@ export interface ModelDetail extends ModelBasic {
   customerReviews: { rating: number; date: string; comment: string }[];
 }
 
+// Pagination response interface
+export interface PaginationResponse<T> {
+  data: T[];
+  total: number;
+  skip: number;
+  limit: number;
+}
+
 const API_URL = import.meta.env.VITE_API_BASE_URL;
 
 class ApiService {
@@ -76,14 +84,32 @@ class ApiService {
     }
   }
 
-  // Get all models (dolls)
-  async getModels(): Promise<ModelBasic[]> {
+  // Get all models (dolls) with pagination and filters
+  async getModels(skip = 0, limit = 10, filters = {}): Promise<PaginationResponse<ModelBasic>> {
     try {
-      const dolls = await this.request<any[]>("/api/dolls");
+      // Build query string from filters
+      const queryParams = new URLSearchParams({
+        skip: skip.toString(),
+        limit: limit.toString()
+      });
+      
+      // Add any additional filters to the query params
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          queryParams.append(key, String(value));
+        }
+      });
+      
+      const endpoint = `/api/dolls?${queryParams.toString()}`;
+      const response = await this.request<any>(endpoint);
       const backendUrl = import.meta.env.VITE_API_BASE_URL;
 
+      // Handle both array response and paginated response formats
+      const dolls = response.items || response;
+      const total = response.total || dolls.length;
+      
       // Transform the API response to match our ModelBasic interface
-      return dolls.map(doll => {
+      const transformedData = dolls.map(doll => {
         let mainImage = '';
         if (Array.isArray(doll.images)) {
           const primary = doll.images.find((img: any) => img.is_primary);
@@ -98,8 +124,20 @@ class ApiService {
           category: doll.doll_category,
         };
       });
+
+      return {
+        data: transformedData,
+        total: total,
+        skip: skip,
+        limit: limit
+      };
     } catch (error) {
-      return [];
+      return {
+        data: [],
+        total: 0,
+        skip: skip,
+        limit: limit
+      };
     }
   }
 
