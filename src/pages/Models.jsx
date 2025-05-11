@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import ModelCard from '../components/ModelCard';
-import { Search, Filter, Bookmark, Grid, Tag } from 'lucide-react';
+import { Search, Filter, Bookmark, Grid, Tag, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { apiService } from '../lib/api';
 
@@ -13,12 +13,48 @@ const Models = () => {
   const [priceFilter, setPriceFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const { theme } = useTheme();
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalModels, setTotalModels] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const modelsPerPage = 10;
+
+  // Prepare filters for API request
+  const getFilterParams = () => {
+    const filters = {};
+    
+    if (categoryFilter !== 'all') {
+      filters.category = categoryFilter;
+    }
+    
+    if (priceFilter !== 'all') {
+      if (priceFilter === 'under100') {
+        filters.price_lte = '100';
+      } else if (priceFilter === '100to150') {
+        filters.price_gte = '100';
+        filters.price_lte = '150';
+      } else if (priceFilter === 'over150') {
+        filters.price_gte = '150';
+      }
+    }
+    
+    if (searchTerm) {
+      filters.search = searchTerm;
+    }
+    
+    return filters;
+  };
 
   useEffect(() => {
     const fetchModels = async () => {
+      setIsLoaded(false);
       try {
-        const fetchedModels = await apiService.getModels();
-        setModels(fetchedModels);
+        const filters = getFilterParams();
+        const result = await apiService.getModels(currentPage, modelsPerPage, filters);
+        setModels(result.models);
+        setTotalModels(result.total);
+        setTotalPages(result.totalPages);
         setIsLoaded(true);
       } catch (error) {
         console.error('Failed to fetch models:', error);
@@ -26,23 +62,36 @@ const Models = () => {
       }
     };
     fetchModels();
-  }, []);
+  }, [currentPage, categoryFilter, priceFilter, searchTerm]);
 
-  const filteredModels = models.filter((model) => {
-    const matchesSearch =
-      model.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      model.description.toLowerCase().includes(searchTerm.toLowerCase());
+  // Change page
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+      window.scrollTo(0, 0); // Scroll to top when changing page
+    }
+  };
 
-    const matchesCategory = categoryFilter === 'all' || model.category === categoryFilter;
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+      window.scrollTo(0, 0); // Scroll to top when changing page
+    }
+  };
 
-    let matchesPrice = true;
-    if (priceFilter === 'under100' && model.price < 100) matchesPrice = true;
-    else if (priceFilter === '100to150' && model.price >= 100 && model.price <= 150) matchesPrice = true;
-    else if (priceFilter === 'over150' && model.price > 150) matchesPrice = true;
-    else if (priceFilter !== 'all') matchesPrice = false;
+  // Reset filters and search
+  const clearFilters = () => {
+    setCategoryFilter('all');
+    setPriceFilter('all');
+    setSearchTerm('');
+    setCurrentPage(1);
+  };
 
-    return matchesSearch && matchesCategory && matchesPrice;
-  });
+  // Apply search with slight delay for typing
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1); // Reset to first page on search
+  };
 
   // Get available categories from model data
   const categories = ['all', ...new Set(models.map((model) => model.category))];
@@ -83,7 +132,7 @@ const Models = () => {
                         : 'border-gray-200 bg-white text-gray-800'
                     } focus:outline-none focus:ring-2 focus:ring-metadite-primary`}
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={handleSearchChange}
                   />
                   <Search
                     className={`absolute left-3 top-2.5 h-5 w-5 ${
@@ -177,10 +226,7 @@ const Models = () => {
                 )}
 
                 <button
-                  onClick={() => {
-                    setCategoryFilter('all');
-                    setPriceFilter('all');
-                  }}
+                  onClick={clearFilters}
                   className="text-xs text-metadite-primary hover:underline ml-4"
                 >
                   Clear all filters
@@ -226,12 +272,50 @@ const Models = () => {
           </div>
 
           {isLoaded ? (
-            filteredModels.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {filteredModels.map((model) => (
-                  <ModelCard key={model.id} model={model} />
-                ))}
-              </div>
+            models.length > 0 ? (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {models.map((model) => (
+                    <ModelCard key={model.id} model={model} />
+                  ))}
+                </div>
+                
+                {/* Pagination Controls */}
+                <div className="flex justify-between items-center mt-10 px-4">
+                  <div className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                    Showing {totalModels > 0 ? (currentPage - 1) * modelsPerPage + 1 : 0}-{Math.min(currentPage * modelsPerPage, totalModels)} of {totalModels} models
+                  </div>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={goToPreviousPage}
+                      disabled={currentPage === 1}
+                      className={`flex items-center px-3 py-1 rounded-md ${
+                        currentPage === 1 
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                        : 'bg-metadite-primary bg-opacity-10 text-metadite-primary hover:bg-opacity-20'
+                      } transition-colors`}
+                    >
+                      <ChevronLeft className="h-4 w-4 mr-1" />
+                      Previous
+                    </button>
+                    <div className={`px-4 py-1 rounded-md bg-gray-100 ${theme === 'dark' ? 'text-gray-700' : 'text-gray-800'}`}>
+                      {currentPage} of {totalPages || 1}
+                    </div>
+                    <button
+                      onClick={goToNextPage}
+                      disabled={currentPage >= totalPages}
+                      className={`flex items-center px-3 py-1 rounded-md ${
+                        currentPage >= totalPages 
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                        : 'bg-metadite-primary bg-opacity-10 text-metadite-primary hover:bg-opacity-20'
+                      } transition-colors`}
+                    >
+                      Next
+                      <ChevronRight className="h-4 w-4 ml-1" />
+                    </button>
+                  </div>
+                </div>
+              </>
             ) : (
               <div className="text-center py-16">
                 <p
@@ -242,11 +326,7 @@ const Models = () => {
                   No models found matching your criteria.
                 </p>
                 <button
-                  onClick={() => {
-                    setSearchTerm('');
-                    setPriceFilter('all');
-                    setCategoryFilter('all');
-                  }}
+                  onClick={clearFilters}
                   className="mt-4 text-metadite-primary hover:underline"
                 >
                   Clear filters
