@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -21,6 +20,7 @@ const Models = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalModels, setTotalModels] = useState(0);
   const modelsPerPage = 10; // Match this with the API limit
+  const [totalPages, setTotalPages] = useState(0);
   
   // Categories derived from fetched models
   const [categories, setCategories] = useState(['all']);
@@ -30,13 +30,37 @@ const Models = () => {
       try {
         setIsLoaded(false);
         const skip = (currentPage - 1) * modelsPerPage;
-        const response = await apiService.getModels(skip, modelsPerPage);
+        
+        // Prepare filters for server-side filtering
+        const filters = {};
+        if (searchTerm) {
+          filters.search = searchTerm;
+        }
+        if (categoryFilter !== 'all') {
+          filters.category = categoryFilter;
+        }
+        if (priceFilter !== 'all') {
+          if (priceFilter === 'under100') {
+            filters.price_lte = 100;
+          } else if (priceFilter === '100to150') {
+            filters.price_gte = 100;
+            filters.price_lte = 150;
+          } else if (priceFilter === 'over150') {
+            filters.price_gte = 150;
+          }
+        }
+        
+        const response = await apiService.getModels(skip, modelsPerPage, filters);
+        
         setModels(response.data);
         setTotalModels(response.total);
+        setTotalPages(Math.ceil(response.total / modelsPerPage));
         
-        // Extract unique categories from models
-        const uniqueCategories = ['all', ...new Set(response.data.map((model) => model.category))];
-        setCategories(uniqueCategories);
+        // Extract unique categories - might need to make a separate call to get all categories
+        if (currentPage === 1) {
+          const uniqueCategories = ['all', ...new Set(response.data.map((model) => model.category))];
+          setCategories(uniqueCategories);
+        }
         
         setIsLoaded(true);
       } catch (error) {
@@ -44,29 +68,9 @@ const Models = () => {
         setIsLoaded(true);
       }
     };
+    
     fetchModels();
-  }, [currentPage]); // Fetch new data when page changes
-
-  // Filter models based on search and filters
-  const filteredModels = models.filter((model) => {
-    const matchesSearch =
-      model.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      model.description.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesCategory = categoryFilter === 'all' || model.category === categoryFilter;
-
-    let matchesPrice = true;
-    if (priceFilter === 'under100' && model.price < 100) matchesPrice = true;
-    else if (priceFilter === '100to150' && model.price >= 100 && model.price <= 150) matchesPrice = true;
-    else if (priceFilter === 'over150' && model.price > 150) matchesPrice = true;
-    else if (priceFilter !== 'all') matchesPrice = false;
-
-    return matchesSearch && matchesCategory && matchesPrice;
-  });
-
-  // Calculate pagination values
-  const totalItems = totalModels;
-  const totalPages = Math.ceil(totalItems / modelsPerPage);
+  }, [currentPage, searchTerm, categoryFilter, priceFilter]);
 
   // Page change handler
   const handlePageChange = (pageNumber) => {
@@ -83,12 +87,7 @@ const Models = () => {
     setCurrentPage(1); // Also reset to first page when filters change
   };
 
-  // Reset page when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, priceFilter, categoryFilter]);
-
-  console.log("Pagination info:", { currentPage, totalPages, modelsPerPage, totalItems, filteredModelsCount: filteredModels.length });
+  console.log("Pagination info:", { currentPage, totalPages, modelsPerPage, totalModels });
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -124,9 +123,9 @@ const Models = () => {
           />
 
           {isLoaded ? (
-            filteredModels.length > 0 ? (
+            models.length > 0 ? (
               <>
-                <ModelGrid models={filteredModels} isLoaded={isLoaded} />
+                <ModelGrid models={models} isLoaded={isLoaded} />
                 
                 {totalPages > 1 && (
                   <ModelPagination
@@ -139,7 +138,7 @@ const Models = () => {
                 {/* Display info about pagination */}
                 <div className="text-center text-sm text-gray-500 mt-4">
                   Page {currentPage} of {totalPages} | 
-                  Showing {Math.min((currentPage - 1) * modelsPerPage + 1, totalItems)} - {Math.min(currentPage * modelsPerPage, totalItems)} of {totalItems} models
+                  Showing {Math.min((currentPage - 1) * modelsPerPage + 1, totalModels)} - {Math.min(currentPage * modelsPerPage, totalModels)} of {totalModels} models
                 </div>
               </>
             ) : (
