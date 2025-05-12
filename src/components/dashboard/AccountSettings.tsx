@@ -76,10 +76,9 @@ const AccountSettings = () => {
         region: data.region,
       };
       await userApi.updateProfile(updateData);
-      // Refresh user in context (if useAuth provides a setUser or similar, or reload)
-      if (typeof window !== 'undefined' && window.location) {
-        // Reload to refresh context (fallback)
-        window.location.reload();
+      // Refresh user in context using updateMembership
+      if (updateMembership) {
+        updateMembership(updateData);
       }
     } catch (error: any) {
       // Error toast is already handled in userApi
