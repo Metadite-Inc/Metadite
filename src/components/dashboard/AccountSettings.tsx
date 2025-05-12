@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { useAuth } from '@/context/AuthContext';
+import { userApi } from '../../lib/api/user_api';
 import {
   Form,
   FormControl,
@@ -29,7 +30,7 @@ interface ProfileFormValues {
 
 const AccountSettings = () => {
   const { user, updateMembership } = useAuth();
-  
+
   const passwordForm = useForm<PasswordFormValues>({
     defaultValues: {
       currentPassword: '',
@@ -40,11 +41,20 @@ const AccountSettings = () => {
 
   const profileForm = useForm<ProfileFormValues>({
     defaultValues: {
-      name: user?.name || '',
+      name: user?.full_name || '',
       email: user?.email || '',
       region: user?.region || '',
     },
   });
+
+  // Ensure form values update when user changes
+  React.useEffect(() => {
+    profileForm.reset({
+      name: user?.full_name || '',
+      email: user?.email || '',
+      region: user?.region || '',
+    });
+  }, [user]);
 
   const onSubmitPassword = (data: PasswordFormValues) => {
     if (data.newPassword !== data.confirmPassword) {
@@ -56,9 +66,24 @@ const AccountSettings = () => {
     passwordForm.reset();
   };
 
-  const onSubmitProfile = (data: ProfileFormValues) => {
-    // In a real app, we would call an API to update the profile
-    toast.success("Profile updated successfully");
+  const onSubmitProfile = async (data: ProfileFormValues) => {
+    try {
+      profileForm.clearErrors();
+      profileForm.setValue('name', data.name.trim());
+      const updateData = {
+        full_name: data.name,
+        email: data.email,
+        region: data.region,
+      };
+      await userApi.updateProfile(updateData);
+      // Refresh user in context (if useAuth provides a setUser or similar, or reload)
+      if (typeof window !== 'undefined' && window.location) {
+        // Reload to refresh context (fallback)
+        window.location.reload();
+      }
+    } catch (error: any) {
+      // Error toast is already handled in userApi
+    }
   };
 
   return (
