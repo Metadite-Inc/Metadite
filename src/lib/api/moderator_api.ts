@@ -109,7 +109,7 @@ class ModeratorApiService extends BaseApiService {
   // Get models for assignment (this might be the same as unassigned dolls or could be all dolls)
   async getModelsForAssignment(): Promise<Model[]> {
     // For now, use the unassigned dolls endpoint
-    return this.getUnassignedDolls(0, 100);
+    return this.getUnassignedDolls(0, 10);
   }
 
   // Assign a doll to moderator
