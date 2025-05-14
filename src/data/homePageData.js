@@ -9,7 +9,7 @@ import { apiService } from '../lib/api';
 export async function fetchFeaturedModels() {
   try {
     const dolls = await apiService.request('/api/dolls/category/limited_edition');
-    const backendUrl = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
+    const backendUrl = import.meta.env.VITE_API_BASE_URL;
     return (dolls || []).slice(0, 3).map(doll => {
       let mainImage = '';
       if (Array.isArray(doll.images)) {

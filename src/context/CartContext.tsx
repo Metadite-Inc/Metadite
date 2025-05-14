@@ -61,6 +61,8 @@ interface CartProviderProps {
 }
 
 // Provider component that wraps your app and makes cart object available
+const LOCAL_STORAGE_CART_KEY = 'metaditeCart';
+
 export function CartProvider({ children }: CartProviderProps) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
