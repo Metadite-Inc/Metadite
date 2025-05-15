@@ -60,7 +60,7 @@ class VideoApiService extends BaseApiService {
     }
   }
 
-  async uploadVideo(data: VideoUploadRequest): Promise<boolean> {
+  async uploadVideo(data: VideoUploadRequest): Promise<Video | null> {
     try {
       const token = this.validateAuth();
 
@@ -84,13 +84,15 @@ class VideoApiService extends BaseApiService {
         throw new Error(`Failed to upload video: ${response.statusText}`);
       }
 
-      return true;
+      // Parse and return the video data including the ID
+      const videoData = await response.json();
+      return videoData;
     } catch (error) {
       toast.error('Failed to upload video', {
         description: error instanceof Error ? error.message : 'Unknown error occurred',
       });
       console.error('Error uploading video:', error);
-      return false;
+      return null;
     }
   }
 
