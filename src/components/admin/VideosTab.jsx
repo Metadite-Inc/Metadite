@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { FileVideo, Search, Edit, Trash2, Plus, X } from 'lucide-react';
 import { toast } from 'sonner';
@@ -26,27 +27,39 @@ const VideosTab = ({ isLoaded }) => {
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
-    const fetchModels = async () => {
+    const fetchData = async () => {
       try {
-        // Using the new pagination API
+        // Fetch models
         const response = await apiService.getModels(0, 100); // Get up to 100 models
         setModels(response.data);
-        setLoading(false);
+        
+        // Fetch all videos
+        await fetchAllVideos();
       } catch (error) {
-        console.error("Error fetching models:", error);
+        console.error("Error fetching data:", error);
+      } finally {
         setLoading(false);
       }
     };
 
-    fetchModels();
+    fetchData();
   }, []);
 
-  useEffect(() => {
-    if (selectedModel) {
-      fetchModelVideos(selectedModel);
+  // New function to fetch all videos
+  const fetchAllVideos = async () => {
+    setLoading(true);
+    try {
+      const videosData = await videoApiService.getAllVideos();
+      setVideos(videosData);
+    } catch (error) {
+      console.error("Error fetching videos:", error);
+      toast.error("Failed to fetch videos");
+    } finally {
+      setLoading(false);
     }
-  }, [selectedModel]);
+  };
 
+  // This function will now only be used when filtering by model
   const fetchModelVideos = async (modelId) => {
     setLoading(true);
     try {
@@ -62,6 +75,14 @@ const VideosTab = ({ isLoaded }) => {
   const handleModelChange = (modelId) => {
     setSelectedModel(modelId);
     setVideoData({...videoData, model_id: modelId});
+    
+    // If a model is selected, filter videos by that model
+    if (modelId) {
+      fetchModelVideos(modelId);
+    } else {
+      // If no model is selected (or selection is cleared), fetch all videos
+      fetchAllVideos();
+    }
   };
 
   const handleFileChange = (e) => {
@@ -118,9 +139,7 @@ const VideosTab = ({ isLoaded }) => {
         setVideoFile(null);
         
         // Refresh videos list
-        if (selectedModel) {
-          fetchModelVideos(selectedModel);
-        }
+        await fetchAllVideos();
       }
     } catch (error) {
       console.error("Error uploading video:", error);
@@ -139,13 +158,17 @@ const VideosTab = ({ isLoaded }) => {
       if (success) {
         toast.success("Video deleted successfully");
         // Refresh videos list
-        if (selectedModel) {
-          fetchModelVideos(selectedModel);
-        }
+        await fetchAllVideos();
       }
     } catch (error) {
       console.error("Error deleting video:", error);
     }
+  };
+
+  // Function to get model name by ID
+  const getModelNameById = (modelId) => {
+    const model = models.find(m => m.id === modelId);
+    return model ? model.name : "Unknown Model";
   };
 
   return (
@@ -263,12 +286,13 @@ const VideosTab = ({ isLoaded }) => {
           <div className="flex items-center space-x-4">
             <Select
               value={selectedModel}
-              onValueChange={setSelectedModel}
+              onValueChange={handleModelChange}
             >
               <SelectTrigger className="w-40 bg-white">
-                <SelectValue placeholder="Select model" />
+                <SelectValue placeholder="Filter by model" />
               </SelectTrigger>
               <SelectContent className="bg-white">
+                <SelectItem value={null}>All Models</SelectItem>
                 {models.map(model => (
                   <SelectItem key={model.id} value={model.id}>{model.name}</SelectItem>
                 ))}
@@ -293,10 +317,10 @@ const VideosTab = ({ isLoaded }) => {
               <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-metadite-primary mx-auto"></div>
               <p className="mt-2 text-gray-500">Loading videos...</p>
             </div>
-          ) : !selectedModel ? (
+          ) : videos.length === 0 ? (
             <div className="text-center py-10">
               <FileVideo className="h-10 w-10 text-gray-300 mx-auto mb-2" />
-              <p className="text-gray-500">Select a model to view its videos</p>
+              <p className="text-gray-500">No videos found</p>
             </div>
           ) : (
             <table className="min-w-full">
@@ -305,7 +329,7 @@ const VideosTab = ({ isLoaded }) => {
                   ${theme === 'dark' ? 'bg-gray-100' : 'bg-gray-50'}`}>
                   <th className="px-6 py-3">Thumbnail</th>
                   <th className="px-6 py-3">Title</th>
-                  <th className="px-6 py-3">Description</th>
+                  <th className="px-6 py-3">Doll Model</th>
                   <th className="px-6 py-3">Featured</th>
                   <th className="px-6 py-3">Added Date</th>
                   <th className="px-6 py-3">Actions</th>
@@ -315,7 +339,7 @@ const VideosTab = ({ isLoaded }) => {
                 {videos
                   .filter(video => 
                     video.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    video.description.toLowerCase().includes(searchTerm.toLowerCase())
+                    getModelNameById(video.model_id).toLowerCase().includes(searchTerm.toLowerCase())
                   )
                   .map((video) => (
                   <tr key={video.id} className={`border-t border-gray-100 transition-colors 
@@ -329,7 +353,7 @@ const VideosTab = ({ isLoaded }) => {
                       />
                     </td>
                     <td className="px-6 py-4 font-medium">{video.title}</td>
-                    <td className="px-6 py-4">{video.description.substring(0, 50)}...</td>
+                    <td className="px-6 py-4">{getModelNameById(video.model_id)}</td>
                     <td className="px-6 py-4">
                       {video.is_featured ? (
                         <span className="inline-block px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
@@ -361,13 +385,6 @@ const VideosTab = ({ isLoaded }) => {
             </table>
           )}
         </div>
-        
-        {!loading && selectedModel && videos.length === 0 && (
-          <div className="text-center py-10">
-            <FileVideo className="h-10 w-10 text-gray-300 mx-auto mb-2" />
-            <p className="text-gray-500">No videos found for this model.</p>
-          </div>
-        )}
       </div>
     </div>
   );
