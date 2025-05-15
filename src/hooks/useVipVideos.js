@@ -70,11 +70,47 @@ export const useVipVideos = (searchTerm) => {
     return null;
   };
 
+  // Fetch a specific video by ID from the API
+  const fetchVideoById = async (id) => {
+    try {
+      setIsLoading(true);
+      const video = await videoApiService.getVideoById(id);
+      return video;
+    } catch (error) {
+      console.error(`Error fetching video ${id}:`, error);
+      toast.error('Failed to load video', {
+        description: 'Please try again later',
+      });
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Get featured videos
+  const fetchFeaturedVideos = async () => {
+    try {
+      setIsLoading(true);
+      const fetchedVideos = await videoApiService.getFeaturedVideos();
+      return fetchedVideos;
+    } catch (error) {
+      console.error('Error fetching featured videos:', error);
+      toast.error('Failed to load featured videos', {
+        description: 'Please try again later',
+      });
+      return [];
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return { 
     filteredVideos, 
     isLoaded,
     isLoading,
-    getVideoById, 
+    getVideoById,
+    fetchVideoById,
+    fetchFeaturedVideos,
     getPreviousVideoId, 
     getNextVideoId 
   };
