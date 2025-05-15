@@ -1,7 +1,6 @@
 
 import { useRef, useState, useEffect } from 'react';
-import { Play } from 'lucide-react';
-import VideoControls from './VideoControls';
+import { Play, Pause, Volume2, VolumeX, SkipBack, SkipForward, Maximize } from 'lucide-react';
 
 const VideoContainer = ({
   video,
@@ -26,10 +25,7 @@ const VideoContainer = ({
   previousVideoId,
   nextVideoId,
   navigateToVideo,
-  selectedQuality,
-  handleQualityChange,
   formatTime,
-  setIsSettingsOpen,
   videoRef,
   videoContainerRef,
 }) => {
@@ -78,19 +74,15 @@ const VideoContainer = ({
         return;
       }
 
-      // Prevent default behavior for certain keys
-      if (['Space', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'f', 'F', 'm', 'M'].includes(e.code) ||
-          e.code === 'KeyM' || e.code === 'KeyF') {
-        e.preventDefault();
-      }
-      
       // Play/pause with spacebar
       if (e.code === 'Space') {
+        e.preventDefault();
         togglePlay();
       }
       
       // Seek with arrow keys (5 seconds)
       if (e.code === 'ArrowLeft' && videoRef.current) {
+        e.preventDefault();
         const newTime = Math.max(videoRef.current.currentTime - 5, 0);
         videoRef.current.currentTime = newTime;
         setCurrentTime(newTime);
@@ -98,6 +90,7 @@ const VideoContainer = ({
       }
       
       if (e.code === 'ArrowRight' && videoRef.current) {
+        e.preventDefault();
         const newTime = Math.min(videoRef.current.currentTime + 5, duration);
         videoRef.current.currentTime = newTime;
         setCurrentTime(newTime);
@@ -106,6 +99,7 @@ const VideoContainer = ({
       
       // Volume control with up/down arrows
       if (e.code === 'ArrowUp') {
+        e.preventDefault();
         const newVolume = Math.min(volume + 0.05, 1);
         setVolume(newVolume);
         if (videoRef.current) {
@@ -121,6 +115,7 @@ const VideoContainer = ({
       }
       
       if (e.code === 'ArrowDown') {
+        e.preventDefault();
         const newVolume = Math.max(volume - 0.05, 0);
         setVolume(newVolume);
         if (videoRef.current) {
@@ -145,15 +140,6 @@ const VideoContainer = ({
       if (e.code === 'KeyF') {
         toggleFullScreen();
       }
-      
-      // Navigate videos with 'p' (previous) and 'n' (next) keys
-      if ((e.code === 'KeyP') && previousVideoId) {
-        navigateToVideo(previousVideoId);
-      }
-      
-      if ((e.code === 'KeyN') && nextVideoId) {
-        navigateToVideo(nextVideoId);
-      }
     };
 
     // Add event listener when component mounts
@@ -164,20 +150,39 @@ const VideoContainer = ({
       document.removeEventListener('keydown', handleKeyPress);
     };
   }, [
-    togglePlay, 
-    videoRef, 
-    duration, 
-    setCurrentTime, 
-    volume, 
-    setVolume, 
-    isMuted, 
-    setIsMuted, 
-    toggleFullScreen, 
-    previousVideoId, 
-    nextVideoId, 
-    navigateToVideo,
+    togglePlay,
+    videoRef,
+    duration,
+    setCurrentTime,
+    volume,
+    setVolume,
+    isMuted,
+    setIsMuted,
+    toggleFullScreen,
     showControlsTemporarily
   ]);
+  
+  // Get appropriate video source URL
+  const getVideoUrl = () => {
+    if (video?.url && video.url.startsWith('http')) {
+      return video.url;
+    } else if (video?.url) {
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+      return `${apiBaseUrl}${video.url}`;
+    }
+    return '';
+  };
+
+  // Get appropriate thumbnail URL
+  const getThumbnailUrl = () => {
+    if (video?.thumbnail_url && video.thumbnail_url.startsWith('http')) {
+      return video.thumbnail_url;
+    } else if (video?.thumbnail_url) {
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+      return `${apiBaseUrl}${video.thumbnail_url}`;
+    }
+    return '';
+  };
 
   return (
     <div 
@@ -186,27 +191,25 @@ const VideoContainer = ({
       onClick={togglePlay}
       onMouseMove={showControlsTemporarily}
     >
-      {/* Using a real video element but with a placeholder source */}
       <video
         ref={videoRef}
         className="w-full h-full object-contain"
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
         onEnded={handleVideoEnd}
-        poster={video.thumbnail}
+        poster={getThumbnailUrl()}
+        src={getVideoUrl()}
         preload="metadata"
       >
-        {/* In a real implementation, this would be a real video source */}
-        {/* <source src={`/videos/${video.id}-${selectedQuality}.mp4`} type="video/mp4" /> */}
         Your browser does not support the video tag.
       </video>
       
       {/* Video title overlay */}
       <div className={`absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/70 to-transparent transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'}`}>
-        <h3 className="text-white text-lg font-medium truncate">{video.title}</h3>
+        <h3 className="text-white text-lg font-medium truncate">{video?.title}</h3>
       </div>
       
-      {/* Play/Pause button overlay */}
+      {/* Play button overlay (only when paused) */}
       {!isPlaying && (
         <div className="absolute inset-0 flex items-center justify-center">
           <button 
@@ -219,26 +222,110 @@ const VideoContainer = ({
       )}
       
       {/* Video controls */}
-      <VideoControls
-        isPlaying={isPlaying}
-        togglePlay={togglePlay}
-        currentTime={currentTime}
-        duration={duration}
-        handleSeek={handleSeek}
-        volume={volume}
-        handleVolumeChange={handleVolumeChange}
-        isMuted={isMuted}
-        toggleMute={toggleMute}
-        toggleFullScreen={toggleFullScreen}
-        previousVideoId={previousVideoId}
-        nextVideoId={nextVideoId}
-        navigateToVideo={navigateToVideo}
-        selectedQuality={selectedQuality}
-        handleQualityChange={handleQualityChange}
-        formatTime={formatTime}
-        setIsSettingsOpen={setIsSettingsOpen}
-        showControls={showControls}
-      />
+      <div className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'}`}>
+        {/* Progress bar */}
+        <div className="flex items-center mb-2">
+          <span className="text-white text-xs mr-2">
+            {formatTime(currentTime)}
+          </span>
+          <input
+            type="range"
+            min="0"
+            max={duration || 100}
+            value={currentTime}
+            onChange={handleSeek}
+            className="flex-1 h-1 bg-white/30 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white"
+            onClick={(e) => e.stopPropagation()}
+          />
+          <span className="text-white text-xs ml-2">
+            {formatTime(duration)}
+          </span>
+        </div>
+        
+        {/* Controls row */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            {/* Play/Pause button */}
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                togglePlay();
+              }} 
+              className="text-white hover:text-gray-300 transition-colors"
+            >
+              {isPlaying ? (
+                <Pause className="h-6 w-6" />
+              ) : (
+                <Play className="h-6 w-6" />
+              )}
+            </button>
+            
+            {/* Volume control */}
+            <div className="hidden sm:flex items-center space-x-1">
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleMute();
+                }} 
+                className="text-white hover:text-gray-300 transition-colors"
+              >
+                {isMuted || volume === 0 ? (
+                  <VolumeX className="h-6 w-6" />
+                ) : (
+                  <Volume2 className="h-6 w-6" />
+                )}
+              </button>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value={isMuted ? 0 : volume}
+                onChange={handleVolumeChange}
+                className="w-16 h-1 bg-white/30 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white"
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
+          </div>
+          
+          <div className="flex items-center space-x-4">
+            {/* Navigation controls */}
+            <div className="hidden sm:flex items-center space-x-2">
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigateToVideo(previousVideoId);
+                }}
+                disabled={!previousVideoId}
+                className={`text-white ${!previousVideoId ? 'opacity-50 cursor-not-allowed' : 'hover:text-gray-300 transition-colors'}`}
+              >
+                <SkipBack className="h-5 w-5" />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigateToVideo(nextVideoId);
+                }}
+                disabled={!nextVideoId}
+                className={`text-white ${!nextVideoId ? 'opacity-50 cursor-not-allowed' : 'hover:text-gray-300 transition-colors'}`}
+              >
+                <SkipForward className="h-5 w-5" />
+              </button>
+            </div>
+            
+            {/* Fullscreen button */}
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleFullScreen();
+              }} 
+              className="text-white hover:text-gray-300 transition-colors"
+            >
+              <Maximize className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

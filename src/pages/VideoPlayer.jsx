@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Video } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { useAuth } from '../context/AuthContext';
@@ -9,7 +9,6 @@ import { useTheme } from '../context/ThemeContext';
 import { useVipVideos } from '../hooks/useVipVideos';
 import { toast } from 'sonner';
 import VideoContainer from '../components/video/VideoContainer';
-import VideoSettingsDialog from '../components/video/VideoSettingsDialog';
 import VideoInfo from '../components/video/VideoInfo';
 
 const VideoPlayer = () => {
@@ -17,40 +16,56 @@ const VideoPlayer = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { theme } = useTheme();
-  const { getVideoById, getPreviousVideoId, getNextVideoId } = useVipVideos();
-  const [selectedQuality, setSelectedQuality] = useState('720p');
+  const { getVideoById, fetchVideoById, getPreviousVideoId, getNextVideoId } = useVipVideos();
   const [isLoading, setIsLoading] = useState(true);
+  const [videoData, setVideoData] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(0.7);
   const [isMuted, setIsMuted] = useState(false);
   const [showControls, setShowControls] = useState(true);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isFullScreen, setIsFullScreen] = useState(false);
   const videoContainerRef = useRef(null);
   const videoRef = useRef(null);
   const controlsTimeoutRef = useRef(null);
   
-  // Get the video data
-  const video = getVideoById(parseInt(videoId));
-  
   // Get previous and next video IDs for navigation
   const previousVideoId = getPreviousVideoId(parseInt(videoId));
   const nextVideoId = getNextVideoId(parseInt(videoId));
+  
+  // Load video data
+  useEffect(() => {
+    const loadVideo = async () => {
+      setIsLoading(true);
+      
+      // Try to get from cache first
+      const cachedVideo = getVideoById(parseInt(videoId));
+      
+      if (cachedVideo) {
+        setVideoData(cachedVideo);
+        setIsLoading(false);
+      } else {
+        // Fetch from API if not in cache
+        const fetchedVideo = await fetchVideoById(parseInt(videoId));
+        if (fetchedVideo) {
+          setVideoData(fetchedVideo);
+        } else {
+          toast.error("Failed to load video");
+        }
+        setIsLoading(false);
+      }
+    };
+    
+    if (user?.membershipLevel === 'vip' || user?.membershipLevel === 'vvip') {
+      loadVideo();
+    }
+  }, [videoId, user, getVideoById, fetchVideoById]);
   
   // Check VIP access
   useEffect(() => {
     if (!user?.membershipLevel || (user.membershipLevel !== 'vip' && user.membershipLevel !== 'vvip')) {
       navigate('/upgrade');
     }
-    
-    // Simulate loading
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
-    
-    return () => clearTimeout(timer);
   }, [user, navigate]);
 
   // Handle play/pause
@@ -79,7 +94,7 @@ const VideoPlayer = () => {
   // Set video duration when metadata is loaded
   const handleLoadedMetadata = () => {
     if (videoRef.current) {
-      setDuration(videoRef.current.duration || 100); // Fallback to 100 seconds if duration is not available
+      setDuration(videoRef.current.duration || 100);
     }
   };
   
@@ -103,7 +118,7 @@ const VideoPlayer = () => {
   const toggleFullScreen = () => {
     if (!videoContainerRef.current) return;
     
-    if (!isFullScreen) {
+    if (!document.fullscreenElement) {
       if (videoContainerRef.current.requestFullscreen) {
         videoContainerRef.current.requestFullscreen();
       } else if (videoContainerRef.current.mozRequestFullScreen) {
@@ -126,30 +141,6 @@ const VideoPlayer = () => {
     }
   };
   
-  // Monitor fullscreen state changes
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullScreen(
-        document.fullscreenElement ||
-        document.mozFullScreenElement ||
-        document.webkitFullscreenElement ||
-        document.msFullscreenElement
-      );
-    };
-    
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
-    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
-    document.addEventListener('msfullscreenchange', handleFullscreenChange);
-    
-    return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
-      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
-      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
-      document.removeEventListener('msfullscreenchange', handleFullscreenChange);
-    };
-  }, []);
-  
   // Auto-hide controls after inactivity
   const showControlsTemporarily = () => {
     setShowControls(true);
@@ -170,50 +161,15 @@ const VideoPlayer = () => {
     };
   }, []);
   
-  // Quality change handler
-  const handleQualityChange = (quality) => {
-    setSelectedQuality(quality);
-    
-    // Save current playback position and playing state
-    const currentPlaybackTime = videoRef.current ? videoRef.current.currentTime : 0;
-    const wasPlaying = isPlaying;
-    
-    // Simulate quality change with a small loading delay
-    setIsLoading(true);
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-      
-      // Restore playback position
-      if (videoRef.current) {
-        videoRef.current.currentTime = currentPlaybackTime;
-        
-        // Resume playback if it was playing before
-        if (wasPlaying) {
-          videoRef.current.play()
-            .catch(error => {
-              console.error('Error playing video after quality change:', error);
-            });
-        }
-      }
-      
-      toast.success(`Quality changed to ${quality}`);
-    }, 1000);
-    
-    return () => clearTimeout(timer);
-  };
-  
-  // Handle previous/next video navigation
-  const navigateToVideo = (videoId) => {
-    if (videoId) {
-      navigate(`/video/${videoId}`);
-      setIsPlaying(false);
-      setCurrentTime(0);
-      setIsLoading(true);
+  // Handle navigation between videos
+  const navigateToVideo = (id) => {
+    if (id) {
+      navigate(`/video/${id}`);
     }
   };
   
   // Handle if video not found
-  if (!video && !isLoading) {
+  if (!videoData && !isLoading) {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
@@ -223,7 +179,9 @@ const VideoPlayer = () => {
             : 'bg-gradient-to-br from-white via-metadite-light to-white'
         }`}>
           <div className="container mx-auto max-w-6xl text-center py-20">
-            <Video className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+            <div className="h-16 w-16 mx-auto mb-4 text-gray-400 flex items-center justify-center">
+              <Loader2 className="h-12 w-12 animate-spin" />
+            </div>
             <h1 className={`text-2xl font-bold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
               Video Not Found
             </h1>
@@ -262,7 +220,7 @@ const VideoPlayer = () => {
           <div className="container mx-auto max-w-6xl px-4">
             <div className="mb-6">
               <VideoContainer
-                video={video}
+                video={videoData}
                 isPlaying={isPlaying}
                 setIsPlaying={setIsPlaying}
                 currentTime={currentTime}
@@ -284,24 +242,13 @@ const VideoPlayer = () => {
                 previousVideoId={previousVideoId}
                 nextVideoId={nextVideoId}
                 navigateToVideo={navigateToVideo}
-                selectedQuality={selectedQuality}
-                handleQualityChange={handleQualityChange}
                 formatTime={formatTime}
-                setIsSettingsOpen={setIsSettingsOpen}
                 videoRef={videoRef}
                 videoContainerRef={videoContainerRef}
               />
               
-              <VideoSettingsDialog
-                isSettingsOpen={isSettingsOpen}
-                setIsSettingsOpen={setIsSettingsOpen}
-                selectedQuality={selectedQuality}
-                handleQualityChange={handleQualityChange}
-                videoRef={videoRef}
-              />
-              
               <VideoInfo
-                video={video}
+                video={videoData}
                 previousVideoId={previousVideoId}
                 nextVideoId={nextVideoId}
               />
