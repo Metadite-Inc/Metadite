@@ -95,7 +95,7 @@ class VideoApiService {
         return [];
       }
 
-      return await this.request<Video[]>(`/api/videos/model/${modelId}`, {
+      return await this.request<Video[]>(`/api/dolls/${modelId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -140,5 +140,40 @@ class VideoApiService {
     }
   }
 }
+
+/**
+// backend api to get videos
+curl -X 'GET' \
+  'http://127.0.0.1:8000/api/videos/?skip=0&limit=50' \
+  -H 'accept: application/json' \
+  -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6I'
+
+// api to get videos by id
+curl -X 'GET' \
+  'http://127.0.0.1:8000/api/videos/5' \
+  -H 'accept: application/json' \
+  -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cC'
+
+// api to upload video thumbnail
+curl -X 'POST' \
+  'http://127.0.0.1:8000/api/images/videos/5/thumbnail' \
+  -H 'accept: application/json' \
+  -H 'Authorization: Bearer eyJhbGciOibQO_2SFz-c8E' \
+  -H 'Content-Type: multipart/form-data' \
+  -F 'file=@MMWC.png;type=image/png'
+
+// api to update videos
+curl -X 'PUT' \
+  'http://127.0.0.1:8000/api/videos/5' \
+  -H 'accept: application/json' \
+  -H 'Authorization: Bearer eyJhbGciOiJIUzI1ibQO_2SFz-c8E' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "title": "string",
+  "description": "string",
+  "created_at": "2025-05-15T19:19:07.367Z"
+}'
+
+**/
 
 export const videoApiService = new VideoApiService();
