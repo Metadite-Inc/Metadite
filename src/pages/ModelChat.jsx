@@ -32,10 +32,10 @@ const ModelChat = () => {
       // Initial message from moderator
       if (fetchedModel) {
         const moderatorMessage = {
-          id: model.id,
+          id: 1,
           modelId: fetchedModel.id,
           senderId: 'moderator.id',
-          senderName: model.name,
+          senderName: fetchedModel.name,
           content: `Hello! I'm ${fetchedModel.name}. How are you today?`,
           timestamp: new Date().toISOString(),
           flagged: false

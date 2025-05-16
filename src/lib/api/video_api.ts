@@ -95,7 +95,7 @@ class VideoApiService {
         return [];
       }
 
-      return await this.request<Video[]>(`/api/videos/model/${modelId}`, {
+      return await this.request<Video[]>(`/api/dolls/${modelId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
