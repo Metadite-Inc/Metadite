@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { PackagePlus, Search, Edit, Trash2, Image, Plus, X } from 'lucide-react';
+import { PackagePlus, Search, Edit, Trash2, Image, Plus, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,6 +12,12 @@ const ModelsTab = ({ isLoaded }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [models, setModels] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalModels, setTotalModels] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const modelsPerPage = 10;
 
   const [newModelData, setNewModelData] = useState({
     name: '',
@@ -35,11 +41,18 @@ const ModelsTab = ({ isLoaded }) => {
   const [additionalImages, setAdditionalImages] = useState([]);
   const [createdModelId, setCreatedModelId] = useState(null);
 
+  // Fetch models with the new pagination API
   useEffect(() => {
     const fetchModels = async () => {
       try {
-        const modelsData = await apiService.getModels();
-        setModels(modelsData);
+        setLoading(true);
+        const skip = (currentPage - 1) * modelsPerPage;
+
+        const response = await apiService.getModels(skip, modelsPerPage);
+
+        setModels(response.data);
+        setTotalModels(response.total);
+        setTotalPages(Math.max(1, Math.ceil(response.total / modelsPerPage)));
         setLoading(false);
       } catch (error) {
         console.error("Error fetching models:", error);
@@ -48,7 +61,7 @@ const ModelsTab = ({ isLoaded }) => {
     };
 
     fetchModels();
-  }, []);
+  }, [currentPage, searchTerm]);
 
   const handleSaveDetails = async (e) => {
     e.preventDefault();
@@ -123,12 +136,8 @@ const ModelsTab = ({ isLoaded }) => {
     }
   };
 
-  const handleAddModel = () => {
-    if (!createdModelId) {
-      toast.error("Please save the model details and upload images first.");
-      return;
-    }
-
+  // Handle model creation success
+  const handleModelCreated = async () => {
     // Reset form and state
     setNewModelData({
       name: '',
@@ -150,27 +159,61 @@ const ModelsTab = ({ isLoaded }) => {
     setAdditionalImages([]);
     setCreatedModelId(null);
 
-    // Update the models list to include the new model
-    const fetchModels = async () => {
-      try {
-        const modelsData = await apiService.getModels();
-        setModels(modelsData);
-      } catch (error) {
-        console.error("Error fetching models:", error);
-      }
-    };
-    fetchModels();
+    // Refresh the models list with the first page
+    setCurrentPage(1);
+    setLoading(true);
+    try {
+      const skip = 0; // First page
+      const response = await apiService.getModels(skip, modelsPerPage, searchTerm); // Pass searchTerm to the API
+      setModels(response.data);
+      setTotalModels(response.total);
+      setTotalPages(Math.ceil(response.total / modelsPerPage));
+    } catch (error) {
+      console.error("Error fetching models:", error);
+    } finally {
+      setLoading(false);
+    }
 
     toast.success("Model added successfully!");
   };
 
+  // Handle model deletion
   const handleDeleteModel = async (modelId) => {
     try {
       await apiService.deleteModel(modelId);
-      // Remove the model from the state
-      setModels(models.filter(model => model.id !== modelId));
+      
+      // Refresh the current page
+      setLoading(true);
+      const skip = (currentPage - 1) * modelsPerPage;
+      const response = await apiService.getModels(skip, modelsPerPage, searchTerm); // Pass searchTerm to the API
+      
+      // If the current page is now empty (except for the last page), go to the previous page
+      if (response.data.length === 0 && currentPage > 1) {
+        setCurrentPage(Math.max(currentPage - 1, 1)); // Ensure currentPage doesn't go below 1
+      } else {
+        setModels(response.data);
+        setTotalModels(response.total);
+        setTotalPages(Math.ceil(response.total / modelsPerPage));
+        setLoading(false);
+      }
+      
+      toast.success("Model deleted successfully");
     } catch (error) {
       toast.error("Failed to delete model");
+      setLoading(false);
+    }
+  };
+
+  // Change page handlers
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(prev => Math.min(prev + 1, totalPages));
+    }
+  };
+
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(prev => Math.max(prev - 1, 1));
     }
   };
 
@@ -503,7 +546,7 @@ const ModelsTab = ({ isLoaded }) => {
                   Upload Images
                 </button>
                 <button
-                  onClick={handleAddModel}
+                  onClick={handleModelCreated}
                   className="flex items-center bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white px-4 py-2 rounded-md hover:opacity-90 transition-opacity"
                 >
                   Add Model
@@ -523,7 +566,10 @@ const ModelsTab = ({ isLoaded }) => {
               type="text"
               placeholder="Search models..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1); // Reset to first page on search
+              }}
               className="pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary text-sm"
             />
           </div>
@@ -549,12 +595,7 @@ const ModelsTab = ({ isLoaded }) => {
                 </tr>
               </thead>
               <tbody>
-                {models
-                  .filter(model => 
-                    model.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    model.description?.toLowerCase().includes(searchTerm.toLowerCase())
-                  )
-                  .map((model) => (
+                {models.map((model) => (
                   <tr key={model.id} className={`border-t border-gray-100 transition-colors 
                     ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}
                     >
@@ -605,6 +646,44 @@ const ModelsTab = ({ isLoaded }) => {
           <div className="text-center py-10">
             <PackagePlus className="h-10 w-10 text-gray-300 mx-auto mb-2" />
             <p className="text-gray-500">No models found.</p>
+          </div>
+        )}
+
+        {/* Pagination Controls */}
+        {!loading && models.length > 0 && (
+          <div className="flex justify-between items-center px-6 py-4 border-t border-gray-100">
+            <div className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+              Showing {totalModels > 0 ? (currentPage - 1) * modelsPerPage + 1 : 0}-{Math.min(currentPage * modelsPerPage, totalModels)} of {totalModels} models
+            </div>
+            <div className="flex space-x-2">
+              <button
+                onClick={goToPreviousPage}
+                disabled={currentPage <= 1}
+                className={`flex items-center px-3 py-1 rounded-md ${
+                  currentPage <= 1 
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                  : 'bg-metadite-primary bg-opacity-10 text-metadite-primary hover:bg-opacity-20'
+                } transition-colors`}
+              >
+                <ChevronLeft className="h-4 w-4 mr-1" />
+                Previous
+              </button>
+              <div className={`px-4 py-1 rounded-md bg-gray-100 ${theme === 'dark' ? 'text-gray-700' : 'text-gray-800'}`}>
+                {currentPage} of {totalPages || 1}
+              </div>
+              <button
+                onClick={goToNextPage}
+                disabled={currentPage >= totalPages}
+                className={`flex items-center px-3 py-1 rounded-md ${
+                  currentPage >= totalPages 
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                  : 'bg-metadite-primary bg-opacity-10 text-metadite-primary hover:bg-opacity-20'
+                } transition-colors`}
+              >
+                Next
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </button>
+            </div>
           </div>
         )}
       </div>
