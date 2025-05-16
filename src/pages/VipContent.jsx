@@ -9,12 +9,13 @@ import VipHeader from '../components/vip/VipHeader';
 import VideoSearch from '../components/vip/VideoSearch';
 import VideoGrid from '../components/vip/VideoGrid';
 import { useVipVideos } from '../hooks/useVipVideos';
+import { Loader2 } from 'lucide-react';
 
 const VipContent = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
-  const { filteredVideos, isLoaded } = useVipVideos(searchTerm);
+  const { filteredVideos, isLoaded, isLoading } = useVipVideos(searchTerm);
   const { theme } = useTheme();
   
   useEffect(() => {
@@ -36,7 +37,17 @@ const VipContent = () => {
         <div className="container mx-auto max-w-6xl">
           <VipHeader filteredVideosCount={filteredVideos.length} />
           <VideoSearch searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
-          <VideoGrid videos={filteredVideos} isLoaded={isLoaded} />
+          
+          {isLoading ? (
+            <div className="flex justify-center items-center py-16">
+              <Loader2 className="h-12 w-12 text-metadite-primary animate-spin" />
+              <span className="ml-4 text-lg font-medium text-gray-700 dark:text-gray-300">
+                Loading videos...
+              </span>
+            </div>
+          ) : (
+            <VideoGrid videos={filteredVideos} isLoaded={isLoaded} />
+          )}
         </div>
       </div>
       

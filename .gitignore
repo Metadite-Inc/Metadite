@@ -25,3 +25,4 @@ yarn-error.log*
 
 dist/
 package-lock.json
+vite.config.ts.timestamp-1746912704623-3ffbe436f448a.mjs

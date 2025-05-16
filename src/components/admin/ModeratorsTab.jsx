@@ -1,39 +1,69 @@
+
 import React, { useState, useEffect } from 'react';
-import { Users, Search, Edit, Trash2 } from 'lucide-react';
+import { Users, Search, Edit, Trash2, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTheme } from '../../context/ThemeContext';
 import { adminApiService } from '../../lib/api/admin_api';
+import { moderatorApiService } from '../../lib/api/moderator_api';
 
 const ModeratorsTab = ({ isLoaded }) => {
   const { theme } = useTheme();
   const [searchTerm, setSearchTerm] = useState('');
   const [moderators, setModerators] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [models, setModels] = useState([]);
+  const [modelsLoading, setModelsLoading] = useState(true);
+  const [selectedModels, setSelectedModels] = useState([]);
+  const [passwordError, setPasswordError] = useState('');
   const [newModeratorData, setNewModeratorData] = useState({
     name: '',
     email: '',
     password: ''
   });
   
-  // Fetch moderators on component mount
+  // Fetch moderators and models on component mount
   useEffect(() => {
-    const fetchModerators = async () => {
+    const fetchData = async () => {
       try {
-        // Note: We need to add a method to fetch moderators in the API service
-        // This is a placeholder until the API method is implemented
-        // const data = await adminApiService.getModerators();
-        // setModerators(data);
+        // Fetch moderators
+        const moderatorsData = await adminApiService.getModerators();
+        setModerators(moderatorsData || []);
         setLoading(false);
+        
+        // Fetch models for assignment
+        const modelsData = await moderatorApiService.getModelsForAssignment();
+        setModels(modelsData || []);
+        setModelsLoading(false);
       } catch (error) {
-        toast.error("Failed to load moderators", {
+        toast.error("Failed to load data", {
           description: error instanceof Error ? error.message : "Unknown error occurred",
         });
         setLoading(false);
+        setModelsLoading(false);
       }
     };
     
-    fetchModerators();
+    fetchData();
   }, []);
+
+  const handleModelSelection = (modelId) => {
+    setSelectedModels(prevSelected => {
+      if (prevSelected.includes(modelId)) {
+        return prevSelected.filter(id => id !== modelId);
+      } else {
+        return [...prevSelected, modelId];
+      }
+    });
+  };
+  
+  const validatePassword = (password) => {
+    if (password.length < 8) {
+      setPasswordError('Password must be at least 8 characters long');
+      return false;
+    }
+    setPasswordError('');
+    return true;
+  };
   
   const handleAddModerator = async (e) => {
     e.preventDefault();
@@ -46,23 +76,27 @@ const ModeratorsTab = ({ isLoaded }) => {
       return;
     }
     
+    // Validate password
+    if (!validatePassword(newModeratorData.password)) {
+      return;
+    }
+    
     try {
       await adminApiService.createModerator({
         email: newModeratorData.email,
         full_name: newModeratorData.name,
-        region: "global", // Default value or could be added to form
+        region: "Asia", // Default value or could be added to form
         role: "moderator",
-        membership_level: "moderator",
+        membership_level: "standard",
         is_active: true,
         video_access_count: 0,
-        assigned_dolls: [],
+        assigned_dolls: selectedModels,
         password: newModeratorData.password
       });
       
       // Refresh moderators list after adding
-      // Placeholder until getModerators method is implemented
-      // const updatedModerators = await adminApiService.getModerators();
-      // setModerators(updatedModerators);
+      const updatedModerators = await adminApiService.getModerators();
+      setModerators(updatedModerators || []);
       
       // Reset form
       setNewModeratorData({
@@ -70,6 +104,8 @@ const ModeratorsTab = ({ isLoaded }) => {
         email: '',
         password: ''
       });
+      setSelectedModels([]);
+      setPasswordError('');
     } catch (error) {
       toast.error("Failed to add moderator", {
         description: error instanceof Error ? error.message : "Unknown error occurred",
@@ -135,10 +171,59 @@ const ModeratorsTab = ({ isLoaded }) => {
                 <input
                   type="password"
                   value={newModeratorData.password}
-                  onChange={(e) => setNewModeratorData({...newModeratorData, password: e.target.value})}
-                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary"
+                  onChange={(e) => {
+                    setNewModeratorData({...newModeratorData, password: e.target.value});
+                    if (e.target.value.length > 0) {
+                      validatePassword(e.target.value);
+                    } else {
+                      setPasswordError('');
+                    }
+                  }}
+                  className={`block w-full px-3 py-2 border ${passwordError ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary`}
                   required
                 />
+                {passwordError && (
+                  <p className="mt-1 text-sm text-red-500 flex items-center">
+                    <AlertTriangle className="h-4 w-4 mr-1" />
+                    {passwordError}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className={`block text-sm font-medium mb-1 
+                  ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
+                  Assign Models
+                </label>
+                <div className={`mt-2 p-3 border ${theme === 'dark' ? 'border-gray-600 bg-gray-800' : 'border-gray-300 bg-gray-50'} rounded-md max-h-40 overflow-y-auto`}>
+                  {modelsLoading ? (
+                    <div className="text-center py-2">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-metadite-primary mx-auto"></div>
+                      <p className="text-xs mt-1">Loading models...</p>
+                    </div>
+                  ) : models.length > 0 ? (
+                    <div className="space-y-2">
+                      {models.map((model) => (
+                        <div key={model.id} className="flex items-center">
+                          <input
+                            type="checkbox"
+                            id={`model-${model.id}`}
+                            checked={selectedModels.includes(model.id)}
+                            onChange={() => handleModelSelection(model.id)}
+                            className="mr-2 h-4 w-4 text-metadite-primary focus:ring-metadite-primary border-gray-300 rounded"
+                          />
+                          <label 
+                            htmlFor={`model-${model.id}`}
+                            className={`text-sm ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}
+                          >
+                            {model.name}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500 text-center">No models available</p>
+                  )}
+                </div>
               </div>
             </div>
 

@@ -16,16 +16,22 @@ const VideoInfo = ({ video, previousVideoId, nextVideoId }) => {
     { key: '↑', action: 'Volume up' },
     { key: '↓', action: 'Volume down' },
     { key: 'M', action: 'Mute/Unmute' },
-    { key: 'F', action: 'Fullscreen' },
-    { key: 'P', action: 'Previous video' },
-    { key: 'N', action: 'Next video' },
+    { key: 'F', action: 'Fullscreen' }
   ];
 
+  // Format the video duration or use a default
+  const formatDuration = (seconds) => {
+    if (!seconds) return '00:00';
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = Math.floor(seconds % 60);
+    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+  
   return (
     <>
       <div className="flex flex-col md:flex-row md:items-center justify-between mt-6 mb-3">
         <h1 className={`text-2xl font-bold mb-2 md:mb-0 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
-          {video.title}
+          {video?.title}
         </h1>
         <div className="flex items-center space-x-2">
           <button 
@@ -36,7 +42,7 @@ const VideoInfo = ({ video, previousVideoId, nextVideoId }) => {
                 ? 'hover:bg-gray-200/20' 
                 : 'opacity-50 cursor-not-allowed'
             }`}
-            title="Previous Video (P)"
+            title="Previous Video"
           >
             <SkipBack className={`h-5 w-5 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`} />
           </button>
@@ -48,7 +54,7 @@ const VideoInfo = ({ video, previousVideoId, nextVideoId }) => {
                 ? 'hover:bg-gray-200/20' 
                 : 'opacity-50 cursor-not-allowed'
             }`}
-            title="Next Video (N)"
+            title="Next Video"
           >
             <SkipForward className={`h-5 w-5 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`} />
           </button>
@@ -56,8 +62,10 @@ const VideoInfo = ({ video, previousVideoId, nextVideoId }) => {
       </div>
       
       <div className={theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>
-        <p className="mb-4">Model: {video.modelName}</p>
-        <p>Duration: {video.duration}</p>
+        <p className="mb-2">
+          {video?.model_name ? `Model: ${video.model_name}` : 'Various Models'}
+        </p>
+        <p>Duration: {formatDuration(video?.duration)}</p>
       </div>
       
       <div className="glass-card p-6 rounded-xl mt-6">
@@ -103,8 +111,9 @@ const VideoInfo = ({ video, previousVideoId, nextVideoId }) => {
           </div>
         ) : (
           <p className={theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>
-            This exclusive VIP video showcases detailed information about {video.modelName}. 
-            Watch in your preferred quality to see all the intricate details and craftsmanship.
+            {video?.description || 
+              `This exclusive VIP video showcases detailed information about ${video?.model_name || 'our models'}. 
+              Watch in high quality to see all the intricate details and craftsmanship.`}
           </p>
         )}
       </div>

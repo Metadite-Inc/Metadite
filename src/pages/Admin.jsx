@@ -18,6 +18,7 @@ import PaymentsTab from '../components/admin/PaymentsTab';
 import FlaggedMessagesTab from '../components/admin/FlaggedMessagesTab';
 import SettingsTab from '../components/admin/SettingsTab';
 import VideosTab from '../components/admin/VideosTab'; // Import the new VideosTab component
+import SlideshowTab from '../components/admin/SlideshowTab';
 
 // Mock data for flagged messages count
 const flaggedMessagesCount = 2;
@@ -101,6 +102,8 @@ const Admin = () => {
               {/* Flagged Messages */}
               {activeTab === 'flagged' && <FlaggedMessagesTab isLoaded={isLoaded} />}
               
+              {/* Slideshow Management */}
+              {activeTab === 'slideshow' && <SlideshowTab isLoaded={isLoaded} />}
               {/* Settings */}
               {activeTab === 'settings' && <SettingsTab isLoaded={isLoaded} />}
             </div>

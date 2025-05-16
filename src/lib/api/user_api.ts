@@ -21,6 +21,23 @@ interface FavoriteModel {
 }
 
 class userApiService {
+  async updateProfile(data: { full_name: string; email: string; region: string }): Promise<any> {
+    try {
+      const result = await this.request<any>(`/api/auth/me`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      });
+      toast.success('Profile updated successfully');
+      return result;
+    } catch (error: any) {
+      if (error.message?.includes('401') || error.message?.includes('403')) {
+        toast.error('Authentication failed. Please log in again.');
+      } else {
+        toast.error('Failed to update profile');
+      }
+      throw error;
+    }
+  }
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     // Use access_token to match auth_api.ts implementation
     const token = localStorage.getItem('access_token');
