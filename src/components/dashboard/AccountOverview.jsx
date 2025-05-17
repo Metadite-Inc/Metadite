@@ -47,7 +47,9 @@ const AccountOverview = ({ user, isLoaded }) => {
             <Calendar className={`h-5 w-5 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'} mr-3`} />
             <div>
               <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Member Since</p>
-              <p className={`font-medium ${theme === 'dark' ? 'text-white' : ''}`}>{user?.created_at ? new Date(user.created_at).toLocaleString('default', { month: 'long', year: 'numeric' }) : '-'}</p>
+              <p className={`font-medium ${theme === 'dark' ? 'text-white' : ''}`}>
+              {user?.created_at ? new Date(user.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '-'}
+              </p>
             </div>
           </div>
           <div className={`flex items-center p-3 ${theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-lg`}>
