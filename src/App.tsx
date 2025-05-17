@@ -1,4 +1,5 @@
 
+import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,6 +9,8 @@ import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { CartProvider } from "./context/CartContext";
 import Index from "./pages/Index";
+import AgeVerificationGate from "./components/AgeVerificationGate";
+import UnderAge from "./pages/UnderAge";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import VipContent from "./pages/VipContent";
@@ -35,32 +38,35 @@ const App = () => {
       <TooltipProvider>
         <ThemeProvider>
           <BrowserRouter>
-            <AuthProvider>
-              <CartProvider>
-                <Toaster />
-                <Sonner />
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/vip-content" element={<VipContent />} />
-                  <Route path="/video/:videoId" element={<VideoPlayer />} />
-                  <Route path="/cart" element={<Cart />} />
-                  <Route path="/checkout" element={<Checkout />} />
-                  <Route path="/admin" element={<Admin />} />
-                  <Route path="/moderator" element={<Moderator />} />
-                  <Route path="/models" element={<Models />} />
-                  <Route path="/model/:id" element={<ModelDetail />} />
-                  <Route path="/model-chat/:id" element={<ModelChat />} />
-                  <Route path="/contact" element={<Contact />} />
-                  <Route path="/upgrade" element={<Upgrade />} />
-                  <Route path="/terms" element={<Terms />} />
-                  <Route path="/order/:orderId" element={<OrderDetail />} />
-                  <Route path="/chat" element={<ChatPage />} /> {/* New Chat Page Route */}
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </CartProvider>
-            </AuthProvider>
+            <AgeVerificationGate>
+              <AuthProvider>
+                <CartProvider>
+                  <Toaster />
+                  <Sonner />
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/underage" element={<UnderAge />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/vip-content" element={<VipContent />} />
+                    <Route path="/video/:videoId" element={<VideoPlayer />} />
+                    <Route path="/cart" element={<Cart />} />
+                    <Route path="/checkout" element={<Checkout />} />
+                    <Route path="/admin" element={<Admin />} />
+                    <Route path="/moderator" element={<Moderator />} />
+                    <Route path="/models" element={<Models />} />
+                    <Route path="/model/:id" element={<ModelDetail />} />
+                    <Route path="/model-chat/:id" element={<ModelChat />} />
+                    <Route path="/contact" element={<Contact />} />
+                    <Route path="/upgrade" element={<Upgrade />} />
+                    <Route path="/terms" element={<Terms />} />
+                    <Route path="/order/:orderId" element={<OrderDetail />} />
+                    <Route path="/chat" element={<ChatPage />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </CartProvider>
+              </AuthProvider>
+            </AgeVerificationGate>
           </BrowserRouter>
         </ThemeProvider>
       </TooltipProvider>

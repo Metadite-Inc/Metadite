@@ -17,7 +17,7 @@ const tiers = [
     description: 'Perfect for casual users',
     features: [
       '10 messages',// per day',
-      'Access to basic models',
+      'Access to all models',
       'One photo',// per model',
       'Email support',
     ],
@@ -32,7 +32,7 @@ const tiers = [
     description: 'Enhanced experience for enthusiasts',
     features: [
       '30 messages',// per day',
-      'Access to premium models',
+      'Access to all models',
       'Access to 1 exclusive video',
       '3 photos',// per model',
       'Priority email support',
@@ -48,9 +48,8 @@ const tiers = [
     description: 'Ultimate experience for collectors',
     features: [
       'Unlimited messages',
-      'Access to all premium models',
+      'Access to all models',
       'Access to 2 premium videos',
-      //'Access to 1 limited edition video',
       'Access to limited edition content',
       'Chances of winning collectible items',
       '5 photos',// per model',
@@ -151,7 +150,7 @@ const Upgrade: React.FC = () => {
               <CardContent className="pt-6">
                 <div className="flex items-center justify-center mb-8">
                   <span className="text-5xl font-bold">${tier.price}</span>
-                  <span className="text-gray-500 dark:text-gray-400 ml-2">/month</span>
+                  {/*<span className="text-gray-500 dark:text-gray-400 ml-2">/month</span>*/}
                 </div>
                 
                 <ul className="space-y-4">
