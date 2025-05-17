@@ -356,6 +356,32 @@ class ApiService {
     }
   }
 
+  // get moderator assigned to doll
+  async getAssignedModerator(modelId: number): Promise<any | any[]> {
+    try {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        toast.error('Authentication required', {
+          description: 'You must be logged in as an admin to view assigned moderators.',
+        });
+        return null;
+      }
+
+      return await this.request<any>(`/api/dolls/moderator/${modelId}/`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    }
+    catch (error) {
+      toast.error('Failed to fetch assigned moderators', {
+        description: error instanceof Error ? error.message : 'Unknown error occurred',
+      });
+      console.error(error);
+      return null;
+    }
+  }
+
   // delete a model by id
   async deleteModel(id: number): Promise<void> {
     try {

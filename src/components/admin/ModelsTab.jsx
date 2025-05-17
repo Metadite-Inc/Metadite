@@ -217,6 +217,46 @@ const ModelsTab = ({ isLoaded }) => {
     }
   };
 
+  const [assignedModerators, setAssignedModerators] = useState({});
+  useEffect(() => {
+    const fetchModelsAndModerators = async () => {
+      try {
+        setLoading(true);
+        const skip = (currentPage - 1) * modelsPerPage;
+        const response = await apiService.getModels(skip, modelsPerPage);
+
+        setModels(response.data);
+        setTotalModels(response.total);
+        setTotalPages(Math.max(1, Math.ceil(response.total / modelsPerPage)));
+
+        // Fetch assigned moderator for each model
+        const moderatorMap = {};
+        await Promise.all(
+          response.data.map(async (model) => {
+            const moderator = await apiService.getAssignedModerator(model.id);
+            if (!moderator) {
+              moderatorMap[model.id] = 'None assigned';
+            } else if (Array.isArray(moderator)) {
+              moderatorMap[model.id] = moderator.length > 0
+                ? moderator.map(m => m.full_name || m.name || m.email).join(', ')
+                : 'None assigned';
+            } else {
+              moderatorMap[model.id] = moderator.full_name || moderator.name || moderator.email || 'None assigned';
+            }
+          })
+        );
+        setAssignedModerators(moderatorMap);
+
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching models:", error);
+        setLoading(false);
+      }
+    };
+
+    fetchModelsAndModerators();
+  }, [currentPage, searchTerm]);
+
   return (
     <div className={`space-y-6 transition-opacity duration-300 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>
       <div className="glass-card rounded-xl overflow-hidden mb-6">
@@ -620,7 +660,7 @@ const ModelsTab = ({ isLoaded }) => {
                       </span>
                     </td>
                     <td className={`px-6 py-4 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
-                      {model.assignedModerator ? model.assignedModerator : 'None assigned'}
+                      {assignedModerators[model.id] || 'None assigned'}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex space-x-2">
