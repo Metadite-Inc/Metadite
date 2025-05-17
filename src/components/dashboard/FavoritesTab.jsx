@@ -1,9 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../../context/ThemeContext';
 import { BookmarkX } from 'lucide-react';
 import { toast } from 'sonner';
 import ModelCard from '../ModelCard';
-import { userApi } from '../../lib/api/user_api';
+import { favoriteApiService } from '../../lib/api/favorite_api';
 
 const FavoritesTab = ({ user }) => {
   const { theme } = useTheme();
@@ -13,22 +14,14 @@ const FavoritesTab = ({ user }) => {
   useEffect(() => {
     // Fetch user favorites from API
     const fetchFavorites = async () => {
-      // Check for token instead of user id
-      const token = localStorage.getItem('access_token');
-      if (!token) return;
-      
       try {
         setIsLoading(true);
-        const favoriteModels = await userApi.getUserFavoriteModels();
+        const favoriteModels = await favoriteApiService.getUserFavorites();
         setFavorites(favoriteModels);
-        setIsLoading(false);
       } catch (error) {
         console.error('Error fetching favorites:', error);
-        if (error.message && (error.message.includes("401") || error.message.includes("403"))) {
-          toast.error("Authentication failed. Please log in again.");
-        } else {
-          toast.error("Failed to load your favorites");
-        }
+        toast.error("Failed to load your favorites");
+      } finally {
         setIsLoading(false);
       }
     };
@@ -38,9 +31,13 @@ const FavoritesTab = ({ user }) => {
 
   const removeFromFavorites = async (favoriteId) => {
     try {
-      await userApi.removeModelFromFavorites(favoriteId);
-      // Update the local state after successful removal
-      setFavorites(favorites.filter(favorite => favorite.id !== favoriteId));
+      const success = await favoriteApiService.removeFromFavorites(favoriteId);
+      
+      if (success) {
+        // Update the local state after successful removal
+        setFavorites(favorites.filter(favorite => favorite.id !== favoriteId));
+        toast.success("Removed from favorites");
+      }
     } catch (error) {
       console.error('Error removing favorite:', error);
       toast.error("Failed to remove from favorites");
@@ -83,20 +80,29 @@ const FavoritesTab = ({ user }) => {
       </h2>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {favorites.map((favorite) => (
-          <ModelCard 
-            key={favorite.id} 
-            model={{
-              id: favorite.doll_id,
-              // If your API returns comprehensive model data, use that instead
-              // Otherwise, you might need an additional API call to fetch model details
-              ...favorite
-            }} 
-            onRemoveFavorite={() => removeFromFavorites(favorite.id)}
-            isFavorite={true}
-            user={user}
-          />
-        ))}
+        {favorites.map((favorite) => {
+          // Create a proper model object from the favorite data
+          const model = {
+            id: favorite.doll_id,
+            name: favorite.doll?.name || "Unknown Model",
+            price: favorite.doll?.price || 0,
+            description: favorite.doll?.description || "No description available",
+            image: favorite.doll?.images?.[0]?.image_url ? 
+              `${import.meta.env.VITE_API_BASE_URL}${favorite.doll.images[0].image_url}` : 
+              "https://placehold.co/600x400?text=No+Image",
+            category: favorite.doll?.category || "",
+          };
+
+          return (
+            <ModelCard 
+              key={favorite.id} 
+              model={model}
+              isFavorite={true}
+              onRemoveFavorite={() => removeFromFavorites(favorite.id)}
+              user={user}
+            />
+          );
+        })}
       </div>
     </div>
   );
