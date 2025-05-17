@@ -1,7 +1,10 @@
 
 import ModelCard from '../ModelCard';
+import { useAuth } from '../../context/AuthContext';
 
 const ModelGrid = ({ models, isLoaded }) => {
+  const { user } = useAuth();
+
   if (!isLoaded) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -33,7 +36,11 @@ const ModelGrid = ({ models, isLoaded }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
       {models.map((model) => (
-        <ModelCard key={model.id} model={model} />
+        <ModelCard 
+          key={model.id} 
+          model={model} 
+          user={user}
+        />
       ))}
     </div>
   );

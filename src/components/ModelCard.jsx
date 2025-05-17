@@ -3,19 +3,43 @@ import { Link } from 'react-router-dom';
 import { ShoppingCart, Heart, MessageSquare } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { toast } from 'sonner';
-import { userApi } from '../lib/api/user_api';
+import { favoriteApiService } from '../lib/api/favorite_api';
 
-const ModelCard = ({ model, user, isFavorite, onRemoveFavorite }) => {
+const ModelCard = ({ model, user, isFavorite: initialIsFavorite, onRemoveFavorite }) => {
   const { addToCart } = useCart();
   const [imageLoaded, setImageLoaded] = useState(false);
-  const [isLiked, setIsLiked] = useState(isFavorite || false);
+  const [isLiked, setIsLiked] = useState(initialIsFavorite || false);
+  const [favoriteId, setFavoriteId] = useState(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [message, setMessage] = useState('');
-  const [favoriteId, setFavoriteId] = useState(model.id); // Store the favorite ID for API operations
 
+  // Check if model is favorited on component mount
   useEffect(() => {
-    setIsLiked(isFavorite || false);
-  }, [isFavorite]);
+    const checkFavoriteStatus = async () => {
+      if (!model?.id) return;
+      
+      try {
+        // Don't check if we already know it's a favorite (like in FavoritesTab)
+        if (initialIsFavorite) {
+          setIsLiked(true);
+          return;
+        }
+
+        const token = localStorage.getItem('access_token');
+        if (!token) return;
+
+        const { is_favorite, favorite_id } = await favoriteApiService.checkIsFavorite(model.id);
+        setIsLiked(is_favorite);
+        if (favorite_id) {
+          setFavoriteId(favorite_id);
+        }
+      } catch (error) {
+        console.error("Error checking favorite status:", error);
+      }
+    };
+
+    checkFavoriteStatus();
+  }, [model?.id, initialIsFavorite]);
 
   const handleAddToCart = () => {
     addToCart(model);
@@ -25,7 +49,6 @@ const ModelCard = ({ model, user, isFavorite, onRemoveFavorite }) => {
   };
 
   const handleLike = async () => {
-    // Use access_token to match auth_api.ts implementation
     const token = localStorage.getItem('access_token');
     if (!token) {
       toast.error("Please log in to save favorites");
@@ -34,30 +57,26 @@ const ModelCard = ({ model, user, isFavorite, onRemoveFavorite }) => {
 
     try {
       if (!isLiked) {
-        // Add to favorites - We'll get user ID from the backend based on the token
-        const response = await userApi.addModelToFavorites(0, model.id); // 0 as placeholder, backend will use token
-        setFavoriteId(response.id); // Save the favorite ID returned from the API
-        setIsLiked(true);
-        toast.success("Added to favorites");
+        // Add to favorites
+        const result = await favoriteApiService.addToFavorites(model.id);
+        if (result) {
+          setFavoriteId(result.id);
+          setIsLiked(true);
+        }
       } else {
         // Remove from favorites
-        if (onRemoveFavorite) {
+        if (onRemoveFavorite && typeof onRemoveFavorite === 'function') {
           // If callback provided (used in FavoritesTab), use that
           onRemoveFavorite();
-        } else {
+        } else if (favoriteId) {
           // Otherwise call API directly
-          await userApi.removeModelFromFavorites(favoriteId);
+          await favoriteApiService.removeFromFavorites(favoriteId);
+          setIsLiked(false);
+          setFavoriteId(null);
         }
-        setIsLiked(false);
-        toast.success("Removed from favorites");
       }
     } catch (error) {
       console.error("Favorite operation failed:", error);
-      if (error.message && (error.message.includes("401") || error.message.includes("403"))) {
-        toast.error("Authentication failed. Please log in again.");
-      } else {
-        toast.error("Failed to update favorites");
-      }
     }
   };
 
@@ -82,19 +101,26 @@ const ModelCard = ({ model, user, isFavorite, onRemoveFavorite }) => {
     setIsChatOpen(false); // Close the chat popup after sending
   };
 
-  
- //model card size
+  // Check if model exists and has required properties
+  if (!model) {
+    return null;
+  }
+
   return (
     <div className="glass-card rounded-xl overflow-hidden transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1">
       <div className="relative overflow-hidden">
         {!imageLoaded && <div className="absolute inset-0 shimmer"></div>}
         <div className="aspect-square w-full">
-        <img
-          src={model.image}
-          alt={model.name}
-          className={`w-full h-80% object-cover transition-transform duration-700 hover:scale-110 ${imageLoaded ? 'image-fade-in loaded' : 'image-fade-in'}`}
-          onLoad={() => setImageLoaded(true)}
-        />
+          <img
+            src={model.image}
+            alt={model.name}
+            className={`w-full h-80% object-cover transition-transform duration-700 hover:scale-110 ${imageLoaded ? 'image-fade-in loaded' : 'image-fade-in'}`}
+            onLoad={() => setImageLoaded(true)}
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = 'https://placehold.co/600x400?text=No+Image';
+            }}
+          />
         </div>
         <button 
           onClick={handleLike}
@@ -129,7 +155,7 @@ const ModelCard = ({ model, user, isFavorite, onRemoveFavorite }) => {
             className="flex items-center space-x-1 bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white px-3 py-2 rounded-md hover:opacity-90 transition-opacity"
           >
             <ShoppingCart className="h-4 w-4" />
-            </button>
+          </button>
         </div>
       </div>
 

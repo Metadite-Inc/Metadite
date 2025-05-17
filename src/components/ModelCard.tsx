@@ -1,20 +1,53 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ShoppingCart, Heart } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { toast } from 'sonner';
+import { favoriteApiService } from '../lib/api/favorite_api';
 
 // Import the Model type directly from CartContext
 import type { Model } from '../context/CartContext';
 
 interface ModelProps {
   model: Model;
+  user?: any;
+  isFavorite?: boolean;
+  onRemoveFavorite?: () => void;
 }
 
-const ModelCard = ({ model }: ModelProps) => {
+const ModelCard = ({ model, user, isFavorite, onRemoveFavorite }: ModelProps) => {
   const { addToCart } = useCart();
   const [imageLoaded, setImageLoaded] = useState(false);
-  const [isLiked, setIsLiked] = useState(false);
+  const [isLiked, setIsLiked] = useState(isFavorite || false);
+  const [favoriteId, setFavoriteId] = useState<number | null>(null);
+  
+  // Check if model is favorited on component mount
+  useEffect(() => {
+    const checkFavoriteStatus = async () => {
+      if (!model?.id) return;
+      
+      try {
+        // Don't check if we already know it's a favorite (like in FavoritesTab)
+        if (isFavorite) {
+          setIsLiked(true);
+          return;
+        }
+
+        const token = localStorage.getItem('access_token');
+        if (!token) return;
+
+        const { is_favorite, favorite_id } = await favoriteApiService.checkIsFavorite(model.id);
+        setIsLiked(is_favorite);
+        if (favorite_id) {
+          setFavoriteId(favorite_id);
+        }
+      } catch (error) {
+        console.error("Error checking favorite status:", error);
+      }
+    };
+
+    checkFavoriteStatus();
+  }, [model?.id, isFavorite]);
   
   const handleAddToCart = () => {
     addToCart(model);
@@ -23,16 +56,35 @@ const ModelCard = ({ model }: ModelProps) => {
     });
   };
   
-  const handleLike = () => {
-    setIsLiked(!isLiked);
-    if (!isLiked) {
-      toast("Added to favorites", {
-        description: `${model.name} has been added to your favorites.`,
-      });
-    } else {
-      toast("Removed from favorites", {
-        description: `${model.name} has been removed from your favorites.`,
-      });
+  const handleLike = async () => {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      toast.error("Please log in to save favorites");
+      return;
+    }
+
+    try {
+      if (!isLiked) {
+        // Add to favorites
+        const result = await favoriteApiService.addToFavorites(model.id);
+        if (result) {
+          setFavoriteId(result.id);
+          setIsLiked(true);
+        }
+      } else {
+        // Remove from favorites
+        if (onRemoveFavorite) {
+          // If callback provided (used in FavoritesTab), use that
+          onRemoveFavorite();
+        } else if (favoriteId) {
+          // Otherwise call API directly
+          await favoriteApiService.removeFromFavorites(favoriteId);
+          setIsLiked(false);
+          setFavoriteId(null);
+        }
+      }
+    } catch (error) {
+      console.error("Favorite operation failed:", error);
     }
   };
 
@@ -46,6 +98,9 @@ const ModelCard = ({ model }: ModelProps) => {
           alt={model.name}
           className={`w-100% h-100% object-contain bg-gray-100 transition-transform duration-700 hover:scale-110 ${imageLoaded ? 'image-fade-in loaded' : 'image-fade-in'}`}
           onLoad={() => setImageLoaded(true)}
+          onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+            e.currentTarget.src = 'https://placehold.co/600x400?text=No+Image';
+          }}
         />
         </div>
         <button 
