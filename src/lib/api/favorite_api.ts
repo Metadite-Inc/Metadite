@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 
 const API_URL = import.meta.env.VITE_API_BASE_URL;
@@ -31,6 +30,7 @@ export interface FavoriteModel {
  * Request data for adding a favorite
  */
 export interface AddFavoriteRequest {
+  user_id: number;
   doll_id: number;
 }
 
@@ -86,9 +86,10 @@ class FavoriteApiService {
   /**
    * Add a model to favorites
    */
-  async addToFavorites(dollId: number): Promise<FavoriteModel | null> {
+  async addToFavorites(dollId: number, userId: number): Promise<FavoriteModel | null> {
     try {
       const data: AddFavoriteRequest = {
+        user_id: userId,
         doll_id: dollId
       };
       

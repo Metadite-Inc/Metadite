@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../../context/ThemeContext';
 import { BookmarkX } from 'lucide-react';
@@ -17,7 +16,17 @@ const FavoritesTab = ({ user }) => {
       try {
         setIsLoading(true);
         const favoriteModels = await favoriteApiService.getUserFavorites();
-        setFavorites(favoriteModels);
+        // Fetch full model details for each favorite
+        const detailedModels = await Promise.all(
+          favoriteModels.map(async (favorite) => {
+            const modelDetail = await import('../../lib/api').then(m => m.apiService.getModelDetails(favorite.doll_id));
+            return {
+              favoriteId: favorite.id,
+              model: modelDetail
+            };
+          })
+        );
+        setFavorites(detailedModels);
       } catch (error) {
         console.error('Error fetching favorites:', error);
         toast.error("Failed to load your favorites");
@@ -35,7 +44,7 @@ const FavoritesTab = ({ user }) => {
       
       if (success) {
         // Update the local state after successful removal
-        setFavorites(favorites.filter(favorite => favorite.id !== favoriteId));
+        setFavorites(favorites.filter(fav => fav.favoriteId !== favoriteId));
         toast.success("Removed from favorites");
       }
     } catch (error) {
@@ -80,29 +89,17 @@ const FavoritesTab = ({ user }) => {
       </h2>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {favorites.map((favorite) => {
-          // Create a proper model object from the favorite data
-          const model = {
-            id: favorite.doll_id,
-            name: favorite.doll?.name || "Unknown Model",
-            price: favorite.doll?.price || 0,
-            description: favorite.doll?.description || "No description available",
-            image: favorite.doll?.images?.[0]?.image_url ? 
-              `${import.meta.env.VITE_API_BASE_URL}${favorite.doll.images[0].image_url}` : 
-              "https://placehold.co/600x400?text=No+Image",
-            category: favorite.doll?.category || "",
-          };
-
-          return (
+        {favorites.map(({ favoriteId, model }) => (
+          model && (
             <ModelCard 
-              key={favorite.id} 
+              key={favoriteId} 
               model={model}
               isFavorite={true}
-              onRemoveFavorite={() => removeFromFavorites(favorite.id)}
+              onRemoveFavorite={() => removeFromFavorites(favoriteId)}
               user={user}
             />
-          );
-        })}
+          )
+        ))}
       </div>
     </div>
   );

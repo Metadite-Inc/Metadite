@@ -58,7 +58,11 @@ const ModelCard = ({ model, user, isFavorite: initialIsFavorite, onRemoveFavorit
     try {
       if (!isLiked) {
         // Add to favorites
-        const result = await favoriteApiService.addToFavorites(Number(model.id));
+        if (!user?.id) {
+          toast.error("User ID not found. Please log in again.");
+          return;
+        }
+        const result = await favoriteApiService.addToFavorites(Number(model.id), user.id);
         if (result) {
           setFavoriteId(result.id);
           setIsLiked(true);
