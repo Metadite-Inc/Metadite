@@ -28,7 +28,7 @@ const ModelCard = ({ model, user, isFavorite: initialIsFavorite, onRemoveFavorit
         const token = localStorage.getItem('access_token');
         if (!token) return;
 
-        const { is_favorite, favorite_id } = await favoriteApiService.checkIsFavorite(model.id);
+        const { is_favorite, favorite_id } = await favoriteApiService.checkIsFavorite(Number(model.id));
         setIsLiked(is_favorite);
         if (favorite_id) {
           setFavoriteId(favorite_id);
@@ -58,7 +58,7 @@ const ModelCard = ({ model, user, isFavorite: initialIsFavorite, onRemoveFavorit
     try {
       if (!isLiked) {
         // Add to favorites
-        const result = await favoriteApiService.addToFavorites(model.id);
+        const result = await favoriteApiService.addToFavorites(Number(model.id));
         if (result) {
           setFavoriteId(result.id);
           setIsLiked(true);

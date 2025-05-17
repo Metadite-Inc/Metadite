@@ -36,6 +36,7 @@ const FavoritesTab = ({ user }) => {
       if (success) {
         // Update the local state after successful removal
         setFavorites(favorites.filter(favorite => favorite.id !== favoriteId));
+        toast.success("Removed from favorites");
       }
     } catch (error) {
       console.error('Error removing favorite:', error);
