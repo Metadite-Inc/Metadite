@@ -127,6 +127,43 @@ const ModeratorsTab = ({ isLoaded }) => {
     }
   };
 
+  const [assignedDolls, setAssignedDolls] = useState({});
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch moderators
+        const moderatorsData = await adminApiService.getModerators();
+        setModerators(moderatorsData || []);
+        setLoading(false);
+
+        // Fetch models for assignment
+        const modelsData = await moderatorApiService.getModelsForAssignment();
+        setModels(modelsData || []);
+        setModelsLoading(false);
+
+        // Fetch assigned dolls for each moderator
+        if (moderatorsData && moderatorsData.length > 0) {
+          const dollsMap = {};
+          await Promise.all(
+            moderatorsData.map(async (mod) => {
+              const dolls = await moderatorApiService.getDollsAssignedToModerator(mod.id);
+              dollsMap[mod.id] = dolls || [];
+            })
+          );
+          setAssignedDolls(dollsMap);
+        }
+      } catch (error) {
+        toast.error("Failed to load data", {
+          description: error instanceof Error ? error.message : "Unknown error occurred",
+        });
+        setLoading(false);
+        setModelsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
   return (
     <div className={`space-y-6 transition-opacity duration-300 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>
       <div className="glass-card rounded-xl overflow-hidden mb-6">
@@ -285,8 +322,8 @@ const ModeratorsTab = ({ isLoaded }) => {
                     <td className="px-6 py-4 font-medium">{mod.full_name}</td>
                     <td className="px-6 py-4">{mod.email}</td>
                     <td className="px-6 py-4">
-                      {mod.assigned_dolls && mod.assigned_dolls.length > 0 
-                        ? mod.assigned_dolls.join(', ')
+                      {assignedDolls[mod.id] && assignedDolls[mod.id].length > 0
+                        ? assignedDolls[mod.id].map(doll => doll.name).join(', ')
                         : 'None assigned'
                       }
                     </td>

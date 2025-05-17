@@ -172,6 +172,8 @@ class ModelApiService {
     }
   }
 
+  
+
   async deleteModel(modelId: number): Promise<void> {
     try {
       const token = localStorage.getItem('access_token');
