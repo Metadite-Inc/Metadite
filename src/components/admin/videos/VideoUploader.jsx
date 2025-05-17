@@ -1,11 +1,13 @@
-
-import React, { useState } from 'react';
-import { FileVideo, X, Upload, Image } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { FileVideo, X, Upload, Image, CalendarDays } from 'lucide-react';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
 import { useTheme } from '../../../context/ThemeContext';
 import { videoApiService } from '../../../lib/api/video_api';
 
@@ -17,7 +19,7 @@ const VideoUploader = ({ models, selectedModel, onVideoUploaded, fetchAllVideos 
     title: '',
     description: '',
     is_featured: false,
-    model_id: selectedModel || '',
+    doll_id: selectedModel || '',
   });
   
   const [videoFile, setVideoFile] = useState(null);
@@ -25,6 +27,20 @@ const VideoUploader = ({ models, selectedModel, onVideoUploaded, fetchAllVideos 
   const [uploadProgress, setUploadProgress] = useState(0);
   const [thumbnailFile, setThumbnailFile] = useState(null);
   const [uploadedVideoId, setUploadedVideoId] = useState(null);
+
+  // Effect to update doll_id when selectedModel changes
+  useEffect(() => {
+    if (selectedModel) {
+      setVideoData(prev => ({ ...prev, doll_id: selectedModel }));
+    }
+  }, [selectedModel]);
+
+  // Function to get model name by ID
+  const getModelNameById = (modelId) => {
+    if (!modelId) return "Select model";
+    const model = models.find(model => model.id === Number(modelId));
+    return model ? model.name : "Select model";
+  };
 
   // Simulate progress for smoother UX
   React.useEffect(() => {
@@ -46,10 +62,10 @@ const VideoUploader = ({ models, selectedModel, onVideoUploaded, fetchAllVideos 
       return;
     }
     
-    // Check if video is larger than 200MB
-    if (file.size > 200 * 1024 * 1024) {
+    // Check if video is larger than 300MB
+    if (file.size > 300 * 1024 * 1024) {
       toast.error("Video too large", {
-        description: "Videos must be less than 200MB."
+        description: "Videos must be less than 300MB."
       });
       return;
     }
@@ -78,7 +94,7 @@ const VideoUploader = ({ models, selectedModel, onVideoUploaded, fetchAllVideos 
       return;
     }
     
-    if (!videoData.title || !videoData.description || !videoData.model_id) {
+    if (!videoData.title || !videoData.description || !videoData.doll_id) { // Changed from model_id to doll_id
       toast.error("Missing required fields", {
         description: "Please fill in all required fields."
       });
@@ -108,8 +124,12 @@ const VideoUploader = ({ models, selectedModel, onVideoUploaded, fetchAllVideos 
       }
     } catch (error) {
       console.error("Error uploading video:", error);
-      setUploadState('initial');
-      toast.error("Failed to upload video");
+      toast.error("Failed to upload video", {
+        description: error.message || "The upload was cancelled due to an error"
+      });
+      
+      // Auto-cancel on failure
+      resetUploadForm();
     }
   };
 
@@ -136,6 +156,13 @@ const VideoUploader = ({ models, selectedModel, onVideoUploaded, fetchAllVideos 
       }
     } catch (error) {
       console.error("Error uploading thumbnail:", error);
+      toast.error("Failed to upload thumbnail", {
+        description: error.message || "The upload was cancelled due to an error"
+      });
+      
+      // Reset form on failure
+      resetUploadForm();
+      fetchAllVideos();
     }
   };
 
@@ -144,7 +171,7 @@ const VideoUploader = ({ models, selectedModel, onVideoUploaded, fetchAllVideos 
       title: '',
       description: '',
       is_featured: false,
-      model_id: selectedModel || '',
+      doll_id: selectedModel || '',
     });
     setVideoFile(null);
     setThumbnailFile(null);
@@ -169,11 +196,13 @@ const VideoUploader = ({ models, selectedModel, onVideoUploaded, fetchAllVideos 
                   Select Model*
                 </label>
                 <Select
-                  value={videoData.model_id}
-                  onValueChange={(value) => setVideoData({...videoData, model_id: value})}
+                  value={videoData.doll_id} // Changed from model_id to doll_id
+                  onValueChange={(value) => setVideoData({...videoData, doll_id: value})} // Changed from model_id to doll_id
                 >
                   <SelectTrigger className="w-full bg-white">
-                    <SelectValue placeholder="Select model" />
+                    <SelectValue>
+                      {getModelNameById(videoData.doll_id)}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent className="bg-white">
                     {models.map(model => (
@@ -247,6 +276,20 @@ const VideoUploader = ({ models, selectedModel, onVideoUploaded, fetchAllVideos 
                     Feature this video
                   </span>
                 </label>
+              </div>
+
+              <div>
+                <label className={`block text-sm font-medium mb-1 
+                  ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
+                  Release Date*
+                </label>
+                <input
+                  type="date"
+                  value={videoData.created_at}
+                  onChange={e => setVideoData({ ...videoData, created_at: e.target.value })}
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary"
+                  required
+                />
               </div>
             </div>
             <div className="flex justify-end">

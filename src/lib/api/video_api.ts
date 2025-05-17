@@ -1,15 +1,17 @@
 
 import { toast } from "sonner";
 import { BaseApiService } from "./base_api";
+import { apiService } from "../api";
 
 const API_URL = import.meta.env.VITE_API_BASE_URL;
 
 export interface VideoUploadRequest {
-  model_id: number;
+  doll_id: number;
   title: string;
   description: string;
   is_featured: boolean;
   file: File;
+  created_at: Date
 }
 
 export interface Video {
@@ -22,7 +24,10 @@ export interface Video {
   is_featured: boolean;
   created_at: string;
   duration?: number;
-  model_name?: string;
+  doll?: {
+    id: number;
+    name: string;
+  };
 }
 
 class VideoApiService extends BaseApiService {
@@ -67,10 +72,11 @@ class VideoApiService extends BaseApiService {
       // Create FormData for file upload
       const formData = new FormData();
       formData.append('file', data.file);
-      formData.append('model_id', data.model_id.toString());
+      formData.append('doll_id', data.doll_id.toString());
       formData.append('title', data.title);
       formData.append('description', data.description);
       formData.append('is_featured', data.is_featured.toString());
+      formData.append('created_at', data.created_at);
 
       const response = await fetch(`${API_URL}/api/videos/upload`, {
         method: 'POST',
@@ -81,7 +87,9 @@ class VideoApiService extends BaseApiService {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to upload video: ${response.statusText}`);
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.detail || `Failed to upload video: ${response.statusText}`;
+        throw new Error(errorMessage);
       }
 
       // Parse and return the video data including the ID
@@ -92,14 +100,14 @@ class VideoApiService extends BaseApiService {
         description: error instanceof Error ? error.message : 'Unknown error occurred',
       });
       console.error('Error uploading video:', error);
-      return null;
+      throw error;//return null;
     }
   }
 
   async getModelVideos(modelId: number): Promise<Video[]> {
     try {
       const token = this.validateAuth();
-      return await this.request<Video[]>(`/api/videos/model/${modelId}`, {
+      return await this.request<Video[]>(`/api/videos/doll/${modelId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
