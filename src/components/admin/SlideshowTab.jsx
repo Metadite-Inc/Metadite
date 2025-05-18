@@ -85,8 +85,11 @@ const SlideshowTab = ({ isLoaded }) => {
                   .map((slide) => (
                     <tr key={slide.id} className={`border-t border-gray-100 transition-colors ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}>
                       <td className="px-6 py-4">
-                        {slide.is_video ? (
-                          <video src={slide.url} className="w-16 h-16 object-contain rounded" controls />
+                        {(slide.is_video !== undefined
+                          ? slide.is_video
+                          : /\.(mp4|webm|ogg)$/i.test(slide.url)
+                        ) ? (
+                          <video src={slide.url} className="w-16 h-16 object-contain rounded" autoPlay muted loop playsInline />
                         ) : (
                           <img
                             src={slide.url}
@@ -95,7 +98,10 @@ const SlideshowTab = ({ isLoaded }) => {
                           />
                         )}
                       </td>
-                      <td className="px-6 py-4 font-medium">{slide.is_video ? 'Video' : 'Image'}</td>
+                      <td className="px-6 py-4 font-medium">{(slide.is_video !== undefined
+                        ? slide.is_video
+                        : /\.(mp4|webm|ogg)$/i.test(slide.url)
+                      ) ? 'Video' : 'Image'}</td>
                       <td className="px-6 py-4">{slide.caption || '-'}</td>
                       <td className="px-6 py-4">
                         <div className="flex space-x-2">

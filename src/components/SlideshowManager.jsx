@@ -41,9 +41,8 @@ export default function SlideshowManager({ isLoaded }) {
           });
         }
       }
-      // Refresh list after upload
-      const data = await slideshowApi.getSlideshows();
-      setItems(data);
+      // Remove uploaded files from the upload section
+      setItems(prev => prev.filter(item => !item.file));
       alert('Upload successful!');
     } catch (err) {
       alert('Upload failed');
@@ -60,7 +59,7 @@ export default function SlideshowManager({ isLoaded }) {
 
   const handleFileUpload = (e) => {
     const files = Array.from(e.target.files);
-    const MAX_SIZE_MB = 20;
+    const MAX_SIZE_MB = 30;
     const validFiles = [];
     let rejected = false;
     files.forEach(file => {
@@ -145,7 +144,7 @@ export default function SlideshowManager({ isLoaded }) {
           ) : items.map((item, idx) => (
             <div key={(item.url || item.id) + idx} className="relative group border rounded p-1 bg-gray-50 dark:bg-gray-800">
               {item.type === 'video' || item.is_video ? (
-                <video src={item.url || item.file && URL.createObjectURL(item.file)} className="w-full h-28 object-contain rounded" autoPlay loop muted playsInline />
+                <video src={item.url || (item.file && URL.createObjectURL(item.file))} className="w-full h-28 object-cover rounded" autoPlay loop muted playsInline />
               ) : (
                 <img src={item.url || item.file && URL.createObjectURL(item.file)} alt={item.name || `Slide ${idx + 1}`} className="w-full h-28 object-contain rounded" />
               )}

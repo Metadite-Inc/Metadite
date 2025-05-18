@@ -27,7 +27,7 @@ const Admin = () => {
   const { user } = useAuth();
   const { theme } = useTheme();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState(() => localStorage.getItem('adminActiveTab') || 'dashboard');
   const [isLoaded, setIsLoaded] = useState(false);
   
   useEffect(() => {
@@ -39,6 +39,11 @@ const Admin = () => {
     setIsLoaded(true);
   }, [user, navigate]);
   
+  // Persist activeTab to localStorage
+  useEffect(() => {
+    localStorage.setItem('adminActiveTab', activeTab);
+  }, [activeTab]);
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
