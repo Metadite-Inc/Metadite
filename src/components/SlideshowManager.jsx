@@ -1,21 +1,53 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Upload } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
-// Key for localStorage
-const STORAGE_KEY = 'slideshowItems';
+import { slideshowApi } from '../lib/api/slideshow_api';
+import { useAuth } from '../context/AuthContext';
 
 export default function SlideshowManager({ isLoaded }) {
   const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
   const fileInputRef = useRef(null);
   const { theme } = useTheme();
+  const { token } = useAuth();
+
+  // Fetch slideshow items from API
+  useEffect(() => {
+    const fetchSlides = async () => {
+      setLoading(true);
+      try {
+        const data = await slideshowApi.getSlideshows();
+        setItems(data);
+      } catch (e) {
+        setItems([]);
+      }
+      setLoading(false);
+    };
+    fetchSlides();
+  }, []);
 
   // --- Upload handler ---
-  function handleUpload(e) {
+  async function handleUpload(e) {
     e.preventDefault();
-    // TODO: Replace with actual upload logic/API call
-    alert('Uploading files... (implement actual upload logic)');
-    // Optionally clear items after upload:
-    // setItems([]);
+    if (!items.length) return;
+    try {
+      for (const item of items) {
+        if (item.file) {
+          await slideshowApi.uploadSlideshow({
+            file: item.file,
+            caption: item.name || '',
+            is_video: item.type === 'video',
+            token,
+          });
+        }
+      }
+      // Refresh list after upload
+      const data = await slideshowApi.getSlideshows();
+      setItems(data);
+      alert('Upload successful!');
+    } catch (err) {
+      alert('Upload failed');
+    }
   }
 
   // --- Cancel handler ---
@@ -25,17 +57,6 @@ export default function SlideshowManager({ isLoaded }) {
       setItems([]);
     }
   }
-
-  useEffect(() => {
-    // Load from localStorage
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) setItems(JSON.parse(saved));
-  }, []);
-
-  useEffect(() => {
-    // Save to localStorage
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-  }, [items]);
 
   const handleFileUpload = (e) => {
     const files = Array.from(e.target.files);
@@ -48,7 +69,7 @@ export default function SlideshowManager({ isLoaded }) {
       } else {
         const url = URL.createObjectURL(file);
         const type = file.type.startsWith('video') ? 'video' : 'image';
-        validFiles.push({ type, url, name: file.name });
+        validFiles.push({ type, url, name: file.name, file });
       }
     });
     if (rejected) {
@@ -69,8 +90,19 @@ export default function SlideshowManager({ isLoaded }) {
     e.target.reset();
   };
 
-  const handleDelete = idx => {
-    setItems(prev => prev.filter((_, i) => i !== idx));
+  // Delete from API if item has id, else from local state
+  const handleDelete = async idx => {
+    const item = items[idx];
+    if (item.id) {
+      try {
+        await slideshowApi.deleteSlideshow(item.id, token);
+        setItems(items.filter((_, i) => i !== idx));
+      } catch {
+        alert('Failed to delete');
+      }
+    } else {
+      setItems(items.filter((_, i) => i !== idx));
+    }
   };
 
   return (
@@ -108,12 +140,14 @@ export default function SlideshowManager({ isLoaded }) {
         </div>
         <div className="text-xs text-gray-500 mb-2">Upload images, GIFs, or videos (mp4/webm/ogg) - Max 20MB per file</div>
         <div className="grid grid-cols-2 gap-4 mt-4">
-          {items.map((item, idx) => (
-            <div key={item.url + idx} className="relative group border rounded p-1 bg-gray-50 dark:bg-gray-800">
-              {item.type === 'video' ? (
-                <video src={item.url} className="w-full h-28 object-contain rounded" autoPlay loop muted playsInline />
+          {loading ? (
+            <div className="col-span-2 text-center text-gray-400">Loading...</div>
+          ) : items.map((item, idx) => (
+            <div key={(item.url || item.id) + idx} className="relative group border rounded p-1 bg-gray-50 dark:bg-gray-800">
+              {item.type === 'video' || item.is_video ? (
+                <video src={item.url || item.file && URL.createObjectURL(item.file)} className="w-full h-28 object-contain rounded" autoPlay loop muted playsInline />
               ) : (
-                <img src={item.url} alt={item.name || `Slide ${idx + 1}`} className="w-full h-28 object-contain rounded" />
+                <img src={item.url || item.file && URL.createObjectURL(item.file)} alt={item.name || `Slide ${idx + 1}`} className="w-full h-28 object-contain rounded" />
               )}
               <button onClick={() => handleDelete(idx)} className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 z-40 hover:bg-red-700 transition-colors text-xs">&times;</button>
             </div>
@@ -124,7 +158,7 @@ export default function SlideshowManager({ isLoaded }) {
         <button
           className="bg-metadite-primary text-white px-4 py-2 rounded hover:bg-metadite-secondary transition disabled:opacity-60"
           onClick={handleUpload}
-          disabled={items.length === 0}
+          disabled={items.filter(i => i.file).length === 0}
         >
           Upload
         </button>
@@ -139,5 +173,3 @@ export default function SlideshowManager({ isLoaded }) {
     </div>
   );
 }
-
-// (Removed duplicate handler functions outside the component)
