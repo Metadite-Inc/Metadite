@@ -1,17 +1,22 @@
-
 import { Link } from 'react-router-dom';
 import React, { useState, useEffect } from 'react';
-
-const STORAGE_KEY = 'slideshowItems';
+import { slideshowApi } from '../../lib/api/slideshow_api';
 
 const HeroSection = ({ isLoaded, user, hasVipAccess, theme }) => {
   const [slideshowItems, setSlideshowItems] = useState([]);
   const [currentSlide, setCurrentSlide] = useState(0);
 
   useEffect(() => {
-    // Load slideshow items from localStorage
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) setSlideshowItems(JSON.parse(saved));
+    // Load slideshow items from API
+    const fetchSlides = async () => {
+      try {
+        const data = await slideshowApi.getSlideshows();
+        setSlideshowItems(data);
+      } catch {
+        setSlideshowItems([]);
+      }
+    };
+    fetchSlides();
   }, []);
 
   useEffect(() => {
