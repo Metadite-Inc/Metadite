@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import logo from '/logo.png'; // Adjust path if needed
+import logo from '/logo.png';
 
 const CURRENT_YEAR = 2025;
 
@@ -39,13 +39,13 @@ const AgeVerificationModal = ({ onAccept, onReject }) => {
       </p>
       <div className="flex flex-col gap-3 w-full mb-3">
         <button
-          className="bg-gray-900 text-white font-medium rounded-md py-3 text-base hover:bg-gray-700 transition"
+          className="bg-metadite-primary text-white font-medium rounded-md py-3 text-base hover:bg-metadite-secondary transition-colors shadow"
           onClick={handleAccept}
         >
           I am 18 years and older - Enter
         </button>
         <button
-          className="bg-white text-gray-900 border border-gray-300 rounded-md py-3 text-base hover:bg-gray-100 transition"
+          className="bg-gray-900 text-white font-medium rounded-md py-3 text-base hover:bg-gray-700 transition-colors shadow"
           onClick={handleReject}
         >
           I am under 18 - Exit
@@ -53,7 +53,7 @@ const AgeVerificationModal = ({ onAccept, onReject }) => {
       </div>
       <div className="flex items-center gap-2 mt-2 text-xs text-gray-500 w-full justify-center">
         <img src={logo} alt="Metadite Logo Small" className="w-5 h-5" />
-        <span>@ Metadite, {CURRENT_YEAR}</span>
+        <span>@Metadite, {CURRENT_YEAR}</span>
       </div>
     </div>
   </div>
