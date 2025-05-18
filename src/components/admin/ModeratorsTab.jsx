@@ -68,14 +68,6 @@ const ModeratorsTab = ({ isLoaded }) => {
   const handleAddModerator = async (e) => {
     e.preventDefault();
     
-    // Validate email format
-    if (!newModeratorData.email.includes('.moderator@metadite.com')) {
-      toast.error("Invalid email format", {
-        description: "Moderator email must be in format: name.moderator@metadite.com",
-      });
-      return;
-    }
-    
     // Validate password
     if (!validatePassword(newModeratorData.password)) {
       return;
