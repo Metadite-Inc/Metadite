@@ -29,7 +29,7 @@ export default function SlideshowManager({ isLoaded }) {
   // --- Upload handler ---
   async function handleUpload(e) {
     e.preventDefault();
-    if (!items.length) return;
+    if (!items.filter(item => item.file).length) return;
     try {
       for (const item of items) {
         if (item.file) {
