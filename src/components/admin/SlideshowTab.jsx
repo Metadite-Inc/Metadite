@@ -7,7 +7,6 @@ import { Search, Edit, Trash2, PackagePlus } from 'lucide-react';
 import { toast } from 'sonner';
 
 const SlideshowTab = ({ isLoaded }) => {
-  const { token } = useAuth();
   const { theme } = useTheme();
   const [slides, setSlides] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -31,7 +30,7 @@ const SlideshowTab = ({ isLoaded }) => {
 
   const handleDeleteSlide = async (slideId) => {
     try {
-      await slideshowApi.deleteSlideshow(slideId, token);
+      await slideshowApi.deleteSlideshow(slideId);
       setSlides(slides.filter(slide => slide.id !== slideId));
       toast.success('Slideshow item deleted successfully');
     } catch (error) {
