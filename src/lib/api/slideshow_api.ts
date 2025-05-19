@@ -18,7 +18,7 @@ function getMediaInfo(item: any, backendUrl: string): SlideshowItem {
   return {
     id: item.id,
     type: isVideo ? 'video' : 'image',
-    url: /^https?:\/\//.test(mediaUrl) ? mediaUrl : `${backendUrl}${mediaUrl}`,
+    url: /^https?:\/\//.test(mediaUrl ?? '') ? mediaUrl : `${backendUrl}${mediaUrl ?? ''}`,
     caption: item.slideshow_caption || item.caption || '',
     is_video: !!isVideo,
     created_at: item.created_at,
