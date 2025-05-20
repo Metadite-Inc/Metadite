@@ -49,9 +49,9 @@ const Cart = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2">
                 <div className={`space-y-4 transition-all duration-500 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-                  {items.map((item) => (
-                    <CartItem key={item.id} item={item} />
-                  ))}
+                  {items.map((item, idx) => (
+  <CartItem key={String(item.id) + '-' + idx} item={item} />
+))}
                 </div>
                 
                 <div className="mt-6 flex justify-between">

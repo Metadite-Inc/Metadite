@@ -17,6 +17,11 @@ import VipContent from "./pages/VipContent";
 import VideoPlayer from "./pages/VideoPlayer";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
+import SubscriptionCheckout from "./pages/SubscriptionCheckout";
+import SuccessSubscription from "./pages/SuccessSubscription";
+import CancelSubscription from "./pages/CancelSubscription";
+import Success from "./pages/Success";
+import Cancel from "./pages/Cancel";
 import Admin from "./pages/Admin";
 import Moderator from "./pages/Moderator";
 import Models from "./pages/Models";
@@ -52,6 +57,11 @@ const App = () => {
                     <Route path="/video/:videoId" element={<VideoPlayer />} />
                     <Route path="/cart" element={<Cart />} />
                     <Route path="/checkout" element={<Checkout />} />
+<Route path="/subscription-checkout" element={<SubscriptionCheckout />} />
+<Route path="/success-subscription" element={<SuccessSubscription />} />
+<Route path="/cancel-subscription" element={<CancelSubscription />} />
+<Route path="/success" element={<Success />} />
+<Route path="/cancel" element={<Cancel />} />
                     <Route path="/admin" element={<Admin />} />
                     <Route path="/moderator" element={<Moderator />} />
                     <Route path="/models" element={<Models />} />
