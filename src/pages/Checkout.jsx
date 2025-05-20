@@ -51,6 +51,7 @@ const Checkout = () => {
       // Call backend to create Stripe session
       const result = await createStripeCheckoutSession(data);
       const stripe = await stripePromise;
+      localStorage.setItem('cartShouldClear', 'true');
       const { error } = await stripe.redirectToCheckout({ sessionId: result.id });
       if (error) {
         toast.error('Stripe redirect failed', { description: error.message });

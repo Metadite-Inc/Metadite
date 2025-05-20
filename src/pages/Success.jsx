@@ -3,9 +3,19 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { Check } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { useEffect } from 'react';
+import { useCart } from '../context/CartContext';
 
 const Success = () => {
   const { theme } = useTheme();
+  const { clearCart } = useCart();
+  useEffect(() => {
+    if (localStorage.getItem('cartShouldClear') === 'true') {
+      clearCart();
+      localStorage.removeItem('cartShouldClear');
+    }
+    // eslint-disable-next-line
+  }, []);
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
