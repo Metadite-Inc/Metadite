@@ -3,6 +3,15 @@ import { toast } from "sonner";
 const API_URL = import.meta.env.VITE_API_BASE_URL;
 
 // Define types for the API
+
+export interface Order {
+  id: string;
+  date: string;
+  items: number;
+  total: number;
+  status: string;
+}
+
 interface ModelReview {
   id?: number;
   user_id: number;
@@ -21,6 +30,23 @@ interface FavoriteModel {
 }
 
 class userApiService {
+  async getUserOrders(): Promise<Order[]> {
+    try {
+      // Fetches the authenticated user's orders
+      const result = await this.request<Order[]>(`/api/orders`, {
+        method: 'GET',
+      });
+      return result;
+    } catch (error) {
+      if (error.message?.includes('401') || error.message?.includes('403')) {
+        toast.error('Authentication failed. Please log in again.');
+      } else {
+        toast.error('Failed to fetch order history');
+      }
+      throw error;
+    }
+  }
+
   async updateProfile(data: { full_name: string; email: string; region: string }): Promise<any> {
     try {
       const result = await this.request<any>(`/api/auth/me`, {

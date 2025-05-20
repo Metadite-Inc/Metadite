@@ -77,9 +77,7 @@ const AccountSettings = () => {
       };
       await userApi.updateProfile(updateData);
       // Refresh user in context using updateMembership
-      if (updateMembership) {
-        updateMembership(updateData);
-      }
+
     } catch (error: any) {
       // Error toast is already handled in userApi
     }
