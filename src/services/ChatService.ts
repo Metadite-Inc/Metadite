@@ -155,6 +155,33 @@ export const sendMessage = async (content: string, chatRoomId: number) => {
   }
 };
 
+// send messages with http
+export const sendHttpMessage = async (content: string, chatRoomId: number) => {
+  const token = getAuthToken();
+  if (!token) return null;
+  
+  const message = {
+    content,
+    chat_room_id: chatRoomId,
+    message_type: "TEXT"
+  };
+  
+  try {
+    const response = await axios.post(
+      `${API_BASE_URL}/api/chat/messages/`, 
+      message, 
+      {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Failed to send message:', error);
+    toast.error('Failed to send message');
+    return null;
+  }
+};
+
 // Chat Room APIs
 export const createChatRoom = async (dollId: string) => {
   const token = getAuthToken();
