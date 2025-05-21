@@ -105,7 +105,7 @@ const Chat: React.FC<ChatProps> = ({ dollId, moderatorId }) => {
         if (!newMessage.trim() || !user) return;
 
         try {
-            await sendMessage(newMessage.trim(), parseInt(dollId), parseInt(moderatorId));
+            await sendMessage(newMessage.trim(), parseInt(dollId));
             setNewMessage('');
         } catch (error) {
             console.error('Error sending message:', error);
