@@ -85,6 +85,39 @@ export const sendModeratorMessage = async (content: string, chatRoomId: number, 
   }
 };
 
+// Send a file message as moderator (image or document)
+export const sendModeratorFileMessage = async (file: File, chatRoomId: number, receiverId: number) => {
+  const token = getAuthToken();
+  if (!token) return null;
+  
+  try {
+    // Determine message type based on file type
+    const messageType = file.type.startsWith('image/') ? "IMAGE" : "FILE";
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('chat_room_id', chatRoomId.toString());
+    formData.append('receiver_id', receiverId.toString());
+    formData.append('message_type', messageType);
+    
+    const response = await axios.post(
+      `${API_BASE_URL}/api/chat/messages/upload`, 
+      formData,
+      {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Failed to upload file:', error);
+    toast.error('Failed to upload file');
+    return null;
+  }
+};
+
 // Flag a message for review
 export const flagMessage = async (messageId: number, flagged: boolean) => {
   const token = getAuthToken();

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ChevronLeft, MessageSquare, Send, AlertTriangle } from 'lucide-react';
+import { ChevronLeft, MessageSquare, Send, AlertTriangle, Paperclip, FileImage, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -9,6 +9,7 @@ import Footer from '../components/Footer';
 import MessageItem from '../components/MessageItem';
 import { Textarea } from "@/components/ui/textarea";
 import { apiService } from '../lib/api'; // Import the API service
+import { sendMessage, sendFileMessage } from '../services/chatService';
 
 const ModelChat = () => {
   const { id } = useParams();
@@ -19,7 +20,11 @@ const ModelChat = () => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const messageEndRef = useRef(null);
+  const fileInputRef = useRef(null);
   const [fetchError, setFetchError] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
   
   // Fetch model data using our API service
   useEffect(() => {
@@ -46,7 +51,8 @@ const ModelChat = () => {
           senderName: modelDetails.name,
           content: `Hello! I'm ${modelDetails.name}. How are you today?`,
           timestamp: new Date().toISOString(),
-          flagged: false
+          flagged: false,
+          message_type: 'TEXT'
         };
         
         setMessages([modelMessage]);
@@ -65,50 +71,140 @@ const ModelChat = () => {
   useEffect(() => {
     messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Handle file selection
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    // Check file size (limit to 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("File too large", {
+        description: "Maximum file size is 10MB"
+      });
+      return;
+    }
+    
+    setSelectedFile(file);
+    
+    // Create preview for images
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      // For non-image files, just show the file name
+      setPreviewUrl(null);
+    }
+  };
   
-  const handleSendMessage = (e) => {
+  // Clear selected file
+  const clearSelectedFile = () => {
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+  
+  const handleSendMessage = async (e) => {
     e.preventDefault();
     
-    if (!newMessage.trim() || !model) return;
+    if ((!newMessage.trim() && !selectedFile) || !model) return;
     
     if (!user) {
       toast.error("Please login to send messages");
       return;
     }
     
-    // Create new message
-    const userMessage = {
-      id: messages.length + 1,
-      modelId: model.id,
-      senderId: user.id || 'user-temp',
-      senderName: user.name || 'User',
-      content: newMessage,
-      timestamp: new Date().toISOString(),
-      flagged: false
-    };
-    
-    // Add message to state
-    setMessages([...messages, userMessage]);
-    setNewMessage('');
-    
-    // Simulate moderator response
-    setTimeout(() => {
-      const moderatorResponse = {
-        id: messages.length + 2,
-        modelId: model.id,
-        senderId: 'moderator-1',
-        senderName: 'Support Team',
-        content: `Thank you for your message about ${model.name}. I'll get back to you soon.`,
-        timestamp: new Date().toISOString(),
-        flagged: false
-      };
+    try {
+      setIsUploading(true);
       
-      setMessages(prev => [...prev, moderatorResponse]);
+      let messageData = null;
       
-      toast.success("Message received", {
-        description: "Our team will respond shortly.",
-      });
-    }, 1000);
+      // Handle file upload
+      if (selectedFile) {
+        try {
+          messageData = await sendFileMessage(selectedFile, model.id.toString());
+          
+          // Add message to state immediately for responsive UI
+          const fileMessage = {
+            id: Date.now(), // temporary ID
+            modelId: model.id,
+            senderId: user.id || 'user-temp',
+            senderName: user.name || 'User',
+            content: selectedFile.type.startsWith('image/') ? URL.createObjectURL(selectedFile) : selectedFile.name,
+            timestamp: new Date().toISOString(),
+            flagged: false,
+            message_type: selectedFile.type.startsWith('image/') ? 'IMAGE' : 'FILE'
+          };
+          
+          setMessages(prev => [...prev, fileMessage]);
+          
+          // Clear file selection
+          clearSelectedFile();
+        } catch (error) {
+          console.error("Failed to upload file:", error);
+          toast.error("Failed to upload file");
+        }
+      }
+      
+      // Handle text message
+      if (newMessage.trim()) {
+        try {
+          messageData = await sendMessage({
+            content: newMessage.trim(),
+            message_type: 'TEXT',
+            doll_id: model.id.toString()
+          });
+          
+          // Add message to state immediately for responsive UI
+          const textMessage = {
+            id: Date.now() + 1, // temporary ID
+            modelId: model.id,
+            senderId: user.id || 'user-temp',
+            senderName: user.name || 'User',
+            content: newMessage,
+            timestamp: new Date().toISOString(),
+            flagged: false,
+            message_type: 'TEXT'
+          };
+          
+          setMessages(prev => [...prev, textMessage]);
+          setNewMessage('');
+        } catch (error) {
+          console.error("Failed to send message:", error);
+          toast.error("Failed to send message");
+        }
+      }
+      
+      // Simulate moderator response
+      setTimeout(() => {
+        const moderatorResponse = {
+          id: Date.now() + 2,
+          modelId: model.id,
+          senderId: 'moderator-1',
+          senderName: 'Support Team',
+          content: `Thank you for your message about ${model.name}. I'll get back to you soon.`,
+          timestamp: new Date().toISOString(),
+          flagged: false,
+          message_type: 'TEXT'
+        };
+        
+        setMessages(prev => [...prev, moderatorResponse]);
+        toast.success("Message received", {
+          description: "Our team will respond shortly.",
+        });
+      }, 1000);
+      
+    } catch (error) {
+      console.error("Error sending message:", error);
+      toast.error("Failed to send message");
+    } finally {
+      setIsUploading(false);
+    }
   };
   
   const handleFlagMessage = (messageId) => {
@@ -134,6 +230,10 @@ const ModelChat = () => {
         });
       }
     }
+  };
+
+  const promptFileSelection = () => {
+    fileInputRef.current?.click();
   };
 
   if (!isLoaded) {
@@ -196,7 +296,7 @@ const ModelChat = () => {
               <div>
                 <h2 className={`font-medium ${theme === 'dark' ? 'text-white' : ''}`}>Chat about {model.name}</h2>
                 <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                  {model.description.substring(0, 10)}
+                  {model.description && model.description.substring(0, 40)}...
                 </p>
               </div>
             </div>
@@ -226,6 +326,34 @@ const ModelChat = () => {
               )}
             </div>
             
+            {/* File preview area */}
+            {selectedFile && (
+              <div className={`p-2 border-t ${theme === 'dark' ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-100'}`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    {previewUrl ? (
+                      <div className="h-16 w-16 overflow-hidden rounded-md">
+                        <img src={previewUrl} alt="Preview" className="h-full w-full object-cover" />
+                      </div>
+                    ) : (
+                      <div className={`h-12 w-12 flex items-center justify-center rounded-md ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                        <FileImage className={`h-6 w-6 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`} />
+                      </div>
+                    )}
+                    <span className={`text-sm truncate max-w-[150px] ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                      {selectedFile.name}
+                    </span>
+                  </div>
+                  <button 
+                    onClick={clearSelectedFile}
+                    className={`p-1 rounded-full ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'}`}
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+            
             <div className={`p-4 border-t ${theme === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
               <form onSubmit={handleSendMessage} className="flex space-x-2">
                 <div className="relative flex-1">
@@ -247,20 +375,37 @@ const ModelChat = () => {
                     </div>
                   )}
                 </div>
+                
+                {/* File upload button */}
+                <button 
+                  type="button"
+                  onClick={promptFileSelection}
+                  className={`flex-shrink-0 p-3 rounded-md ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'}`}
+                >
+                  <Paperclip className={`h-5 w-5 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`} />
+                </button>
+                
+                {/* Hidden file input */}
+                <input 
+                  ref={fileInputRef}
+                  type="file" 
+                  onChange={handleFileSelect}
+                  className="hidden"
+                  accept="image/*,.pdf,.doc,.docx"
+                />
+                
                 <button 
                   type="submit"
-                  disabled={!newMessage.trim()}
+                  disabled={(!newMessage.trim() && !selectedFile) || isUploading}
                   className="flex-shrink-0 bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white p-3 rounded-md hover:opacity-90 transition-opacity disabled:opacity-50"
                 >
-                  <Send className="h-5 w-5" />
+                  {isUploading ? (
+                    <span className="inline-block h-5 w-5 rounded-full border-2 border-white border-r-transparent animate-spin"></span>
+                  ) : (
+                    <Send className="h-5 w-5" />
+                  )}
                 </button>
               </form>
-              <div className="mt-2 text-xs text-gray-500">
-                <span className="flex items-center">
-                  <AlertTriangle className="h-3 w-3 mr-1" />
-                  
-                </span>
-              </div>
             </div>
           </div>
         </div>

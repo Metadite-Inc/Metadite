@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -8,7 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { 
   MessageSquare, Send, User, Clock, Filter, Search,
-  AlertTriangle
+  AlertTriangle, Paperclip, FileImage, X
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { 
@@ -32,6 +32,11 @@ const Moderator = () => {
   const [receiverId, setReceiverId] = useState(null);
   const [websocket, setWebsocket] = useState(null);
   const [loading, setLoading] = useState(true);
+  const fileInputRef = useRef(null);
+  const messageEndRef = useRef(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
   
   // Redirect non-moderator users
   useEffect(() => {
@@ -41,6 +46,11 @@ const Moderator = () => {
       setIsLoaded(true);
     }
   }, [user, navigate]);
+  
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    messageEndRef?.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
   
   // Load assigned models/dolls when component mounts
   useEffect(() => {
@@ -111,23 +121,103 @@ const Moderator = () => {
     }
   };
   
-  // Send a new message
+  // Handle file selection
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    // Check file size (limit to 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("File too large", {
+        description: "Maximum file size is 10MB"
+      });
+      return;
+    }
+    
+    setSelectedFile(file);
+    
+    // Create preview for images
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      // For non-image files, just show the file name
+      setPreviewUrl(null);
+    }
+  };
+  
+  // Clear selected file
+  const clearSelectedFile = () => {
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+  
+  const promptFileSelection = () => {
+    fileInputRef.current?.click();
+  };
+  
+  // Send a new message (text or file)
   const handleSendMessage = async (e) => {
     e.preventDefault();
     
-    if (!newMessage.trim() || !selectedModel || !receiverId) return;
+    if ((!newMessage.trim() && !selectedFile) || !selectedModel || !receiverId) return;
+    
+    setIsUploading(true);
     
     try {
-      const sentMessage = await sendModeratorMessage(newMessage, selectedModel.id, receiverId);
-      if (sentMessage) {
-        // If WebSocket doesn't update the UI, we can add the message manually
+      if (selectedFile) {
+        // Create FormData for file upload
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+        formData.append('chat_room_id', selectedModel.id);
+        formData.append('receiver_id', receiverId);
+        
+        // Determine message type based on file type
+        const messageType = selectedFile.type.startsWith('image/') ? 'IMAGE' : 'FILE';
+        formData.append('message_type', messageType);
+        
+        // API call to send file message
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000"}/api/chat/messages/upload`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+          },
+          body: formData
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Server responded with ${response.status}`);
+        }
+        
+        const sentMessage = await response.json();
+        
+        // Update UI to show sent message
         setMessages(prev => [...prev, sentMessage]);
-        setNewMessage('');
-        toast.success('Message sent');
+        clearSelectedFile();
+        
+        toast.success('File sent');
+      }
+      
+      if (newMessage.trim()) {
+        const sentMessage = await sendModeratorMessage(newMessage, selectedModel.id, receiverId);
+        if (sentMessage) {
+          // If WebSocket doesn't update the UI, we can add the message manually
+          setMessages(prev => [...prev, sentMessage]);
+          setNewMessage('');
+          toast.success('Message sent');
+        }
       }
     } catch (error) {
       console.error('Error sending message:', error);
       toast.error('Failed to send message');
+    } finally {
+      setIsUploading(false);
     }
   };
   
@@ -310,6 +400,7 @@ const Moderator = () => {
                             onFlag={() => handleFlagMessage(message.id)}
                           />
                         ))}
+                        <div ref={messageEndRef} />
                       </div>
                     ) : (
                       <div className="h-full flex items-center justify-center">
@@ -323,6 +414,34 @@ const Moderator = () => {
                       </div>
                     )}
                   </div>
+                  
+                  {/* File preview area */}
+                  {selectedFile && (
+                    <div className={`p-2 border-t ${theme === 'dark' ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-100'}`}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          {previewUrl ? (
+                            <div className="h-16 w-16 overflow-hidden rounded-md">
+                              <img src={previewUrl} alt="Preview" className="h-full w-full object-cover" />
+                            </div>
+                          ) : (
+                            <div className={`h-12 w-12 flex items-center justify-center rounded-md ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                              <FileImage className={`h-6 w-6 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`} />
+                            </div>
+                          )}
+                          <span className={`text-sm truncate max-w-[150px] ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                            {selectedFile.name}
+                          </span>
+                        </div>
+                        <button 
+                          onClick={clearSelectedFile}
+                          className={`p-1 rounded-full ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'}`}
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
                   
                   <div className={`p-4 border-t ${theme === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
                     <form onSubmit={handleSendMessage} className="flex space-x-2">
@@ -339,12 +458,35 @@ const Moderator = () => {
                           rows={1}
                         ></textarea>
                       </div>
+                      
+                      {/* File upload button */}
+                      <button 
+                        type="button"
+                        onClick={promptFileSelection}
+                        className={`flex-shrink-0 p-3 rounded-md ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'}`}
+                      >
+                        <Paperclip className={`h-5 w-5 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`} />
+                      </button>
+                      
+                      {/* Hidden file input */}
+                      <input 
+                        ref={fileInputRef}
+                        type="file" 
+                        onChange={handleFileSelect}
+                        className="hidden"
+                        accept="image/*,.pdf,.doc,.docx"
+                      />
+                      
                       <button 
                         type="submit"
-                        disabled={!newMessage.trim()}
+                        disabled={(!newMessage.trim() && !selectedFile) || isUploading}
                         className="flex-shrink-0 bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white p-3 rounded-md hover:opacity-90 transition-opacity disabled:opacity-50"
                       >
-                        <Send className="h-5 w-5" />
+                        {isUploading ? (
+                          <span className="inline-block h-5 w-5 rounded-full border-2 border-white border-r-transparent animate-spin"></span>
+                        ) : (
+                          <Send className="h-5 w-5" />
+                        )}
                       </button>
                     </form>
                   </div>
