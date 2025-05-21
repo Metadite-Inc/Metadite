@@ -57,11 +57,11 @@ const App = () => {
                     <Route path="/video/:videoId" element={<VideoPlayer />} />
                     <Route path="/cart" element={<Cart />} />
                     <Route path="/checkout" element={<Checkout />} />
-<Route path="/subscription-checkout" element={<SubscriptionCheckout />} />
-<Route path="/success-subscription" element={<SuccessSubscription />} />
-<Route path="/cancel-subscription" element={<CancelSubscription />} />
-<Route path="/success" element={<Success />} />
-<Route path="/cancel" element={<Cancel />} />
+                    <Route path="/subscription-checkout" element={<SubscriptionCheckout />} />
+                    <Route path="/success-subscription" element={<SuccessSubscription />} />
+                    <Route path="/cancel-subscription" element={<CancelSubscription />} />
+                    <Route path="/success" element={<Success />} />
+                    <Route path="/cancel" element={<Cancel />} />
                     <Route path="/admin" element={<Admin />} />
                     <Route path="/moderator" element={<Moderator />} />
                     <Route path="/models" element={<Models />} />

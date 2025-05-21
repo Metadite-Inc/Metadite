@@ -1,4 +1,3 @@
-
 import axios from 'axios';
 import { toast } from 'sonner';
 import { MessageStatus } from '../types/chat';
@@ -7,6 +6,10 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 // WebSocket connection
 let ws: WebSocket | null = null;
+const MAX_RECONNECT_ATTEMPTS = 5;
+let reconnectAttempts = 0;
+let reconnectTimeout: NodeJS.Timeout | null = null;
+const messageQueue: any[] = [];
 
 // Helper method to extract user ID from JWT token
 const getUserIdFromToken = (token: string): number => {
@@ -44,7 +47,50 @@ const getAuthToken = (): string | null => {
   return token;
 };
 
-// send messages with web sockets
+// Helper function to process message queue
+const processMessageQueue = async () => {
+  const queue = JSON.parse(localStorage.getItem('messageQueue') || '[]');
+  for (const message of queue) {
+    try {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({
+          action: "create",
+          message: message.content,
+          chat_room_id: message.chatRoomId,
+          type: message.type || "text"
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to process queued message:', error);
+    }
+  }
+  localStorage.removeItem('messageQueue');
+};
+
+// Queue message for later sending
+const queueMessage = (message: any) => {
+  messageQueue.push(message);
+  localStorage.setItem('messageQueue', JSON.stringify(messageQueue));
+};
+
+// Reconnection logic
+const reconnectWebSocket = (chatRoomId: number, onMessage: (data: any) => void) => {
+  if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+    toast.error('Failed to reconnect. Please refresh the page.');
+    return;
+  }
+  
+  if (reconnectTimeout) {
+    clearTimeout(reconnectTimeout);
+  }
+  
+  reconnectTimeout = setTimeout(() => {
+    reconnectAttempts++;
+    connectWebSocket(chatRoomId, onMessage);
+  }, Math.min(1000 * Math.pow(2, reconnectAttempts), 30000));
+};
+
+// Enhanced WebSocket connection
 export const connectWebSocket = (chatRoomId: number, onMessage: (data: any) => void) => {
   const token = getAuthToken();
   if (!token) return null;
@@ -54,19 +100,58 @@ export const connectWebSocket = (chatRoomId: number, onMessage: (data: any) => v
     
     ws = new WebSocket(`${API_BASE_URL.replace('http', 'ws')}/api/chat/ws/${chatRoomId}/${userId}`);
     
+    ws.onopen = () => {
+      console.log('WebSocket connected');
+      reconnectAttempts = 0;
+      // Process any queued messages
+      processMessageQueue();
+    };
+    
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
       onMessage(data);
     };
     
-    ws.onclose = () => {
-      console.log('WebSocket connection closed');
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+      toast.error('Connection error. Please check your internet connection.');
+    };
+    
+    ws.onclose = (event) => {
+      console.log('WebSocket connection closed:', event.code, event.reason);
+      if (event.code !== 1000) { // Not a normal closure
+        reconnectWebSocket(chatRoomId, onMessage);
+      }
     };
     
     return ws;
   } catch (error) {
     console.error('Failed to connect WebSocket:', error);
+    toast.error('Failed to establish connection. Please try again.');
     return null;
+  }
+};
+
+// Enhanced message sending with queueing
+export const sendMessage = async (content: string, chatRoomId: number, moderatorId: number) => {
+  if (!ws || ws.readyState !== WebSocket.OPEN) {
+    // Queue message if WebSocket is not available
+    queueMessage({ content, chatRoomId, type: "text" });
+    return;
+  }
+
+  try {
+    ws.send(JSON.stringify({
+      action: "create",
+      message: content,
+      chat_room_id: chatRoomId,
+      type: "text"
+    }));
+  } catch (error) {
+    console.error('Error sending message:', error);
+    // Queue message on error
+    queueMessage({ content, chatRoomId, type: "text" });
+    toast.error('Failed to send message. Will retry when connection is restored.');
   }
 };
 
