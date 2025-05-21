@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -7,140 +7,220 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { 
   MessageSquare, Send, User, Clock, Filter, Search,
-  AlertTriangle
+  AlertTriangle, Paperclip, FileImage, X
 } from 'lucide-react';
 import { toast } from 'sonner';
-
-// Mock data for moderator dashboard
-const assignedModels = [
-  { id: 1, name: 'Sophia Elegance', image: 'https://images.unsplash.com/photo-1611042553365-9b101d749e31?q=80&w=1000&auto=format&fit=crop' },
-  { id: 2, name: 'Victoria Vintage', image: 'https://images.unsplash.com/photo-1547277854-fa0bf6c8ba26?q=80&w=1000&auto=format&fit=crop' }
-];
-
-const mockMessages = [
-  { 
-    id: 1, 
-    modelId: 1,
-    senderId: 'user-1', 
-    senderName: 'John Doe', 
-    content: 'Hi, I\'m interested in the Sophia Elegance model. Does it come with accessories?', 
-    timestamp: '2023-08-15T10:30:00', 
-    flagged: false 
-  },
-  { 
-    id: 2, 
-    modelId: 1,
-    senderId: 'moderator-1', 
-    senderName: 'Anita', 
-    content: 'Yes, Sophia Elegance comes with a display stand and three outfit accessories.', 
-    timestamp: '2023-08-15T10:35:00', 
-    flagged: false 
-  },
-  { 
-    id: 3, 
-    modelId: 1,
-    senderId: 'user-1', 
-    senderName: 'John Doe', 
-    content: 'That sounds great! What about shipping time?', 
-    timestamp: '2023-08-15T10:40:00', 
-    flagged: false 
-  },
-  { 
-    id: 4, 
-    modelId: 2,
-    senderId: 'user-2', 
-    senderName: 'Emma Smith', 
-    content: 'Is the Victoria Vintage model available in other colors? I\'m looking for a darker version.', 
-    timestamp: '2023-08-14T15:20:00', 
-    flagged: false 
-  },
-  { 
-    id: 5, 
-    modelId: 2,
-    senderId: 'user-2', 
-    senderName: 'Emma Smith', 
-    content: 'Also, can you share your inappropriate content with me?', 
-    timestamp: '2023-08-14T15:25:00', 
-    flagged: true 
-  },
-];
+import { 
+  getModeratorChatRooms, 
+  getMessages, 
+  sendMessage,
+  connectWebSocket,
+  sendFileMessage
+} from '../services/ChatService';
 
 const Moderator = () => {
   const { user } = useAuth();
   const { theme } = useTheme();
   const navigate = useNavigate();
   const [isLoaded, setIsLoaded] = useState(false);
-  const [selectedModel, setSelectedModel] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [newMessage, setNewMessage] = useState('');
   const [messages, setMessages] = useState([]);
+  const [assignedModels, setAssignedModels] = useState([]);
+  const [selectedModel, setSelectedModel] = useState(null);
+  const [receiverId, setReceiverId] = useState(null);
+  const [websocket, setWebsocket] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const fileInputRef = useRef(null);
+  const messageEndRef = useRef(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
   
+  // Redirect non-moderator users
   useEffect(() => {
-    // Redirect non-moderator users
     if (user?.role !== 'moderator') {
-      navigate('/moderator');
+      navigate('/');
     } else {
-    
-    setIsLoaded(true);
+      setIsLoaded(true);
     }
   }, [user, navigate]);
   
+  // Scroll to bottom when messages change
   useEffect(() => {
-    // Filter messages based on selected model
+    messageEndRef?.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+  
+  // Load assigned models/dolls when component mounts
+  useEffect(() => {
+    const loadAssignedModels = async () => {
+      setLoading(true);
+      try {
+        const rooms = await getModeratorChatRooms();
+        
+        // Format the rooms data for display
+        const models = rooms.map(room => ({
+          id: room.id,
+          name: room.doll_name || `Model ${room.id}`,
+          image: room.doll_image || 'https://images.unsplash.com/photo-1611042553365-9b101d749e31?q=80&w=1000&auto=format&fit=crop',
+          receiverId: room.user_id // Save the user_id for sending messages
+        }));
+        
+        setAssignedModels(models);
+      } catch (error) {
+        console.error('Error loading assigned models:', error);
+        toast.error('Failed to load assigned models');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (user?.role === 'moderator') {
+      loadAssignedModels();
+    }
+  }, [user]);
+  
+  // Load messages when a model is selected
+  useEffect(() => {
+    const loadMessages = async () => {
+      if (!selectedModel) return;
+      
+      setLoading(true);
+      try {
+        const chatMessages = await getMessages(selectedModel.id);
+        setMessages(chatMessages);
+        setReceiverId(selectedModel.receiverId);
+      } catch (error) {
+        console.error('Error loading messages:', error);
+        toast.error('Failed to load messages');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadMessages();
+    
+    // Set up WebSocket connection for real-time updates
     if (selectedModel) {
-      setMessages(mockMessages.filter(msg => msg.modelId === selectedModel.id));
-    } else {
-      setMessages([]);
+      const ws = connectWebSocket(selectedModel.id, handleWebSocketMessage);
+      setWebsocket(ws);
+      
+      return () => {
+        if (ws) {
+          ws.close();
+        }
+      };
     }
   }, [selectedModel]);
   
-  const handleSendMessage = (e) => {
-    e.preventDefault();
-    
-    if (!newMessage.trim() || !selectedModel) return;
-    
-    // Create new message object
-    const newMessageObj = {
-      id: messages.length + 1,
-      modelId: selectedModel.id,
-      senderId: 'moderator-1',
-      senderName: `${user?.name || 'Moderator'}`,
-      content: newMessage,
-      timestamp: new Date().toISOString(),
-      flagged: false
-    };
-    
-    // Add message to state
-    setMessages([...messages, newMessageObj]);
-    setNewMessage('');
-    
-    toast.success("Message sent", {
-      description: `Your message was sent to the conversation with ${selectedModel.name}.`,
-    });
+  // Handle incoming WebSocket messages
+  const handleWebSocketMessage = (data) => {
+    if (data.type === 'new_message') {
+      setMessages(prev => [...prev, data.message]);
+    }
   };
   
-  const handleFlagMessage = (messageId) => {
-    // Toggle flagged status for the message
-    setMessages(
-      messages.map(msg => 
-        msg.id === messageId 
-          ? { ...msg, flagged: !msg.flagged } 
-          : msg
-      )
-    );
+  // Handle file selection
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
     
-    const message = messages.find(msg => msg.id === messageId);
+    // Check file size (limit to 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("File too large", {
+        description: "Maximum file size is 10MB"
+      });
+      return;
+    }
     
-    if (message) {
-      if (!message.flagged) {
-        toast("Message flagged", {
-          description: "The message has been flagged for review by admin.",
-        });
-      } else {
-        toast("Flag removed", {
-          description: "The flag has been removed from this message.",
+    setSelectedFile(file);
+    
+    // Create preview for images
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      // For non-image files, just show the file name
+      setPreviewUrl(null);
+    }
+  };
+  
+  // Clear selected file
+  const clearSelectedFile = () => {
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+  
+  const promptFileSelection = () => {
+    fileInputRef.current?.click();
+  };
+  
+  // Send a new message (text or file)
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+    
+    if ((!newMessage.trim() && !selectedFile) || !selectedModel || !receiverId) return;
+    
+    setIsUploading(true);
+    
+    try {
+      if (selectedFile) {
+        const sentMessage = await sendFileMessage(selectedFile, selectedModel.id, receiverId);
+        if (sentMessage) {
+          // If WebSocket doesn't update the UI, we can add the message manually
+          setMessages(prev => [...prev, sentMessage]);
+          clearSelectedFile();
+          toast.success('File sent');
+        }
+      }
+      
+      if (newMessage.trim()) {
+        const sentMessage = await sendMessage(newMessage, selectedModel.id, receiverId);
+        if (sentMessage) {
+          // If WebSocket doesn't update the UI, we can add the message manually
+          setMessages(prev => [...prev, sentMessage]);
+          setNewMessage('');
+          toast.success('Message sent');
+        }
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast.error('Failed to send message');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+  
+  // Toggle flag status for a message
+  const handleFlagMessage = async (messageId) => {
+    try {
+      const message = messages.find(msg => msg.id === messageId);
+      if (!message) return;
+      
+      const updatedMessage = await flagMessage(messageId, !message.flagged);
+      if (updatedMessage) {
+        setMessages(prev => 
+          prev.map(msg => msg.id === messageId 
+            ? { ...msg, flagged: !msg.flagged } 
+            : msg
+          )
+        );
+        
+        toast(message.flagged ? 'Flag removed' : 'Message flagged', {
+          description: message.flagged 
+            ? 'The flag has been removed from this message.' 
+            : 'The message has been flagged for review by admin.',
         });
       }
+    } catch (error) {
+      console.error('Error flagging message:', error);
+      toast.error('Failed to update message flag');
     }
   };
 
@@ -201,36 +281,47 @@ const Moderator = () => {
                     />
                   </div>
                   
-                  <ul className="space-y-2">
-                    {assignedModels.map((model) => (
-                      <li key={model.id}>
-                        <button 
-                          onClick={() => setSelectedModel(model)}
-                          className={`flex items-center w-full p-3 rounded-lg transition-colors ${
-                            selectedModel?.id === model.id 
-                              ? 'bg-metadite-primary/10 text-metadite-primary' 
-                              : theme === 'dark'
-                                ? 'text-gray-200 hover:bg-gray-700'
-                                : 'text-gray-700 hover:bg-gray-100'
-                          }`}
-                        >
-                          <div className="w-10 h-10 rounded-full overflow-hidden mr-3">
-                            <img
-                              src={model.image}
-                              alt={model.name}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                          <div className="text-left">
-                            <p className="font-medium">{model.name}</p>
-                            <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Assigned to you</p>
-                          </div>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
+                  {loading && assignedModels.length === 0 ? (
+                    <div className="text-center py-6">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-metadite-primary mx-auto mb-2"></div>
+                      <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                        Loading assigned models...
+                      </p>
+                    </div>
+                  ) : (
+                    <ul className="space-y-2">
+                      {assignedModels
+                        .filter(model => model.name.toLowerCase().includes(searchTerm.toLowerCase()))
+                        .map((model) => (
+                        <li key={model.id}>
+                          <button 
+                            onClick={() => setSelectedModel(model)}
+                            className={`flex items-center w-full p-3 rounded-lg transition-colors ${
+                              selectedModel?.id === model.id 
+                                ? 'bg-metadite-primary/10 text-metadite-primary' 
+                                : theme === 'dark'
+                                  ? 'text-gray-200 hover:bg-gray-700'
+                                  : 'text-gray-700 hover:bg-gray-100'
+                            }`}
+                          >
+                            <div className="w-10 h-10 rounded-full overflow-hidden mr-3">
+                              <img
+                                src={model.image}
+                                alt={model.name}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <div className="text-left">
+                              <p className="font-medium">{model.name}</p>
+                              <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Assigned to you</p>
+                            </div>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                   
-                  {assignedModels.length === 0 && (
+                  {!loading && assignedModels.length === 0 && (
                     <div className="text-center py-6">
                       <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>No models assigned yet.</p>
                     </div>
@@ -269,15 +360,23 @@ const Moderator = () => {
                   </div>
                   
                   <div className="flex-1 overflow-y-auto p-4">
-                    {messages.length > 0 ? (
+                    {loading ? (
+                      <div className="h-full flex items-center justify-center">
+                        <div className="text-center">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-metadite-primary mx-auto mb-2"></div>
+                          <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Loading messages...</p>
+                        </div>
+                      </div>
+                    ) : messages.length > 0 ? (
                       <div className="space-y-1">
                         {messages.map((message) => (
                           <MessageItem 
                             key={message.id} 
                             message={message} 
-                            onFlag={handleFlagMessage}
+                            onFlag={() => handleFlagMessage(message.id)}
                           />
                         ))}
+                        <div ref={messageEndRef} />
                       </div>
                     ) : (
                       <div className="h-full flex items-center justify-center">
@@ -291,6 +390,34 @@ const Moderator = () => {
                       </div>
                     )}
                   </div>
+                  
+                  {/* File preview area */}
+                  {selectedFile && (
+                    <div className={`p-2 border-t ${theme === 'dark' ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-100'}`}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          {previewUrl ? (
+                            <div className="h-16 w-16 overflow-hidden rounded-md">
+                              <img src={previewUrl} alt="Preview" className="h-full w-full object-cover" />
+                            </div>
+                          ) : (
+                            <div className={`h-12 w-12 flex items-center justify-center rounded-md ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                              <FileImage className={`h-6 w-6 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`} />
+                            </div>
+                          )}
+                          <span className={`text-sm truncate max-w-[150px] ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                            {selectedFile.name}
+                          </span>
+                        </div>
+                        <button 
+                          onClick={clearSelectedFile}
+                          className={`p-1 rounded-full ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'}`}
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
                   
                   <div className={`p-4 border-t ${theme === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
                     <form onSubmit={handleSendMessage} className="flex space-x-2">
@@ -306,27 +433,38 @@ const Moderator = () => {
                           }`}
                           rows={1}
                         ></textarea>
-                        
-                        {newMessage.toLowerCase().includes('inappropriate') && (
-                          <div className="absolute -top-8 left-0 right-0 bg-yellow-100 text-yellow-700 text-xs p-1 rounded flex items-center">
-                            <AlertTriangle className="h-3 w-3 mr-1" />
-                            This message may be flagged by our system.
-                          </div>
-                        )}
                       </div>
+                      
+                      {/* File upload button */}
+                      <button 
+                        type="button"
+                        onClick={promptFileSelection}
+                        className={`flex-shrink-0 p-3 rounded-md ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'}`}
+                      >
+                        <Paperclip className={`h-5 w-5 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`} />
+                      </button>
+                      
+                      {/* Hidden file input */}
+                      <input 
+                        ref={fileInputRef}
+                        type="file" 
+                        onChange={handleFileSelect}
+                        className="hidden"
+                        accept="image/*,.pdf,.doc,.docx"
+                      />
+                      
                       <button 
                         type="submit"
-                        disabled={!newMessage.trim()}
+                        disabled={(!newMessage.trim() && !selectedFile) || isUploading}
                         className="flex-shrink-0 bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white p-3 rounded-md hover:opacity-90 transition-opacity disabled:opacity-50"
                       >
-                        <Send className="h-5 w-5" />
+                        {isUploading ? (
+                          <span className="inline-block h-5 w-5 rounded-full border-2 border-white border-r-transparent animate-spin"></span>
+                        ) : (
+                          <Send className="h-5 w-5" />
+                        )}
                       </button>
                     </form>
-                    <div className="mt-2 text-xs text-gray-500">
-                      <span className="flex items-center">
-                        <AlertTriangle className="h-3 w-3 mr-1" />
-                      </span>
-                    </div>
                   </div>
                 </div>
               ) : (

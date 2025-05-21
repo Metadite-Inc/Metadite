@@ -1,8 +1,11 @@
+
 import React from 'react';
 import { Flag, Heart, Share2, Star } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { useTheme } from '../../../context/ThemeContext';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { createChatRoom } from '../../../services/ChatService';
+import { toast } from 'sonner';
 
 const ModelDetails = ({ 
   model, 
@@ -15,6 +18,24 @@ const ModelDetails = ({
 }) => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
+  const navigate = useNavigate();
+  
+  const handleChatButtonClick = async () => {
+    try {
+      // Create a chat room first
+      const chatRoom = await createChatRoom(model.id.toString());
+      
+      if (chatRoom) {
+        // Navigate to the model chat page with the chat room ID
+        navigate(`/model-chat/${model.id}?roomId=${chatRoom.id}`);
+      } else {
+        toast.error("Failed to create chat room");
+      }
+    } catch (error) {
+      console.error('Error creating chat room:', error);
+      toast.error("Error creating chat session");
+    }
+  };
   
   return (
     <div>
@@ -109,17 +130,16 @@ const ModelDetails = ({
       </div>
 
       <div className="mt-6">
-        <Link to={`/model-chat/${model.id}`}>
-          <Button 
-            variant="outline" 
-            className={`w-full flex items-center justify-center ${isDark ? 'bg-gray-700 border-gray-600 hover:bg-gray-600' : ''}`}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-            </svg>
-            Chat
-          </Button>
-        </Link>
+        <Button 
+          variant="outline" 
+          className={`w-full flex items-center justify-center ${isDark ? 'bg-gray-700 border-gray-600 hover:bg-gray-600' : ''}`}
+          onClick={handleChatButtonClick}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+          </svg>
+          Chat
+        </Button>
       </div>
     </div>
   );

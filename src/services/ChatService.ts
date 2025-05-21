@@ -1,96 +1,367 @@
 import axios from 'axios';
-import { MessageCreate, MessageInDB, ChatRoom, MessageStatus, MessageType } from '../types/chat';
+import { toast } from 'sonner';
+import { MessageStatus } from '../types/chat';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;//|| "http://127.0.0.1:8000";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 // WebSocket connection
 let ws: WebSocket | null = null;
+const MAX_RECONNECT_ATTEMPTS = 5;
+let reconnectAttempts = 0;
+let reconnectTimeout: NodeJS.Timeout | null = null;
+const messageQueue: any[] = [];
 
-export const connectWebSocket = (userId: string, onMessage: (data: any) => void) => {
-    ws = new WebSocket(`${API_BASE_URL.replace('http', 'ws')}/ws/${userId}`);
+// Helper method to extract user ID from JWT token
+const getUserIdFromToken = (token: string): number => {
+  try {
+    // JWT tokens consist of three parts separated by dots
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      throw new Error('Invalid token format');
+    }
     
-    ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        onMessage(data);
+    // Decode the payload (middle part)
+    const payload = JSON.parse(atob(parts[1]));
+    
+    // Extract the 'sub' claim which contains the user ID
+    if (payload && payload.sub) {
+      return Number(payload.sub);
+    } else {
+      throw new Error('User ID not found in token');
+    }
+  } catch (error) {
+    console.error('Failed to extract user ID from token:', error);
+    throw new Error('Failed to extract user ID from token');
+  }
+};
+
+// Get auth token from localStorage and validate
+const getAuthToken = (): string | null => {
+  const token = localStorage.getItem('access_token');
+  if (!token) {
+    toast.error('Authentication required', {
+      description: 'You must be logged in to send messages.',
+    });
+    return null;
+  }
+  return token;
+};
+
+// Helper function to process message queue
+const processMessageQueue = async () => {
+  const queue = JSON.parse(localStorage.getItem('messageQueue') || '[]');
+  for (const message of queue) {
+    try {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({
+          action: "create",
+          message: message.content,
+          chat_room_id: message.chatRoomId,
+          type: message.type || "text"
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to process queued message:', error);
+    }
+  }
+  localStorage.removeItem('messageQueue');
+};
+
+// Queue message for later sending
+const queueMessage = (message: any) => {
+  messageQueue.push(message);
+  localStorage.setItem('messageQueue', JSON.stringify(messageQueue));
+};
+
+// Reconnection logic
+const reconnectWebSocket = (chatRoomId: number, onMessage: (data: any) => void) => {
+  if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+    toast.error('Failed to reconnect. Please refresh the page.');
+    return;
+  }
+  
+  if (reconnectTimeout) {
+    clearTimeout(reconnectTimeout);
+  }
+  
+  reconnectTimeout = setTimeout(() => {
+    reconnectAttempts++;
+    connectWebSocket(chatRoomId, onMessage);
+  }, Math.min(1000 * Math.pow(2, reconnectAttempts), 30000));
+};
+
+// Enhanced WebSocket connection
+export const connectWebSocket = (chatRoomId: number, onMessage: (data: any) => void) => {
+  const token = getAuthToken();
+  if (!token) return null;
+  
+  try {
+    const userId = getUserIdFromToken(token);
+    
+    ws = new WebSocket(`${API_BASE_URL.replace('http', 'ws')}/api/chat/ws/${chatRoomId}/${userId}`);
+    
+    ws.onopen = () => {
+      console.log('WebSocket connected');
+      reconnectAttempts = 0;
+      // Process any queued messages
+      processMessageQueue();
     };
     
-    ws.onclose = () => {
-        console.log('WebSocket connection closed');
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      onMessage(data);
+    };
+    
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+      toast.error('Connection error. Please check your internet connection.');
+    };
+    
+    ws.onclose = (event) => {
+      console.log('WebSocket connection closed:', event.code, event.reason);
+      if (event.code !== 1000) { // Not a normal closure
+        reconnectWebSocket(chatRoomId, onMessage);
+      }
     };
     
     return ws;
+  } catch (error) {
+    console.error('Failed to connect WebSocket:', error);
+    toast.error('Failed to establish connection. Please try again.');
+    return null;
+  }
 };
 
-export const sendMessage = async (message: MessageCreate, token: string) => {
-    const response = await axios.post(`${API_BASE_URL}/messages`, message, {
+// Enhanced message sending with queueing
+export const sendMessage = async (content: string, chatRoomId: number) => {
+  if (!ws || ws.readyState !== WebSocket.OPEN) {
+    // Queue message if WebSocket is not available
+    queueMessage({ content, chatRoomId, type: "text" });
+    return;
+  }
+
+  try {
+    ws.send(JSON.stringify({
+      action: "create",
+      message: content,
+      chat_room_id: chatRoomId,
+      type: "text"
+    }));
+  } catch (error) {
+    console.error('Error sending message:', error);
+    // Queue message on error
+    queueMessage({ content, chatRoomId, type: "text" });
+    toast.error('Failed to send message. Will retry when connection is restored.');
+  }
+};
+
+// send messages with http
+export const sendHttpMessage = async (content: string, chatRoomId: number) => {
+  const token = getAuthToken();
+  if (!token) return null;
+  
+  const message = {
+    content,
+    chat_room_id: chatRoomId,
+    message_type: "TEXT"
+  };
+  
+  try {
+    const response = await axios.post(
+      `${API_BASE_URL}/api/chat/messages/`, 
+      message, 
+      {
         headers: { Authorization: `Bearer ${token}` }
-    });
-    return response.data;
-};
-
-export const sendFileMessage = async (file: File, dollId: string, token: string) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('doll_id', dollId);
-    
-    const response = await axios.post(`${API_BASE_URL}/messages/file`, formData, {
-        headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data'
-        }
-    });
-    return response.data;
-};
-
-export const getMessages = async (dollId: string, limit: number = 50, before?: Date, token: string) => {
-    //edited to use URLSearchParams for query parameters
-    const params = new URLSearchParams();
-    params.append('limit', limit.toString());
-    if (before) params.append('before', before.toISOString());
-
-    
-    const response = await axios.get(`${API_BASE_URL}/messages/${dollId}?${params}`, {
-        headers: { Authorization: `Bearer ${token}` }
-    });
-    return response.data;
-};
-
-export const getModeratorMessages = async (limit: number = 50, token: string) => {
-    const response = await axios.get(`${API_BASE_URL}/moderator/messages?limit=${limit}`, {
-        headers: { Authorization: `Bearer ${token}` }
-    });
-    return response.data;
-};
-
-export const updateMessageStatus = async (messageId: string, status: MessageStatus, token: string) => {
-    const response = await axios.put(
-        `${API_BASE_URL}/messages/${messageId}/status`,
-        { status },
-        { headers: { Authorization: `Bearer ${token}` } }
+      }
     );
     return response.data;
+  } catch (error) {
+    console.error('Failed to send message:', error);
+    toast.error('Failed to send message');
+    return null;
+  }
 };
 
-export const deleteMessage = async (messageId: string, token: string) => {
-    const response = await axios.delete(`${API_BASE_URL}/messages/${messageId}`, {
+// Chat Room APIs
+export const createChatRoom = async (dollId: string) => {
+  const token = getAuthToken();
+  if (!token) return null;
+  
+  try {
+    const response = await axios.post(`${API_BASE_URL}/api/chat/rooms/`, 
+      { doll_id: dollId },
+      {
         headers: { Authorization: `Bearer ${token}` }
-    });
+      }
+    );
     return response.data;
+  } catch (error) {
+    console.error('Failed to create chat room:', error);
+    toast.error('Failed to create chat room');
+    return null;
+  }
 };
 
-export const getUnreadCount = async (token: string) => {
-    const response = await axios.get(`${API_BASE_URL}/unread/count`, {
-        headers: { Authorization: `Bearer ${token}` }
-    });
-    return response.data;
-};
-
-export const sendTypingIndicator = (dollId: string, isTyping: boolean) => {
-    if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({
-            type: 'typing',
-            doll_id: dollId,
-            is_typing: isTyping
-        }));
+export const getUserChatRooms = async (skip: number = 0, limit: number = 100) => {
+  const token = getAuthToken();
+  if (!token) return null;
+  
+  const response = await axios.get(
+    `${API_BASE_URL}/api/chat/user/rooms/?skip=${skip}&limit=${limit}`,
+    {
+      headers: { Authorization: `Bearer ${token}` }
     }
-}; 
+  );
+  return response.data;
+};
+
+export const getModeratorChatRooms = async (skip: number = 0, limit: number = 100) => {
+  const token = getAuthToken();
+  if (!token) return null;
+  
+  const response = await axios.get(
+    `${API_BASE_URL}/api/chat/moderator/rooms/?skip=${skip}&limit=${limit}`,
+    {
+      headers: { Authorization: `Bearer ${token}` }
+    }
+  );
+  return response.data;
+};
+
+export const getChatRoomById = async (chatRoomId: number) => {
+  const token = getAuthToken();
+  if (!token) return null;
+  
+  try {
+    const response = await axios.get(
+      `${API_BASE_URL}/api/chat/rooms/${chatRoomId}`,
+      {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Failed to get chat room:', error);
+    return null;
+  }
+};
+
+export const sendFileMessage = async (file: File, chatRoomId: number) => {
+  const token = getAuthToken();
+  if (!token) return null;
+  
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('chat_room_id', chatRoomId.toString());
+  
+  try {
+    const response = await axios.post(
+      `${API_BASE_URL}/api/chat/messages/${chatRoomId}/upload`, 
+      formData, 
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Failed to upload file:', error);
+    toast.error('Failed to upload file');
+    return null;
+  }
+};
+
+export const getMessages = async (chatRoomId: number, skip: number = 0, limit: number = 50) => {
+  const token = getAuthToken();
+  if (!token) return null;
+  
+  try {
+    const params = new URLSearchParams();
+    params.append('skip', skip.toString());
+    params.append('limit', limit.toString());
+    
+    const response = await axios.get(
+      `${API_BASE_URL}/api/chat/rooms/${chatRoomId}/messages?${params}`,
+      {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Failed to get messages:', error);
+    return [];
+  }
+};
+
+export const deleteMessage = async (messageId: number) => {
+  const token = getAuthToken();
+  if (!token) return null;
+  
+  const response = await axios.delete(
+    `${API_BASE_URL}/api/chat/messages/${messageId}`,
+    {
+      headers: { Authorization: `Bearer ${token}` }
+    }
+  );
+  return response.data;
+};
+
+export const getUnreadCount = async () => {
+  const token = getAuthToken();
+  if (!token) return null;
+  
+  const response = await axios.get(
+    `${API_BASE_URL}/api/chat/unread-count`,
+    {
+      headers: { Authorization: `Bearer ${token}` }
+    }
+  );
+  return response.data;
+};
+
+// Add a function to update message status (Read/Delivered)
+export const updateMessageStatus = async (messageId: string, status: MessageStatus) => {
+  const token = getAuthToken();
+  if (!token) return null;
+  
+  const response = await axios.put(
+    `${API_BASE_URL}/api/chat/messages/${messageId}/status`,
+    { status },
+    {
+      headers: { Authorization: `Bearer ${token}` }
+    }
+  );
+  return response.data;
+};
+
+// File handling
+export const getFileUrl = (filename: string) => {
+  return `${API_BASE_URL}/api/chat/files/${filename}`;
+};
+
+// Mark messages as read via WebSocket
+export const markMessagesAsRead = (chatRoomId: number) => {
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({
+      action: "read",
+      chat_room_id: chatRoomId
+    }));
+    return true;
+  }
+  return false;
+};
+
+// Send typing indicator via WebSocket
+export const sendTypingIndicator = (chatRoomId: number, isTyping: boolean) => {
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({
+      action: "typing",
+      chat_room_id: chatRoomId,
+      is_typing: isTyping
+    }));
+    return true;
+  }
+  return false;
+};

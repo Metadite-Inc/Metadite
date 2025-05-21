@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
     sendMessage, 
@@ -7,9 +8,9 @@ import {
     sendTypingIndicator,
     updateMessageStatus,
     deleteMessage
-} from '../services/chatService';
+} from '../services/ChatService';
 import { MessageCreate, MessageInDB, MessageType, MessageStatus, WebSocketMessage } from '../types/chat';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../context/AuthContext';
 import { format } from 'date-fns';
 
 interface ChatProps {
@@ -25,7 +26,7 @@ const Chat: React.FC<ChatProps> = ({ dollId, moderatorId }) => {
     const [isLoading, setIsLoading] = useState(false);
     const [hasMore, setHasMore] = useState(true);
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const { user, token } = useAuth();
+    const { user } = useAuth();
     const typingTimeoutRef = useRef<NodeJS.Timeout>();
 
     // Scroll to bottom when new messages arrive
@@ -42,12 +43,12 @@ const Chat: React.FC<ChatProps> = ({ dollId, moderatorId }) => {
     useEffect(() => {
         if (!user) return;
 
-        const ws = connectWebSocket(user.uid, handleWebSocketMessage);
+        const ws = connectWebSocket(parseInt(dollId), handleWebSocketMessage);
 
         return () => {
-            ws.close();
+            if (ws) ws.close();
         };
-    }, [user]);
+    }, [user, dollId]);
 
     const handleWebSocketMessage = (data: WebSocketMessage) => {
         switch (data.type) {
@@ -83,13 +84,15 @@ const Chat: React.FC<ChatProps> = ({ dollId, moderatorId }) => {
     };
 
     const loadMessages = async (before?: Date) => {
-        if (!token || isLoading || !hasMore) return;
+        if (!user || isLoading || !hasMore) return;
 
         setIsLoading(true);
         try {
-            const newMessages = await getMessages(dollId, 50, before, token);
-            setMessages(prev => [...newMessages, ...prev]);
-            setHasMore(newMessages.length === 50);
+            const newMessages = await getMessages(parseInt(dollId), 0, 50);
+            if (newMessages) {
+                setMessages(prev => [...newMessages, ...prev]);
+                setHasMore(newMessages.length === 50);
+            }
         } catch (error) {
             console.error('Error loading messages:', error);
         } finally {
@@ -99,16 +102,10 @@ const Chat: React.FC<ChatProps> = ({ dollId, moderatorId }) => {
 
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newMessage.trim() || !token) return;
-
-        const message: MessageCreate = {
-            content: newMessage.trim(),
-            message_type: MessageType.TEXT,
-            doll_id: dollId
-        };
+        if (!newMessage.trim() || !user) return;
 
         try {
-            await sendMessage(message, token);
+            await sendMessage(newMessage.trim(), parseInt(dollId));
             setNewMessage('');
         } catch (error) {
             console.error('Error sending message:', error);
@@ -116,11 +113,11 @@ const Chat: React.FC<ChatProps> = ({ dollId, moderatorId }) => {
     };
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (!e.target.files?.length || !token) return;
+        if (!e.target.files?.length || !user) return;
 
         const file = e.target.files[0];
         try {
-            await sendFileMessage(file, dollId, token);
+            await sendFileMessage(file, parseInt(dollId));
         } catch (error) {
             console.error('Error uploading file:', error);
         }
@@ -129,7 +126,7 @@ const Chat: React.FC<ChatProps> = ({ dollId, moderatorId }) => {
     const handleTyping = useCallback(() => {
         if (!isTyping) {
             setIsTyping(true);
-            sendTypingIndicator(dollId, true);
+            sendTypingIndicator(parseInt(dollId), true);
         }
 
         if (typingTimeoutRef.current) {
@@ -138,23 +135,23 @@ const Chat: React.FC<ChatProps> = ({ dollId, moderatorId }) => {
 
         typingTimeoutRef.current = setTimeout(() => {
             setIsTyping(false);
-            sendTypingIndicator(dollId, false);
+            sendTypingIndicator(parseInt(dollId), false);
         }, 3000);
     }, [dollId, isTyping]);
 
     const handleMessageStatus = async (messageId: string, status: MessageStatus) => {
-        if (!token) return;
+        if (!user) return;
         try {
-            await updateMessageStatus(messageId, status, token);
+            await updateMessageStatus(messageId, status);
         } catch (error) {
             console.error('Error updating message status:', error);
         }
     };
 
     const handleDeleteMessage = async (messageId: string) => {
-        if (!token) return;
+        if (!user) return;
         try {
-            await deleteMessage(messageId, token);
+            await deleteMessage(parseInt(messageId));
             setMessages(prev => prev.filter(msg => msg.id !== messageId));
         } catch (error) {
             console.error('Error deleting message:', error);
@@ -167,7 +164,7 @@ const Chat: React.FC<ChatProps> = ({ dollId, moderatorId }) => {
                 {messages.map(message => (
                     <div 
                         key={message.id} 
-                        className={`message ${message.sender_id === user?.uid ? 'sent' : 'received'}`}
+                        className={`message ${message.sender_id === user?.id ? 'sent' : 'received'}`}
                     >
                         <div className="message-content">
                             {message.message_type === MessageType.IMAGE ? (
@@ -184,7 +181,7 @@ const Chat: React.FC<ChatProps> = ({ dollId, moderatorId }) => {
                             <span className="time">
                                 {format(new Date(message.created_at), 'HH:mm')}
                             </span>
-                            {message.sender_id === user?.uid && (
+                            {message.sender_id === user?.id && (
                                 <button 
                                     onClick={() => handleDeleteMessage(message.id)}
                                     className="delete-button"
@@ -231,4 +228,4 @@ const Chat: React.FC<ChatProps> = ({ dollId, moderatorId }) => {
     );
 };
 
-export default Chat; 
+export default Chat;
