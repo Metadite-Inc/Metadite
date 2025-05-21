@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
@@ -16,8 +15,9 @@ import {
   getChatMessages, 
   sendModeratorMessage, 
   flagMessage,
-  connectToChatWebSocket
-} from '../lib/api/chat_api';
+  connectToChatWebSocket,
+  sendModeratorFileMessage
+} from '../services/ChatService';
 
 const Moderator = () => {
   const { user } = useAuth();
@@ -172,36 +172,13 @@ const Moderator = () => {
     
     try {
       if (selectedFile) {
-        // Create FormData for file upload
-        const formData = new FormData();
-        formData.append('file', selectedFile);
-        formData.append('chat_room_id', selectedModel.id);
-        formData.append('receiver_id', receiverId);
-        
-        // Determine message type based on file type
-        const messageType = selectedFile.type.startsWith('image/') ? 'IMAGE' : 'FILE';
-        formData.append('message_type', messageType);
-        
-        // API call to send file message
-        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000"}/api/chat/messages/upload`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-          },
-          body: formData
-        });
-        
-        if (!response.ok) {
-          throw new Error(`Server responded with ${response.status}`);
+        const sentMessage = await sendModeratorFileMessage(selectedFile, selectedModel.id, receiverId);
+        if (sentMessage) {
+          // If WebSocket doesn't update the UI, we can add the message manually
+          setMessages(prev => [...prev, sentMessage]);
+          clearSelectedFile();
+          toast.success('File sent');
         }
-        
-        const sentMessage = await response.json();
-        
-        // Update UI to show sent message
-        setMessages(prev => [...prev, sentMessage]);
-        clearSelectedFile();
-        
-        toast.success('File sent');
       }
       
       if (newMessage.trim()) {

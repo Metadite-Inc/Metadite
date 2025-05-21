@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
-import { useAuth } from '../context/AuthContext'; // Assuming you have an AuthContext to get user info
+import { useAuth } from '../context/AuthContext'; 
+import { getMessages, sendMessage } from '../services/ChatService';
 
 const ChatPage = () => {
   const { user } = useAuth(); // Get the current user from AuthContext

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
     sendMessage, 
@@ -7,9 +8,9 @@ import {
     sendTypingIndicator,
     updateMessageStatus,
     deleteMessage
-} from '../services/chatService';
+} from '../services/ChatService';
 import { MessageCreate, MessageInDB, MessageType, MessageStatus, WebSocketMessage } from '../types/chat';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../context/AuthContext';
 import { format } from 'date-fns';
 
 interface ChatProps {
@@ -231,4 +232,4 @@ const Chat: React.FC<ChatProps> = ({ dollId, moderatorId }) => {
     );
 };
 
-export default Chat; 
+export default Chat;

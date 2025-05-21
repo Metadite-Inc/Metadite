@@ -9,7 +9,7 @@ import Footer from '../components/Footer';
 import MessageItem from '../components/MessageItem';
 import { Textarea } from "@/components/ui/textarea";
 import { apiService } from '../lib/api'; // Import the API service
-import { sendMessage, sendFileMessage } from '../services/chatService';
+import { sendMessage, sendFileMessage } from '../services/ChatService';
 
 const ModelChat = () => {
   const { id } = useParams();
