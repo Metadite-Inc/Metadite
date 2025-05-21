@@ -3,7 +3,7 @@ import axios from 'axios';
 import { toast } from 'sonner';
 import { MessageStatus } from '../types/chat';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 // WebSocket connection
 let ws: WebSocket | null = null;
@@ -44,6 +44,7 @@ const getAuthToken = (): string | null => {
   return token;
 };
 
+// send messages with web sockets
 export const connectWebSocket = (chatRoomId: number, onMessage: (data: any) => void) => {
   const token = getAuthToken();
   if (!token) return null;
@@ -133,34 +134,6 @@ export const getChatRoomById = async (chatRoomId: number) => {
   }
 };
 
-// Message APIs
-export const sendMessage = async (content: string, chatRoomId: number, receiverId: number) => {
-  const token = getAuthToken();
-  if (!token) return null;
-  
-  const message = {
-    content,
-    chat_room_id: chatRoomId,
-    receiver_id: receiverId,
-    message_type: "TEXT"
-  };
-  
-  try {
-    const response = await axios.post(
-      `${API_BASE_URL}/api/chat/messages/`, 
-      message, 
-      {
-        headers: { Authorization: `Bearer ${token}` }
-      }
-    );
-    return response.data;
-  } catch (error) {
-    console.error('Failed to send message:', error);
-    toast.error('Failed to send message');
-    return null;
-  }
-};
-
 export const sendFileMessage = async (file: File, chatRoomId: number) => {
   const token = getAuthToken();
   if (!token) return null;
@@ -171,7 +144,7 @@ export const sendFileMessage = async (file: File, chatRoomId: number) => {
   
   try {
     const response = await axios.post(
-      `${API_BASE_URL}/api/chat/messages/upload`, 
+      `${API_BASE_URL}/api/chat/messages/${chatRoomId}/upload`, 
       formData, 
       {
         headers: {

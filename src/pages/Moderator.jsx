@@ -11,12 +11,11 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { 
-  getAssignedRooms, 
-  getChatMessages, 
-  sendModeratorMessage, 
-  flagMessage,
-  connectToChatWebSocket,
-  sendModeratorFileMessage
+  getModeratorChatRooms, 
+  getMessages, 
+  sendMessage,
+  connectWebSocket,
+  sendFileMessage
 } from '../services/ChatService';
 
 const Moderator = () => {
@@ -57,7 +56,7 @@ const Moderator = () => {
     const loadAssignedModels = async () => {
       setLoading(true);
       try {
-        const rooms = await getAssignedRooms();
+        const rooms = await getModeratorChatRooms();
         
         // Format the rooms data for display
         const models = rooms.map(room => ({
@@ -88,7 +87,7 @@ const Moderator = () => {
       
       setLoading(true);
       try {
-        const chatMessages = await getChatMessages(selectedModel.id);
+        const chatMessages = await getMessages(selectedModel.id);
         setMessages(chatMessages);
         setReceiverId(selectedModel.receiverId);
       } catch (error) {
@@ -103,7 +102,7 @@ const Moderator = () => {
     
     // Set up WebSocket connection for real-time updates
     if (selectedModel) {
-      const ws = connectToChatWebSocket(selectedModel.id, handleWebSocketMessage);
+      const ws = connectWebSocket(selectedModel.id, handleWebSocketMessage);
       setWebsocket(ws);
       
       return () => {
@@ -172,7 +171,7 @@ const Moderator = () => {
     
     try {
       if (selectedFile) {
-        const sentMessage = await sendModeratorFileMessage(selectedFile, selectedModel.id, receiverId);
+        const sentMessage = await sendFileMessage(selectedFile, selectedModel.id, receiverId);
         if (sentMessage) {
           // If WebSocket doesn't update the UI, we can add the message manually
           setMessages(prev => [...prev, sentMessage]);
@@ -182,7 +181,7 @@ const Moderator = () => {
       }
       
       if (newMessage.trim()) {
-        const sentMessage = await sendModeratorMessage(newMessage, selectedModel.id, receiverId);
+        const sentMessage = await sendMessage(newMessage, selectedModel.id, receiverId);
         if (sentMessage) {
           // If WebSocket doesn't update the UI, we can add the message manually
           setMessages(prev => [...prev, sentMessage]);
