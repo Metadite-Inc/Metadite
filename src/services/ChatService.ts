@@ -133,7 +133,7 @@ export const connectWebSocket = (chatRoomId: number, onMessage: (data: any) => v
 };
 
 // Enhanced message sending with queueing
-export const sendMessage = async (content: string, chatRoomId: number, moderatorId: number) => {
+export const sendMessage = async (content: string, chatRoomId: number) => {
   if (!ws || ws.readyState !== WebSocket.OPEN) {
     // Queue message if WebSocket is not available
     queueMessage({ content, chatRoomId, type: "text" });
