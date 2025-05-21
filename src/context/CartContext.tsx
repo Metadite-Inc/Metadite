@@ -12,7 +12,13 @@ export interface Model {
   image: string;
 }
 
-interface CartItem extends Model {
+interface CartItem {
+  id: number; // cart row id
+  doll_id: number | string; // model id
+  name: string;
+  price: number;
+  description: string;
+  image: string;
   quantity: number;
 }
 
@@ -31,33 +37,23 @@ interface CartContextType {
 // Create a context for cart
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-// Sample model data for demo or fallback purposes
-const sampleModels: Model[] = [
-  {
-    id: 1,
-    name: 'Sophia Elegance',
-    price: 129.99,
-    description: 'Handcrafted porcelain doll with intricate details and premium fabric clothing. A classic addition to any collection.',
-    image: 'https://images.unsplash.com/photo-1611042553365-9b101d749e31?q=80&w=1000&auto=format&fit=crop'
-  },
-  {
-    id: 2,
-    name: 'Victoria Vintage',
-    price: 159.99,
-    description: 'Inspired by Victorian era fashion, this doll features authentic period clothing and accessories with incredible attention to detail.',
-    image: 'https://images.unsplash.com/photo-1547277854-fa0bf6c8ba26?q=80&w=1000&auto=format&fit=crop'
-  },
-  {
-    id: 3,
-    name: 'Modern Mila',
-    price: 99.99,
-    description: 'Contemporary doll design with customizable features and modern fashion elements. Perfect for the trendy collector.',
-    image: 'https://images.unsplash.com/photo-1603552489088-b8304faff8ad?q=80&w=1000&auto=format&fit=crop'
-  }
-];
 
 interface CartProviderProps {
   children: ReactNode;
+}
+
+// Utility to merge cart items by doll_id, summing their quantities
+function mergeCartItemsByDollId(items: CartItem[]): CartItem[] {
+  const merged: { [key: string]: CartItem } = {};
+  for (const item of items) {
+    const key = String(item.doll_id);
+    if (merged[key]) {
+      merged[key].quantity += item.quantity;
+    } else {
+      merged[key] = { ...item };
+    }
+  }
+  return Object.values(merged);
 }
 
 // Provider component that wraps your app and makes cart object available
@@ -71,7 +67,8 @@ export function CartProvider({ children }: CartProviderProps) {
   // Transform API cart items to our CartItem format
   const transformApiCartItems = (apiItems: ApiCartItem[]): CartItem[] => {
     return apiItems.map(item => ({
-      id: item.doll_id,
+      id: item.id, // cart row id
+      doll_id: item.doll_id, // model id
       name: item.doll?.name || 'Unknown Model',
       price: item.doll?.price || 0,
       description: item.doll?.description || '',
@@ -87,7 +84,8 @@ export function CartProvider({ children }: CartProviderProps) {
         // If no user is logged in, try to load from localStorage
         const storedCart = localStorage.getItem(LOCAL_STORAGE_CART_KEY);
         if (storedCart) {
-          setItems(JSON.parse(storedCart));
+          const parsed = JSON.parse(storedCart);
+          setItems(mergeCartItemsByDollId(parsed));
         }
         setLoading(false);
         return;
@@ -100,13 +98,13 @@ export function CartProvider({ children }: CartProviderProps) {
         if (cartItems.length > 0) {
           // Transform API cart items to our CartItem format
           const transformedItems = transformApiCartItems(cartItems);
-          setItems(transformedItems);
+          setItems(mergeCartItemsByDollId(transformedItems));
         } else {
           // If API returns empty but we have local cart, sync it to backend
           const storedCart = localStorage.getItem('metaditeCart');
           if (storedCart) {
             const localItems = JSON.parse(storedCart);
-            setItems(localItems);
+            setItems(mergeCartItemsByDollId(localItems));
             // Optional: could sync local cart to backend here
           }
         }
@@ -114,7 +112,8 @@ export function CartProvider({ children }: CartProviderProps) {
         // If API fails, load from localStorage as fallback
         const storedCart = localStorage.getItem('metaditeCart');
         if (storedCart) {
-          setItems(JSON.parse(storedCart));
+          const parsed = JSON.parse(storedCart);
+          setItems(mergeCartItemsByDollId(parsed));
         }
         console.error("Error fetching cart:", error);
       } finally {
@@ -147,41 +146,46 @@ export function CartProvider({ children }: CartProviderProps) {
   const addToCart = async (item: Model) => {
     try {
       if (user) {
-        // Try to add to API if user is logged in
+        // Add to backend
         await cartApiService.addToCart(Number(item.id), 1);
+        // Fetch the latest cart from backend to get real IDs
+        const cartItems = await cartApiService.getCartItems();
+        const transformedItems = transformApiCartItems(cartItems);
+        setItems(mergeCartItemsByDollId(transformedItems));
+        return;
       }
-      
-      // Update local state regardless of API success
-      const itemIndex = items.findIndex(cartItem => cartItem.id === item.id);
-      
-      if (itemIndex !== -1) {
-        // Item exists, update quantity
-        const updatedItems = [...items];
-        updatedItems[itemIndex].quantity += 1;
-        setItems(updatedItems);
-      } else {
-        // Item doesn't exist, add it with quantity 1
-        setItems([...items, { ...item, quantity: 1 }]);
-      }
+      // Not logged in: create local item
+      const newItem: CartItem = {
+        id: Date.now(), // temporary id (only for guests)
+        doll_id: item.id,
+        name: item.name,
+        price: item.price,
+        description: item.description,
+        image: item.image,
+        quantity: 1
+      };
+      setItems(mergeCartItemsByDollId([...items, newItem]));
     } catch (error) {
       console.error("Error adding to cart:", error);
       // Still update local cart even if API fails
-      const itemIndex = items.findIndex(cartItem => cartItem.id === item.id);
-      
-      if (itemIndex !== -1) {
-        const updatedItems = [...items];
-        updatedItems[itemIndex].quantity += 1;
-        setItems(updatedItems);
-      } else {
-        setItems([...items, { ...item, quantity: 1 }]);
-      }
+      const newItem: CartItem = {
+        id: Date.now(),
+        doll_id: item.id,
+        name: item.name,
+        price: item.price,
+        description: item.description,
+        image: item.image,
+        quantity: 1
+      };
+      setItems(mergeCartItemsByDollId([...items, newItem]));
     }
   };
+
 
   // Remove item from cart
   const removeFromCart = async (itemId: number | string) => {
     try {
-      // Find the cart item with this model ID
+      // Find the cart item with this cart row ID
       const cartItem = items.find(item => item.id === itemId);
       if (!cartItem) return;
       
@@ -247,7 +251,8 @@ export function CartProvider({ children }: CartProviderProps) {
 
   // Get model by ID
   const getModel = (modelId: number | string) => {
-    return sampleModels.find(model => model.id === modelId);
+    // Implement with real data source or API
+    return undefined;
   };
 
   // Context value

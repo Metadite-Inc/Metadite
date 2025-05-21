@@ -10,6 +10,7 @@ const CartItem = ({ item }) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const { theme } = useTheme();
 
+  // Use item.doll_id for display, item.id for cart actions
   const handleIncrease = async () => {
     setIsUpdating(true);
     try {
@@ -38,6 +39,7 @@ const CartItem = ({ item }) => {
       setIsUpdating(false);
     }
   };
+
 
   return (
     <div className={`glass-card rounded-lg p-4 mb-4 flex items-center ${
