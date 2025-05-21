@@ -1,69 +1,52 @@
+
+// Add/expand types if not already present
 export enum MessageType {
-    TEXT = "text",
-    IMAGE = "image",
-    FILE = "file"
+  TEXT = "TEXT",
+  IMAGE = "IMAGE",
+  FILE = "FILE",
+  AUDIO = "AUDIO",
+  VIDEO = "VIDEO"
 }
 
 export enum MessageStatus {
-    SENT = "sent",
-    DELIVERED = "delivered",
-    READ = "read"
+  SENT = "SENT",
+  DELIVERED = "DELIVERED",
+  READ = "READ"
 }
 
-export interface MessageBase {
-    content: string;
-    message_type: MessageType;
-    doll_id: string;
+export interface MessageCreate {
+  content: string;
+  message_type: MessageType;
+  doll_id: string;
 }
 
-export interface MessageCreate extends MessageBase {}
-
-export interface MessageInDB extends MessageBase {
-    id: string;
-    sender_id: string;
-    receiver_id: string;
-    status: MessageStatus;
-    created_at: string;
-    updated_at: string;
-}
-
-export interface ChatRoom {
-    id: string;
-    doll_id: string;
-    user_id: string;
-    moderator_id: string;
-    is_active: boolean;
-    created_at: string;
-    updated_at: string;
-    last_message?: MessageInDB;
-}
-
-export interface ChatMessage {
-    id: string;
-    content: string;
-    message_type: MessageType;
-    sender_id: string;
-    receiver_id: string;
-    status: MessageStatus;
-    created_at: string;
-    updated_at: string;
-    is_deleted?: boolean;
-}
-
-export interface TypingIndicator {
-    user_id: string;
-    is_typing: boolean;
-}
-
-export interface UnreadCount {
-    unread_count: number;
+export interface MessageInDB {
+  id: string;
+  content: string;
+  sender_id: string;
+  receiver_id?: string;
+  chat_room_id?: string;
+  message_type: MessageType;
+  status?: MessageStatus;
+  created_at: string;
+  updated_at?: string;
+  flagged?: boolean;
 }
 
 export interface WebSocketMessage {
-    type: 'new_message' | 'status_update' | 'typing';
-    message?: MessageInDB;
-    message_id?: string;
-    status?: MessageStatus;
-    user_id?: string;
-    is_typing?: boolean;
-} 
+  type: 'new_message' | 'status_update' | 'typing';
+  message?: MessageInDB;
+  message_id?: string;
+  status?: MessageStatus;
+  user_id?: string;
+  is_typing?: boolean;
+}
+
+export interface ChatRoom {
+  id: number;
+  user_id: number;
+  doll_id: number;
+  moderator_id: number;
+  created_at: string;
+  updated_at: string;
+}

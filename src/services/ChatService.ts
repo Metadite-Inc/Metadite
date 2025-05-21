@@ -74,13 +74,19 @@ export const createChatRoom = async (dollId: string) => {
   const token = getAuthToken();
   if (!token) return null;
   
-  const response = await axios.post(`${API_BASE_URL}/api/chat/rooms/`, 
-    { doll_id: dollId },
-    {
-      headers: { Authorization: `Bearer ${token}` }
-    }
-  );
-  return response.data;
+  try {
+    const response = await axios.post(`${API_BASE_URL}/api/chat/rooms/`, 
+      { doll_id: dollId },
+      {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Failed to create chat room:', error);
+    toast.error('Failed to create chat room');
+    return null;
+  }
 };
 
 export const getUserChatRooms = async (skip: number = 0, limit: number = 100) => {
@@ -113,13 +119,18 @@ export const getChatRoomById = async (chatRoomId: number) => {
   const token = getAuthToken();
   if (!token) return null;
   
-  const response = await axios.get(
-    `${API_BASE_URL}/api/chat/rooms/${chatRoomId}`,
-    {
-      headers: { Authorization: `Bearer ${token}` }
-    }
-  );
-  return response.data;
+  try {
+    const response = await axios.get(
+      `${API_BASE_URL}/api/chat/rooms/${chatRoomId}`,
+      {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Failed to get chat room:', error);
+    return null;
+  }
 };
 
 // Message APIs
@@ -134,14 +145,20 @@ export const sendMessage = async (content: string, chatRoomId: number, receiverI
     message_type: "TEXT"
   };
   
-  const response = await axios.post(
-    `${API_BASE_URL}/api/chat/messages/`, 
-    message, 
-    {
-      headers: { Authorization: `Bearer ${token}` }
-    }
-  );
-  return response.data;
+  try {
+    const response = await axios.post(
+      `${API_BASE_URL}/api/chat/messages/`, 
+      message, 
+      {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Failed to send message:', error);
+    toast.error('Failed to send message');
+    return null;
+  }
 };
 
 export const sendFileMessage = async (file: File, chatRoomId: number) => {
@@ -150,35 +167,47 @@ export const sendFileMessage = async (file: File, chatRoomId: number) => {
   
   const formData = new FormData();
   formData.append('file', file);
+  formData.append('chat_room_id', chatRoomId.toString());
   
-  const response = await axios.post(
-    `${API_BASE_URL}/api/chat/messages/${chatRoomId}/upload`, 
-    formData, 
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'multipart/form-data'
+  try {
+    const response = await axios.post(
+      `${API_BASE_URL}/api/chat/messages/upload`, 
+      formData, 
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
       }
-    }
-  );
-  return response.data;
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Failed to upload file:', error);
+    toast.error('Failed to upload file');
+    return null;
+  }
 };
 
 export const getMessages = async (chatRoomId: number, skip: number = 0, limit: number = 50) => {
   const token = getAuthToken();
   if (!token) return null;
   
-  const params = new URLSearchParams();
-  params.append('skip', skip.toString());
-  params.append('limit', limit.toString());
-  
-  const response = await axios.get(
-    `${API_BASE_URL}/api/chat/rooms/${chatRoomId}/messages?${params}`,
-    {
-      headers: { Authorization: `Bearer ${token}` }
-    }
-  );
-  return response.data;
+  try {
+    const params = new URLSearchParams();
+    params.append('skip', skip.toString());
+    params.append('limit', limit.toString());
+    
+    const response = await axios.get(
+      `${API_BASE_URL}/api/chat/rooms/${chatRoomId}/messages?${params}`,
+      {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Failed to get messages:', error);
+    return [];
+  }
 };
 
 export const deleteMessage = async (messageId: number) => {

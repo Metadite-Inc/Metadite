@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 import { BaseApiService } from "./base_api";
 import { apiService } from "../api";
@@ -77,6 +76,7 @@ class VideoApiService extends BaseApiService {
       formData.append('description', data.description);
       formData.append('is_featured', data.is_featured.toString());
       formData.append('created_at', data.created_at);
+      formData.append('upload_date', new Date().toISOString());
 
       const response = await fetch(`${API_URL}/api/videos/upload`, {
         method: 'POST',

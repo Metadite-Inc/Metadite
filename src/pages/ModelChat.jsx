@@ -1,5 +1,6 @@
+
 import { useState, useEffect, useRef } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { ChevronLeft, MessageSquare, Send, AlertTriangle, Paperclip, FileImage, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../context/AuthContext';
@@ -8,14 +9,23 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import MessageItem from '../components/MessageItem';
 import { Textarea } from "@/components/ui/textarea";
-import { apiService } from '../lib/api'; // Import the API service
-import { sendMessage, sendFileMessage } from '../services/ChatService';
+import { apiService } from '../lib/api';
+import { 
+  sendMessage, 
+  sendFileMessage, 
+  getMessages, 
+  connectWebSocket,
+  getChatRoomById,
+  createChatRoom
+} from '../services/ChatService';
 
 const ModelChat = () => {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { theme } = useTheme();
   const [model, setModel] = useState(null);
+  const [chatRoom, setChatRoom] = useState(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
@@ -25,14 +35,19 @@ const ModelChat = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
+  const wsRef = useRef(null);
   
-  // Fetch model data using our API service
+  // Get room ID from URL or null if not present
+  const roomIdFromUrl = searchParams.get('roomId');
+  
+  // Fetch model data and set up chat room
   useEffect(() => {
-    const fetchModelDetails = async () => {
+    const initializeChat = async () => {
       try {
         setIsLoaded(false);
         setFetchError(false);
         
+        // Fetch model details
         const modelDetails = await apiService.getModelDetails(parseInt(id));
         
         if (!modelDetails) {
@@ -43,29 +58,78 @@ const ModelChat = () => {
         
         setModel(modelDetails);
         
-        // Initial message from model
-        const modelMessage = {
-          id: 1,
-          modelId: modelDetails.id,
-          senderId: 'model.id',
-          senderName: modelDetails.name,
-          content: `Hello! I'm ${modelDetails.name}. How are you today?`,
-          timestamp: new Date().toISOString(),
-          flagged: false,
-          message_type: 'TEXT'
-        };
+        // If we have a room ID, get chat room details
+        let chatRoomData;
+        if (roomIdFromUrl) {
+          chatRoomData = await getChatRoomById(parseInt(roomIdFromUrl));
+        }
         
-        setMessages([modelMessage]);
+        // If no room ID in URL or failed to get room, create a new one
+        if (!chatRoomData) {
+          chatRoomData = await createChatRoom(id.toString());
+          if (!chatRoomData) {
+            toast.error("Failed to create chat session");
+            setFetchError(true);
+            setIsLoaded(true);
+            return;
+          }
+        }
+        
+        setChatRoom(chatRoomData);
+        
+        // Load messages for this chat room
+        const chatMessages = await getMessages(chatRoomData.id);
+        if (chatMessages && chatMessages.length) {
+          setMessages(chatMessages);
+        } else {
+          // If no messages, add initial greeting
+          const initialMessage = {
+            id: Date.now(),
+            modelId: modelDetails.id,
+            senderId: 'model',
+            senderName: modelDetails.name,
+            content: `Hello! I'm ${modelDetails.name}. How can I help you today?`,
+            timestamp: new Date().toISOString(),
+            flagged: false,
+            message_type: 'TEXT'
+          };
+          
+          setMessages([initialMessage]);
+        }
+        
+        // Connect to WebSocket for this chat room
+        const ws = connectWebSocket(chatRoomData.id, handleWebSocketMessage);
+        wsRef.current = ws;
+        
         setIsLoaded(true);
       } catch (error) {
-        console.error("Failed to fetch model details:", error);
+        console.error("Failed to initialize chat:", error);
         setFetchError(true);
         setIsLoaded(true);
       }
     };
 
-    fetchModelDetails();
-  }, [id]);
+    initializeChat();
+    
+    // Cleanup WebSocket connection when component unmounts
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+    };
+  }, [id, roomIdFromUrl]);
+  
+  // Handle incoming WebSocket messages
+  const handleWebSocketMessage = (data) => {
+    console.log("WebSocket message received:", data);
+    
+    // Handle different types of messages
+    if (data.type === 'new_message' && data.message) {
+      setMessages(prev => [...prev, data.message]);
+    } else if (data.type === 'typing') {
+      // Handle typing indicators if needed
+    }
+  };
   
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -112,7 +176,7 @@ const ModelChat = () => {
   const handleSendMessage = async (e) => {
     e.preventDefault();
     
-    if ((!newMessage.trim() && !selectedFile) || !model) return;
+    if ((!newMessage.trim() && !selectedFile) || !model || !chatRoom) return;
     
     if (!user) {
       toast.error("Please login to send messages");
@@ -122,26 +186,29 @@ const ModelChat = () => {
     try {
       setIsUploading(true);
       
-      let messageData = null;
+      // Get the moderator ID for this chat room
+      const moderatorId = chatRoom.moderator_id || 1; // Default to ID 1 if not available
       
       // Handle file upload
       if (selectedFile) {
         try {
-          messageData = await sendFileMessage(selectedFile, model.id.toString());
+          const fileMessageResponse = await sendFileMessage(selectedFile, chatRoom.id);
           
-          // Add message to state immediately for responsive UI
-          const fileMessage = {
-            id: Date.now(), // temporary ID
-            modelId: model.id,
-            senderId: user.id || 'user-temp',
-            senderName: user.name || 'User',
-            content: selectedFile.type.startsWith('image/') ? URL.createObjectURL(selectedFile) : selectedFile.name,
-            timestamp: new Date().toISOString(),
-            flagged: false,
-            message_type: selectedFile.type.startsWith('image/') ? 'IMAGE' : 'FILE'
-          };
-          
-          setMessages(prev => [...prev, fileMessage]);
+          if (fileMessageResponse) {
+            // Add message to local state for immediate feedback
+            const fileMessage = {
+              id: Date.now(),
+              chat_room_id: chatRoom.id,
+              sender_id: user.id,
+              sender_name: user.name || user.email || 'User',
+              content: selectedFile.type.startsWith('image/') ? URL.createObjectURL(selectedFile) : selectedFile.name,
+              created_at: new Date().toISOString(),
+              flagged: false,
+              message_type: selectedFile.type.startsWith('image/') ? 'IMAGE' : 'FILE'
+            };
+            
+            setMessages(prev => [...prev, fileMessage]);
+          }
           
           // Clear file selection
           clearSelectedFile();
@@ -154,25 +221,24 @@ const ModelChat = () => {
       // Handle text message
       if (newMessage.trim()) {
         try {
-          messageData = await sendMessage({
-            content: newMessage.trim(),
-            message_type: 'TEXT',
-            doll_id: model.id.toString()
-          });
+          const textMessageResponse = await sendMessage(newMessage.trim(), chatRoom.id, moderatorId);
           
-          // Add message to state immediately for responsive UI
-          const textMessage = {
-            id: Date.now() + 1, // temporary ID
-            modelId: model.id,
-            senderId: user.id || 'user-temp',
-            senderName: user.name || 'User',
-            content: newMessage,
-            timestamp: new Date().toISOString(),
-            flagged: false,
-            message_type: 'TEXT'
-          };
+          if (textMessageResponse) {
+            // Add message to local state for immediate feedback
+            const textMessage = {
+              id: Date.now() + 1,
+              chat_room_id: chatRoom.id,
+              sender_id: user.id,
+              sender_name: user.name || user.email || 'User',
+              content: newMessage,
+              created_at: new Date().toISOString(),
+              flagged: false,
+              message_type: 'TEXT'
+            };
+            
+            setMessages(prev => [...prev, textMessage]);
+          }
           
-          setMessages(prev => [...prev, textMessage]);
           setNewMessage('');
         } catch (error) {
           console.error("Failed to send message:", error);
@@ -180,25 +246,23 @@ const ModelChat = () => {
         }
       }
       
-      // Simulate moderator response
-      setTimeout(() => {
-        const moderatorResponse = {
-          id: Date.now() + 2,
-          modelId: model.id,
-          senderId: 'moderator-1',
-          senderName: 'Support Team',
-          content: `Thank you for your message about ${model.name}. I'll get back to you soon.`,
-          timestamp: new Date().toISOString(),
-          flagged: false,
-          message_type: 'TEXT'
-        };
-        
-        setMessages(prev => [...prev, moderatorResponse]);
-        toast.success("Message received", {
-          description: "Our team will respond shortly.",
-        });
-      }, 1000);
-      
+      // For demo purposes, simulate a moderator response after a delay
+      if (!import.meta.env.PROD) {
+        setTimeout(() => {
+          const moderatorResponse = {
+            id: Date.now() + 2,
+            chat_room_id: chatRoom.id,
+            sender_id: 'moderator',
+            sender_name: 'Support Team',
+            content: `Thank you for your message about ${model.name}. A team member will respond shortly.`,
+            created_at: new Date().toISOString(),
+            flagged: false,
+            message_type: 'TEXT'
+          };
+          
+          setMessages(prev => [...prev, moderatorResponse]);
+        }, 1000);
+      }
     } catch (error) {
       console.error("Error sending message:", error);
       toast.error("Failed to send message");
@@ -250,19 +314,19 @@ const ModelChat = () => {
     );
   }
 
-  if (!model || fetchError) {
+  if (!model || fetchError || !chatRoom) {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
         <div className={`flex-1 pt-24 pb-12 px-4 ${theme === 'dark' ? 'bg-gray-900' : 'bg-gradient-to-br from-white via-metadite-light to-white'}`}>
           <div className="container mx-auto max-w-4xl text-center py-16">
-            <h1 className="text-3xl font-bold mb-4">Model Not Found</h1>
-            <p className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-8`}>The model you're looking for doesn't exist or has been removed.</p>
+            <h1 className="text-3xl font-bold mb-4">Chat Not Available</h1>
+            <p className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-8`}>We couldn't establish a chat session. Please try again later.</p>
             <Link 
-              to="/models"
+              to={`/model/${id}`}
               className="bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white px-6 py-3 rounded-lg hover:opacity-90 transition-opacity"
             >
-              Browse All Models
+              Back to Model Details
             </Link>
           </div>
         </div>
@@ -296,7 +360,7 @@ const ModelChat = () => {
               <div>
                 <h2 className={`font-medium ${theme === 'dark' ? 'text-white' : ''}`}>Chat about {model.name}</h2>
                 <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                  {model.description && model.description.substring(0, 40)}...
+                  {chatRoom && `Chat ID: ${chatRoom.id}`}
                 </p>
               </div>
             </div>
@@ -367,13 +431,6 @@ const ModelChat = () => {
                         : 'border-gray-300 text-gray-900'
                     }`}
                   />
-                  
-                  {newMessage.toLowerCase().includes('inappropriate') && (
-                    <div className="absolute -top-8 left-0 right-0 bg-yellow-100 text-yellow-700 text-xs p-1 rounded flex items-center">
-                      <AlertTriangle className="h-3 w-3 mr-1" />
-                      This message may be flagged by our system.
-                    </div>
-                  )}
                 </div>
                 
                 {/* File upload button */}
