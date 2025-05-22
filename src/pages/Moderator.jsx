@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { useTheme } from '../context/ThemeContext';
@@ -24,12 +24,20 @@ const Moderator = () => {
     selectedFile,
     previewUrl,
     isUploading,
+    typingUsers,
+    connectionStatus,
+    messageEndRef,
+    hasMoreMessages,
+    isLoadingMore,
     handleSelectModel,
     handleFileSelect,
     clearSelectedFile,
     promptFileSelection,
     handleSendMessage,
-    handleFlagMessage
+    handleFlagMessage,
+    handleDeleteMessage,
+    handleTyping,
+    loadMoreMessages
   } = useModerator();
 
   return (
@@ -80,15 +88,23 @@ const Moderator = () => {
                 messages={messages}
                 loading={loading}
                 handleFlagMessage={handleFlagMessage}
+                handleDeleteMessage={handleDeleteMessage}
                 newMessage={newMessage}
                 setNewMessage={setNewMessage}
                 handleSendMessage={handleSendMessage}
+                handleTyping={handleTyping}
                 promptFileSelection={promptFileSelection}
                 isUploading={isUploading}
                 selectedFile={selectedFile}
                 previewUrl={previewUrl}
                 clearSelectedFile={clearSelectedFile}
                 isLoaded={isLoaded}
+                typingUsers={typingUsers}
+                connectionStatus={connectionStatus}
+                messageEndRef={messageEndRef}
+                hasMoreMessages={hasMoreMessages}
+                loadMoreMessages={loadMoreMessages}
+                isLoadingMore={isLoadingMore}
               />
             </div>
           </div>

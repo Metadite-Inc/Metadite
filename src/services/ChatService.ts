@@ -1,13 +1,14 @@
+
 import axios from 'axios';
 import { toast } from 'sonner';
-import { MessageStatus } from '../types/chat';
+import { MessageStatus, MessageType } from '../types/chat';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 // WebSocket connection
 let ws: WebSocket | null = null;
-const MAX_RECONNECT_ATTEMPTS = 5;
 let reconnectAttempts = 0;
+const MAX_RECONNECT_ATTEMPTS = 5;
 let reconnectTimeout: NodeJS.Timeout | null = null;
 const messageQueue: any[] = [];
 
@@ -48,18 +49,23 @@ const getAuthToken = (): string | null => {
 };
 
 // Helper function to process message queue
-const processMessageQueue = async () => {
+const processMessageQueue = () => {
+  if (!ws || ws.readyState !== WebSocket.OPEN) return;
+  
   const queue = JSON.parse(localStorage.getItem('messageQueue') || '[]');
+  if (queue.length === 0) return;
+  
+  console.log(`Processing ${queue.length} queued messages`);
+  
   for (const message of queue) {
     try {
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({
-          action: "create",
-          message: message.content,
-          chat_room_id: message.chatRoomId,
-          type: message.type || "text"
-        }));
-      }
+      ws.send(JSON.stringify({
+        action: "create",
+        message: message.content,
+        chat_room_id: message.chatRoomId,
+        type: message.type || "text"
+      }));
+      console.log('Sent queued message:', message);
     } catch (error) {
       console.error('Failed to process queued message:', error);
     }
@@ -69,8 +75,11 @@ const processMessageQueue = async () => {
 
 // Queue message for later sending
 const queueMessage = (message: any) => {
-  messageQueue.push(message);
-  localStorage.setItem('messageQueue', JSON.stringify(messageQueue));
+  const queue = JSON.parse(localStorage.getItem('messageQueue') || '[]');
+  queue.push(message);
+  localStorage.setItem('messageQueue', JSON.stringify(queue));
+  console.log('Message queued for later sending:', message);
+  toast.info('Message will be sent when connection is restored');
 };
 
 // Reconnection logic
@@ -84,10 +93,13 @@ const reconnectWebSocket = (chatRoomId: number, onMessage: (data: any) => void) 
     clearTimeout(reconnectTimeout);
   }
   
+  const backoffTime = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
+  console.log(`Attempting to reconnect in ${backoffTime/1000} seconds (attempt ${reconnectAttempts + 1}/${MAX_RECONNECT_ATTEMPTS})`);
+  
   reconnectTimeout = setTimeout(() => {
     reconnectAttempts++;
     connectWebSocket(chatRoomId, onMessage);
-  }, Math.min(1000 * Math.pow(2, reconnectAttempts), 30000));
+  }, backoffTime);
 };
 
 // Enhanced WebSocket connection
@@ -98,18 +110,35 @@ export const connectWebSocket = (chatRoomId: number, onMessage: (data: any) => v
   try {
     const userId = getUserIdFromToken(token);
     
-    ws = new WebSocket(`${API_BASE_URL.replace('http', 'ws')}/api/chat/ws/${chatRoomId}/${userId}`);
+    // Close existing connection if any
+    if (ws) {
+      ws.close();
+    }
+    
+    const wsUrl = `${API_BASE_URL.replace('http', 'ws')}/api/chat/ws/${chatRoomId}/${userId}`;
+    console.log(`Connecting to WebSocket: ${wsUrl}`);
+    
+    ws = new WebSocket(wsUrl);
     
     ws.onopen = () => {
       console.log('WebSocket connected');
+      toast.success('Connected to chat server');
       reconnectAttempts = 0;
       // Process any queued messages
       processMessageQueue();
+      
+      // Mark messages as read on connection
+      markMessagesAsRead(chatRoomId);
     };
     
     ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      onMessage(data);
+      try {
+        const data = JSON.parse(event.data);
+        console.log('WebSocket message received:', data);
+        onMessage(data);
+      } catch (error) {
+        console.error('Error parsing WebSocket message:', error);
+      }
     };
     
     ws.onerror = (error) => {
@@ -132,39 +161,60 @@ export const connectWebSocket = (chatRoomId: number, onMessage: (data: any) => v
   }
 };
 
-// Enhanced message sending with queueing
-export const sendMessage = async (content: string, chatRoomId: number) => {
-  if (!ws || ws.readyState !== WebSocket.OPEN) {
-    // Queue message if WebSocket is not available
-    queueMessage({ content, chatRoomId, type: "text" });
-    return;
+// Send a message via WebSocket with fallback to HTTP
+export const sendMessage = async (content: string, chatRoomId: number, moderatorId?: number) => {
+  console.log(`Sending message to room ${chatRoomId}:`, content);
+  
+  // Try WebSocket first
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    try {
+      const message = {
+        action: "create",
+        message: content,
+        chat_room_id: chatRoomId,
+        type: "text"
+      };
+      
+      // Add moderator_id if provided
+      if (moderatorId) {
+        message['moderator_id'] = moderatorId;
+      }
+      
+      ws.send(JSON.stringify(message));
+      console.log('Message sent via WebSocket');
+      return true;
+    } catch (error) {
+      console.error('Error sending message via WebSocket:', error);
+      // Fall back to HTTP if WebSocket fails
+    }
   }
-
+  
+  // Fallback to HTTP
+  console.log('Falling back to HTTP for sending message');
   try {
-    ws.send(JSON.stringify({
-      action: "create",
-      message: content,
-      chat_room_id: chatRoomId,
-      type: "text"
-    }));
+    const result = await sendHttpMessage(content, chatRoomId, moderatorId);
+    return result;
   } catch (error) {
-    console.error('Error sending message:', error);
-    // Queue message on error
-    queueMessage({ content, chatRoomId, type: "text" });
-    toast.error('Failed to send message. Will retry when connection is restored.');
+    // Queue message for later if both methods fail
+    queueMessage({ content, chatRoomId, type: "text", moderatorId });
+    throw error;
   }
 };
 
-// send messages with http
-export const sendHttpMessage = async (content: string, chatRoomId: number) => {
+// Send messages with HTTP
+export const sendHttpMessage = async (content: string, chatRoomId: number, moderatorId?: number) => {
   const token = getAuthToken();
   if (!token) return null;
   
-  const message = {
+  const message: any = {
     content,
     chat_room_id: chatRoomId,
-    message_type: "TEXT"
+    message_type: MessageType.TEXT
   };
+  
+  if (moderatorId) {
+    message.moderator_id = moderatorId;
+  }
   
   try {
     const response = await axios.post(
@@ -174,11 +224,12 @@ export const sendHttpMessage = async (content: string, chatRoomId: number) => {
         headers: { Authorization: `Bearer ${token}` }
       }
     );
+    console.log('Message sent via HTTP:', response.data);
     return response.data;
   } catch (error) {
-    console.error('Failed to send message:', error);
+    console.error('Failed to send message via HTTP:', error);
     toast.error('Failed to send message');
-    return null;
+    throw error;
   }
 };
 
@@ -188,12 +239,14 @@ export const createChatRoom = async (dollId: string) => {
   if (!token) return null;
   
   try {
+    console.log(`Creating chat room for doll ${dollId}`);
     const response = await axios.post(`${API_BASE_URL}/api/chat/rooms/`, 
       { doll_id: dollId },
       {
         headers: { Authorization: `Bearer ${token}` }
       }
     );
+    console.log('Chat room created:', response.data);
     return response.data;
   } catch (error) {
     console.error('Failed to create chat room:', error);
@@ -206,26 +259,42 @@ export const getUserChatRooms = async (skip: number = 0, limit: number = 100) =>
   const token = getAuthToken();
   if (!token) return null;
   
-  const response = await axios.get(
-    `${API_BASE_URL}/api/chat/user/rooms/?skip=${skip}&limit=${limit}`,
-    {
-      headers: { Authorization: `Bearer ${token}` }
-    }
-  );
-  return response.data;
+  try {
+    console.log(`Fetching user chat rooms (skip=${skip}, limit=${limit})`);
+    const response = await axios.get(
+      `${API_BASE_URL}/api/chat/user/rooms/?skip=${skip}&limit=${limit}`,
+      {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    );
+    console.log('User chat rooms fetched:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch user chat rooms:', error);
+    toast.error('Failed to fetch chat rooms');
+    return [];
+  }
 };
 
 export const getModeratorChatRooms = async (skip: number = 0, limit: number = 100) => {
   const token = getAuthToken();
   if (!token) return null;
   
-  const response = await axios.get(
-    `${API_BASE_URL}/api/chat/moderator/rooms/?skip=${skip}&limit=${limit}`,
-    {
-      headers: { Authorization: `Bearer ${token}` }
-    }
-  );
-  return response.data;
+  try {
+    console.log(`Fetching moderator chat rooms (skip=${skip}, limit=${limit})`);
+    const response = await axios.get(
+      `${API_BASE_URL}/api/chat/moderator/rooms/?skip=${skip}&limit=${limit}`,
+      {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    );
+    console.log('Moderator chat rooms fetched:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch moderator chat rooms:', error);
+    toast.error('Failed to fetch chat rooms');
+    return [];
+  }
 };
 
 export const getChatRoomById = async (chatRoomId: number) => {
@@ -233,26 +302,35 @@ export const getChatRoomById = async (chatRoomId: number) => {
   if (!token) return null;
   
   try {
+    console.log(`Fetching chat room ${chatRoomId}`);
     const response = await axios.get(
       `${API_BASE_URL}/api/chat/rooms/${chatRoomId}`,
       {
         headers: { Authorization: `Bearer ${token}` }
       }
     );
+    console.log('Chat room fetched:', response.data);
     return response.data;
   } catch (error) {
     console.error('Failed to get chat room:', error);
+    toast.error('Failed to load chat room');
     return null;
   }
 };
 
-export const sendFileMessage = async (file: File, chatRoomId: number) => {
+export const sendFileMessage = async (file: File, chatRoomId: number, receiverId?: number) => {
   const token = getAuthToken();
   if (!token) return null;
+  
+  console.log(`Uploading file to chat room ${chatRoomId}:`, file.name);
   
   const formData = new FormData();
   formData.append('file', file);
   formData.append('chat_room_id', chatRoomId.toString());
+  
+  if (receiverId) {
+    formData.append('receiver_id', receiverId.toString());
+  }
   
   try {
     const response = await axios.post(
@@ -262,9 +340,14 @@ export const sendFileMessage = async (file: File, chatRoomId: number) => {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
+        },
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total!);
+          console.log(`Upload progress: ${percentCompleted}%`);
         }
       }
     );
+    console.log('File uploaded successfully:', response.data);
     return response.data;
   } catch (error) {
     console.error('Failed to upload file:', error);
@@ -278,6 +361,7 @@ export const getMessages = async (chatRoomId: number, skip: number = 0, limit: n
   if (!token) return null;
   
   try {
+    console.log(`Fetching messages for chat room ${chatRoomId} (skip=${skip}, limit=${limit})`);
     const params = new URLSearchParams();
     params.append('skip', skip.toString());
     params.append('limit', limit.toString());
@@ -288,9 +372,11 @@ export const getMessages = async (chatRoomId: number, skip: number = 0, limit: n
         headers: { Authorization: `Bearer ${token}` }
       }
     );
+    console.log(`Fetched ${response.data.length} messages`);
     return response.data;
   } catch (error) {
     console.error('Failed to get messages:', error);
+    toast.error('Failed to load messages');
     return [];
   }
 };
@@ -299,26 +385,42 @@ export const deleteMessage = async (messageId: number) => {
   const token = getAuthToken();
   if (!token) return null;
   
-  const response = await axios.delete(
-    `${API_BASE_URL}/api/chat/messages/${messageId}`,
-    {
-      headers: { Authorization: `Bearer ${token}` }
-    }
-  );
-  return response.data;
+  try {
+    console.log(`Deleting message ${messageId}`);
+    const response = await axios.delete(
+      `${API_BASE_URL}/api/chat/messages/${messageId}`,
+      {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    );
+    console.log('Message deleted:', response.data);
+    toast.success('Message deleted');
+    return response.data;
+  } catch (error) {
+    console.error('Failed to delete message:', error);
+    toast.error('Failed to delete message');
+    throw error;
+  }
 };
 
 export const getUnreadCount = async () => {
   const token = getAuthToken();
   if (!token) return null;
   
-  const response = await axios.get(
-    `${API_BASE_URL}/api/chat/unread-count`,
-    {
-      headers: { Authorization: `Bearer ${token}` }
-    }
-  );
-  return response.data;
+  try {
+    console.log('Fetching unread message count');
+    const response = await axios.get(
+      `${API_BASE_URL}/api/chat/unread-count`,
+      {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    );
+    console.log('Unread count:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to get unread count:', error);
+    return { count: 0 };
+  }
 };
 
 // Add a function to update message status (Read/Delivered)
@@ -326,14 +428,21 @@ export const updateMessageStatus = async (messageId: string, status: MessageStat
   const token = getAuthToken();
   if (!token) return null;
   
-  const response = await axios.put(
-    `${API_BASE_URL}/api/chat/messages/${messageId}/status`,
-    { status },
-    {
-      headers: { Authorization: `Bearer ${token}` }
-    }
-  );
-  return response.data;
+  try {
+    console.log(`Updating message ${messageId} status to ${status}`);
+    const response = await axios.put(
+      `${API_BASE_URL}/api/chat/messages/${messageId}/status`,
+      { status },
+      {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    );
+    console.log('Message status updated:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to update message status:', error);
+    return null;
+  }
 };
 
 // File handling
@@ -344,6 +453,7 @@ export const getFileUrl = (filename: string) => {
 // Mark messages as read via WebSocket
 export const markMessagesAsRead = (chatRoomId: number) => {
   if (ws && ws.readyState === WebSocket.OPEN) {
+    console.log(`Marking all messages as read in room ${chatRoomId}`);
     ws.send(JSON.stringify({
       action: "read",
       chat_room_id: chatRoomId
@@ -356,6 +466,7 @@ export const markMessagesAsRead = (chatRoomId: number) => {
 // Send typing indicator via WebSocket
 export const sendTypingIndicator = (chatRoomId: number, isTyping: boolean) => {
   if (ws && ws.readyState === WebSocket.OPEN) {
+    console.log(`Sending typing indicator: ${isTyping ? 'typing' : 'stopped typing'} in room ${chatRoomId}`);
     ws.send(JSON.stringify({
       action: "typing",
       chat_room_id: chatRoomId,
@@ -366,17 +477,25 @@ export const sendTypingIndicator = (chatRoomId: number, isTyping: boolean) => {
   return false;
 };
 
-// Add a flagMessage function that was missing
+// Flag message for review
 export const flagMessage = async (messageId: number, isFlagged: boolean) => {
   const token = getAuthToken();
   if (!token) return null;
   
-  const response = await axios.put(
-    `${API_BASE_URL}/api/chat/messages/${messageId}/flag`,
-    { flagged: isFlagged },
-    {
-      headers: { Authorization: `Bearer ${token}` }
-    }
-  );
-  return response.data;
+  try {
+    console.log(`${isFlagged ? 'Flagging' : 'Unflagging'} message ${messageId}`);
+    const response = await axios.put(
+      `${API_BASE_URL}/api/chat/messages/${messageId}/flag`,
+      { flagged: isFlagged },
+      {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    );
+    console.log('Message flag updated:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to update message flag:', error);
+    toast.error(`Failed to ${isFlagged ? 'flag' : 'unflag'} message`);
+    return null;
+  }
 };

@@ -1,5 +1,5 @@
 
-import React, { useRef } from 'react';
+import React from 'react';
 import { MessageSquare } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import ChatHeader from './ChatHeader';
@@ -12,18 +12,25 @@ const ChatContainer = ({
   messages,
   loading,
   handleFlagMessage,
+  handleDeleteMessage,
   newMessage,
   setNewMessage,
   handleSendMessage,
+  handleTyping,
   promptFileSelection,
   isUploading,
   selectedFile,
   previewUrl,
   clearSelectedFile,
-  isLoaded
+  isLoaded,
+  typingUsers,
+  connectionStatus,
+  messageEndRef,
+  hasMoreMessages,
+  loadMoreMessages,
+  isLoadingMore
 }) => {
   const { theme } = useTheme();
-  const messageEndRef = useRef(null);
 
   if (!selectedModel) {
     return (
@@ -45,14 +52,23 @@ const ChatContainer = ({
     <div className={`glass-card rounded-xl overflow-hidden h-[600px] flex flex-col transition-opacity duration-300 ${
       theme === 'dark' ? 'bg-gray-800/70 border-gray-700' : ''
     } ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>
-      <ChatHeader selectedModel={selectedModel} />
+      <ChatHeader 
+        selectedModel={selectedModel} 
+        connectionStatus={connectionStatus}
+      />
       
       <div className="flex-1 overflow-y-auto p-4">
         <ChatMessages 
           messages={messages} 
           loading={loading} 
           handleFlagMessage={handleFlagMessage}
+          handleDeleteMessage={handleDeleteMessage}
           messageEndRef={messageEndRef}
+          hasMoreMessages={hasMoreMessages}
+          loadMoreMessages={loadMoreMessages}
+          isLoadingMore={isLoadingMore}
+          typingUsers={typingUsers}
+          connectionStatus={connectionStatus}
         />
       </div>
       
@@ -66,10 +82,12 @@ const ChatContainer = ({
         newMessage={newMessage}
         setNewMessage={setNewMessage}
         handleSendMessage={handleSendMessage}
+        handleTyping={handleTyping}
         selectedModel={selectedModel}
         promptFileSelection={promptFileSelection}
         isUploading={isUploading}
         selectedFile={selectedFile}
+        connectionStatus={connectionStatus}
       />
     </div>
   );
