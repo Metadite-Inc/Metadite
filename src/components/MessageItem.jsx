@@ -1,17 +1,16 @@
 
 import React from 'react';
 import { format } from 'date-fns';
-import { getFileUrl } from '../services/ChatService';
+import { getFileUrl, deleteMessage } from '../services/ChatService';
 import { useState } from 'react';
-import { AlertTriangle, MoreVertical, Download, Image as ImageIcon } from 'lucide-react';
+import { MoreVertical, Download, Image as ImageIcon, Trash } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { toast } from 'sonner';
 
-const MessageItem = ({ message, onFlag }) => {
+const MessageItem = ({ message, onDelete }) => {
   const { user } = useAuth();
   const [showActions, setShowActions] = useState(false);
   const isOwnMessage = message.sender_id === user?.id;
-  const isFlagged = message.flagged;
-  const mightBeInappropriate = message.content?.toLowerCase().includes('inappropriate');
 
   const renderMessageContent = () => {
     switch (message.message_type) {
@@ -60,6 +59,18 @@ const MessageItem = ({ message, onFlag }) => {
     }
   };
 
+  const handleDeleteMessage = async () => {
+    try {
+      await deleteMessage(message.id);
+      onDelete?.(message.id);
+      toast.success("Message deleted successfully");
+      setShowActions(false);
+    } catch (error) {
+      console.error("Error deleting message:", error);
+      toast.error("Failed to delete message");
+    }
+  };
+
   return (
     <div className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} mb-4 group`}>
       <div 
@@ -69,12 +80,6 @@ const MessageItem = ({ message, onFlag }) => {
             : 'bg-white dark:bg-gray-800 shadow-sm'
         }`}
       >
-        {isFlagged && (
-          <div className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full">
-            <AlertTriangle className="h-3 w-3" />
-          </div>
-        )}
-        
         <div className="flex justify-between items-start mb-1">
           <span className={`text-xs font-medium ${isOwnMessage ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'}`}>
             {message.sender_name || 'Unknown'} • {format(new Date(message.created_at || message.timestamp), 'HH:mm')}
@@ -90,27 +95,17 @@ const MessageItem = ({ message, onFlag }) => {
           </button>
         </div>
         
-        {renderMessageContent()}
+        <div className="mt-2">
+          {renderMessageContent()}
+        </div>
         
-        {mightBeInappropriate && !isFlagged && (
-          <div className="mt-2 text-xs italic text-yellow-500 flex items-center">
-            <AlertTriangle className="h-3 w-3 mr-1" />
-            This message may contain inappropriate content
-          </div>
-        )}
-        
-        {showActions && (
+        {showActions && isOwnMessage && (
           <div className="absolute right-0 mt-2 w-32 bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden z-10 animate-fade-in border border-gray-200 dark:border-gray-700">
             <button 
-              className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-              onClick={() => {
-                onFlag?.(message.id);
-                setShowActions(false);
-              }}
+              className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-red-500 flex items-center"
+              onClick={handleDeleteMessage}
             >
-              {isFlagged ? 'Remove flag' : 'Flag message'}
-            </button>
-            <button className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+              <Trash className="h-4 w-4 mr-2" />
               Delete
             </button>
           </div>

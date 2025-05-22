@@ -365,3 +365,18 @@ export const sendTypingIndicator = (chatRoomId: number, isTyping: boolean) => {
   }
   return false;
 };
+
+// Add a flagMessage function that was missing
+export const flagMessage = async (messageId: number, isFlagged: boolean) => {
+  const token = getAuthToken();
+  if (!token) return null;
+  
+  const response = await axios.put(
+    `${API_BASE_URL}/api/chat/messages/${messageId}/flag`,
+    { flagged: isFlagged },
+    {
+      headers: { Authorization: `Bearer ${token}` }
+    }
+  );
+  return response.data;
+};

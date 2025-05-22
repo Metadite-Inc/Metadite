@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { ChevronLeft, MessageSquare, Send, AlertTriangle, Paperclip, FileImage, X } from 'lucide-react';
@@ -15,7 +16,8 @@ import {
   getMessages, 
   connectWebSocket,
   getChatRoomById,
-  createChatRoom
+  createChatRoom,
+  deleteMessage
 } from '../services/ChatService';
 
 const ModelChat = () => {
@@ -245,23 +247,7 @@ const ModelChat = () => {
         }
       }
       
-      // For demo purposes, simulate a moderator response after a delay
-      if (!import.meta.env.PROD) {
-        setTimeout(() => {
-          const moderatorResponse = {
-            id: Date.now() + 2,
-            chat_room_id: chatRoom.id,
-            sender_id: 'moderator',
-            sender_name: 'Support Team',
-            content: `Thank you for your message about ${model.name}. A team member will respond shortly.`,
-            created_at: new Date().toISOString(),
-            flagged: false,
-            message_type: 'TEXT'
-          };
-          
-          setMessages(prev => [...prev, moderatorResponse]);
-        }, 1000);
-      }
+      // Remove the auto-generated moderator response - we don't add it anymore
     } catch (error) {
       console.error("Error sending message:", error);
       toast.error("Failed to send message");
@@ -270,29 +256,9 @@ const ModelChat = () => {
     }
   };
   
-  const handleFlagMessage = (messageId) => {
-    // Toggle flagged status
-    setMessages(prev => 
-      prev.map(msg => 
-        msg.id === messageId 
-          ? { ...msg, flagged: !msg.flagged } 
-          : msg
-      )
-    );
-    
-    const message = messages.find(msg => msg.id === messageId);
-    
-    if (message) {
-      if (!message.flagged) {
-        toast("Message flagged", {
-          description: "The message has been flagged for review by admin.",
-        });
-      } else {
-        toast("Flag removed", {
-          description: "The flag has been removed from this message.",
-        });
-      }
-    }
+  const handleDeleteMessage = (messageId) => {
+    setMessages(prev => prev.filter(msg => msg.id !== messageId));
+    toast.success("Message deleted");
   };
 
   const promptFileSelection = () => {
@@ -364,14 +330,14 @@ const ModelChat = () => {
               </div>
             </div>
             
-            <div className="overflow-y-auto mb-4 flex-grow">
+            <div className="overflow-y-auto p-4 flex-grow">
               {messages.length > 0 ? (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {messages.map((message) => (
                     <MessageItem
                       key={message.id}
                       message={message}
-                      isOwnMessage={message.sender_id === user?.id}
+                      onDelete={handleDeleteMessage}
                     />
                   ))}
                   <div ref={messageEndRef} />
