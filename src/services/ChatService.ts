@@ -103,7 +103,7 @@ const reconnectWebSocket = (chatRoomId: number, onMessage: (data: any) => void) 
 };
 
 // Enhanced WebSocket connection
-export const connectWebSocket = (chatRoomId: number, onMessage: (data: any) => void) => {
+export const connectWebSocket = (chatRoomId: number | string, onMessage: (data: any) => void) => {
   const token = getAuthToken();
   if (!token) return null;
   
@@ -115,7 +115,15 @@ export const connectWebSocket = (chatRoomId: number, onMessage: (data: any) => v
       ws.close();
     }
     
-    const wsUrl = `${API_BASE_URL.replace('http', 'ws')}/api/chat/ws/${chatRoomId}/${userId}`;
+    let wsUrl;
+    
+    // Handle special case for global notifications
+    if (chatRoomId === 'global') {
+      wsUrl = `${API_BASE_URL.replace('http', 'ws')}/api/chat/ws/global/${userId}`;
+    } else {
+      wsUrl = `${API_BASE_URL.replace('http', 'ws')}/api/chat/ws/${chatRoomId}/${userId}`;
+    }
+    
     console.log(`Connecting to WebSocket: ${wsUrl}`);
     
     ws = new WebSocket(wsUrl);
@@ -127,8 +135,10 @@ export const connectWebSocket = (chatRoomId: number, onMessage: (data: any) => v
       // Process any queued messages
       processMessageQueue();
       
-      // Mark messages as read on connection
-      markMessagesAsRead(chatRoomId);
+      // Mark messages as read on connection (only for real chat rooms, not global)
+      if (chatRoomId !== 'global') {
+        markMessagesAsRead(Number(chatRoomId));
+      }
     };
     
     ws.onmessage = (event) => {
@@ -149,7 +159,7 @@ export const connectWebSocket = (chatRoomId: number, onMessage: (data: any) => v
     ws.onclose = (event) => {
       console.log('WebSocket connection closed:', event.code, event.reason);
       if (event.code !== 1000) { // Not a normal closure
-        reconnectWebSocket(chatRoomId, onMessage);
+        reconnectWebSocket(Number(chatRoomId), onMessage);
       }
     };
     
@@ -173,7 +183,7 @@ export const sendMessage = async (content: string, chatRoomId: number, moderator
         message: content,
         chat_room_id: chatRoomId,
         type: "text"
-      };
+      } as any;
       
       // Add moderator_id if provided
       if (moderatorId) {
@@ -381,7 +391,7 @@ export const getMessages = async (chatRoomId: number, skip: number = 0, limit: n
   }
 };
 
-export const deleteMessage = async (messageId: number) => {
+export const deleteMessage = async (messageId: string | number) => {
   const token = getAuthToken();
   if (!token) return null;
   
@@ -478,7 +488,7 @@ export const sendTypingIndicator = (chatRoomId: number, isTyping: boolean) => {
 };
 
 // Flag message for review
-export const flagMessage = async (messageId: number, isFlagged: boolean) => {
+export const flagMessage = async (messageId: number | string, isFlagged: boolean) => {
   const token = getAuthToken();
   if (!token) return null;
   

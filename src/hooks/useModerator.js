@@ -11,7 +11,8 @@ import {
   sendFileMessage,
   flagMessage,
   sendTypingIndicator,
-  markMessagesAsRead
+  markMessagesAsRead,
+  deleteMessage
 } from '../services/ChatService';
 
 const useModerator = () => {
@@ -78,6 +79,60 @@ const useModerator = () => {
     }
   }, [user]);
   
+  // Set up a global WebSocket connection for notifications
+  useEffect(() => {
+    if (user?.role !== 'moderator') return;
+    
+    // This WebSocket will be used for global notifications like new chat rooms
+    const globalWs = connectWebSocket('global', handleGlobalWebSocketMessage);
+    
+    if (globalWs) {
+      globalWs.onopen = () => {
+        console.log('Global WebSocket connected');
+      };
+      
+      return () => {
+        if (globalWs) {
+          globalWs.close();
+        }
+      };
+    }
+  }, [user]);
+  
+  // Handle global WebSocket messages (new chat rooms, etc.)
+  const handleGlobalWebSocketMessage = useCallback((data) => {
+    console.log('Received global WebSocket message:', data);
+    
+    if (data.type === 'new_chat_room' && data.chat_room) {
+      // Update the assigned models list with the new chat room
+      setAssignedModels(prev => {
+        // Check if we already have this chat room
+        const exists = prev.some(model => model.id === data.chat_room.id);
+        if (exists) return prev;
+        
+        const newModel = {
+          id: data.chat_room.id,
+          name: data.chat_room.doll_name || `Model ${data.chat_room.id}`,
+          image: data.chat_room.doll_image || 'https://images.unsplash.com/photo-1611042553365-9b101d749e31?q=80&w=1000&auto=format&fit=crop',
+          receiverId: data.chat_room.user_id,
+          lastMessage: 'New conversation',
+          lastMessageTime: new Date().toISOString(),
+          unreadCount: 1
+        };
+        
+        toast.info(`New chat room created for ${newModel.name}`, {
+          description: 'Click to view the conversation',
+          action: {
+            label: 'View',
+            onClick: () => handleSelectModel(newModel)
+          }
+        });
+        
+        return [...prev, newModel];
+      });
+    }
+  }, []);
+  
   // Handle model selection
   const handleSelectModel = useCallback((model) => {
     // Clear input message and selected file when switching rooms
@@ -135,6 +190,15 @@ const useModerator = () => {
           setConnectionStatus('connected');
           // Mark messages as read when joining a chat room
           markMessagesAsRead(selectedModel.id);
+          
+          // Update the model's unread count to 0
+          setAssignedModels(prev => 
+            prev.map(model => 
+              model.id === selectedModel.id 
+                ? { ...model, unreadCount: 0 }
+                : model
+            )
+          );
         };
         
         ws.onclose = () => {
@@ -218,6 +282,22 @@ const useModerator = () => {
           msg.id === data.message.id ? data.message : msg
         )
       );
+    } else if (data.type === 'new_chat_room' && data.chat_room) {
+      setAssignedModels(prev => {
+        // Check if we already have this chat room
+        const exists = prev.some(model => model.id === data.chat_room.id);
+        if (exists) return prev;
+        
+        return [...prev, {
+          id: data.chat_room.id,
+          name: data.chat_room.doll_name || `Model ${data.chat_room.id}`,
+          image: data.chat_room.doll_image || 'https://images.unsplash.com/photo-1611042553365-9b101d749e31?q=80&w=1000&auto=format&fit=crop',
+          receiverId: data.chat_room.user_id,
+          lastMessage: 'New conversation',
+          lastMessageTime: new Date().toISOString(),
+          unreadCount: 1
+        }];
+      });
     }
   }, []);
   
@@ -300,7 +380,7 @@ const useModerator = () => {
       if (selectedFile) {
         const sentMessage = await sendFileMessage(selectedFile, selectedModel.id, receiverId);
         if (sentMessage) {
-          // If WebSocket doesn't update the UI, we can add the message manually
+          // Add the message manually to ensure it appears in the UI immediately
           setMessages(prev => [...prev, sentMessage]);
           clearSelectedFile();
           
@@ -322,7 +402,7 @@ const useModerator = () => {
       if (newMessage.trim()) {
         const sentMessage = await sendMessage(newMessage, selectedModel.id, receiverId);
         if (sentMessage) {
-          // If WebSocket doesn't update the UI, we can add the message manually
+          // Add the message manually to ensure it appears in the UI immediately
           setMessages(prev => [...prev, sentMessage]);
           
           // Update the model's last message in the sidebar
