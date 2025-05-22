@@ -1,242 +1,36 @@
-import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+
+import React from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import MessageItem from '../components/MessageItem';
-import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { 
-  MessageSquare, Send, User, Clock, Filter, Search,
-  AlertTriangle, Paperclip, FileImage, X
-} from 'lucide-react';
-import { toast } from 'sonner';
-import { 
-  getModeratorChatRooms, 
-  getMessages, 
-  sendMessage,
-  connectWebSocket,
-  sendFileMessage,
-  flagMessage
-} from '../services/ChatService';
+import { MessageSquare } from 'lucide-react';
+import useModerator from '../hooks/useModerator';
+import ModelList from '../components/moderator/ModelList';
+import ChatContainer from '../components/moderator/ChatContainer';
 
 const Moderator = () => {
-  const { user } = useAuth();
   const { theme } = useTheme();
-  const navigate = useNavigate();
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [newMessage, setNewMessage] = useState('');
-  const [messages, setMessages] = useState([]);
-  const [assignedModels, setAssignedModels] = useState([]);
-  const [selectedModel, setSelectedModel] = useState(null);
-  const [receiverId, setReceiverId] = useState(null);
-  const [websocket, setWebsocket] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const fileInputRef = useRef(null);
-  const messageEndRef = useRef(null);
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(null);
-  const [isUploading, setIsUploading] = useState(false);
-  
-  // Redirect non-moderator users
-  useEffect(() => {
-    if (user?.role !== 'moderator') {
-      navigate('/');
-    } else {
-      setIsLoaded(true);
-    }
-  }, [user, navigate]);
-  
-  // Scroll to bottom when messages change
-  useEffect(() => {
-    messageEndRef?.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-  
-  // Load assigned models/dolls when component mounts
-  useEffect(() => {
-    const loadAssignedModels = async () => {
-      setLoading(true);
-      try {
-        const rooms = await getModeratorChatRooms();
-        
-        // Format the rooms data for display
-        const models = rooms.map(room => ({
-          id: room.id,
-          name: room.doll_name || `Model ${room.id}`,
-          image: room.doll_image || 'https://images.unsplash.com/photo-1611042553365-9b101d749e31?q=80&w=1000&auto=format&fit=crop',
-          receiverId: room.user_id // Save the user_id for sending messages
-        }));
-        
-        setAssignedModels(models);
-      } catch (error) {
-        console.error('Error loading assigned models:', error);
-        toast.error('Failed to load assigned models');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (user?.role === 'moderator') {
-      loadAssignedModels();
-    }
-  }, [user]);
-  
-  // Updated to clear the message input when selecting a new model
-  const handleSelectModel = (model) => {
-    // Clear input message and selected file when switching rooms
-    setNewMessage('');
-    clearSelectedFile();
-    setSelectedModel(model);
-  };
-  
-  // Load messages when a model is selected
-  useEffect(() => {
-    const loadMessages = async () => {
-      if (!selectedModel) return;
-      
-      setLoading(true);
-      try {
-        const chatMessages = await getMessages(selectedModel.id);
-        setMessages(chatMessages);
-        setReceiverId(selectedModel.receiverId);
-      } catch (error) {
-        console.error('Error loading messages:', error);
-        toast.error('Failed to load messages');
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    loadMessages();
-    
-    // Set up WebSocket connection for real-time updates
-    if (selectedModel) {
-      // Close previous connection if it exists
-      if (websocket) {
-        websocket.close();
-      }
-      
-      const ws = connectWebSocket(selectedModel.id, handleWebSocketMessage);
-      setWebsocket(ws);
-      
-      return () => {
-        if (ws) {
-          ws.close();
-        }
-      };
-    }
-  }, [selectedModel]);
-  
-  // Handle incoming WebSocket messages
-  const handleWebSocketMessage = (data) => {
-    if (data.type === 'new_message') {
-      setMessages(prev => [...prev, data.message]);
-    }
-  };
-  
-  // Handle file selection
-  const handleFileSelect = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    // Check file size (limit to 10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("File too large", {
-        description: "Maximum file size is 10MB"
-      });
-      return;
-    }
-    
-    setSelectedFile(file);
-    
-    // Create preview for images
-    if (file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewUrl(reader.result);
-      };
-      reader.readAsDataURL(file);
-    } else {
-      // For non-image files, just show the file name
-      setPreviewUrl(null);
-    }
-  };
-  
-  // Clear selected file
-  const clearSelectedFile = () => {
-    setSelectedFile(null);
-    setPreviewUrl(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
-  
-  const promptFileSelection = () => {
-    fileInputRef.current?.click();
-  };
-  
-  // Send a new message (text or file)
-  const handleSendMessage = async (e) => {
-    e.preventDefault();
-    
-    if ((!newMessage.trim() && !selectedFile) || !selectedModel || !receiverId) return;
-    
-    setIsUploading(true);
-    
-    try {
-      if (selectedFile) {
-        const sentMessage = await sendFileMessage(selectedFile, selectedModel.id, receiverId);
-        if (sentMessage) {
-          // If WebSocket doesn't update the UI, we can add the message manually
-          setMessages(prev => [...prev, sentMessage]);
-          clearSelectedFile();
-          toast.success('File sent');
-        }
-      }
-      
-      if (newMessage.trim()) {
-        const sentMessage = await sendMessage(newMessage, selectedModel.id, receiverId);
-        if (sentMessage) {
-          // If WebSocket doesn't update the UI, we can add the message manually
-          setMessages(prev => [...prev, sentMessage]);
-          setNewMessage('');
-          toast.success('Message sent');
-        }
-      }
-    } catch (error) {
-      console.error('Error sending message:', error);
-      toast.error('Failed to send message');
-    } finally {
-      setIsUploading(false);
-    }
-  };
-  
-  // Toggle flag status for a message
-  const handleFlagMessage = async (messageId) => {
-    try {
-      const message = messages.find(msg => msg.id === messageId);
-      if (!message) return;
-      
-      const updatedMessage = await flagMessage(messageId, !message.flagged);
-      if (updatedMessage) {
-        setMessages(prev => 
-          prev.map(msg => msg.id === messageId 
-            ? { ...msg, flagged: !msg.flagged } 
-            : msg
-          )
-        );
-        
-        toast(message.flagged ? 'Flag removed' : 'Message flagged', {
-          description: message.flagged 
-            ? 'The flag has been removed from this message.' 
-            : 'The message has been flagged for review by admin.',
-        });
-      }
-    } catch (error) {
-      console.error('Error flagging message:', error);
-      toast.error('Failed to update message flag');
-    }
-  };
+  const {
+    isLoaded,
+    searchTerm,
+    setSearchTerm,
+    newMessage,
+    setNewMessage,
+    messages,
+    assignedModels,
+    selectedModel,
+    loading,
+    fileInputRef,
+    selectedFile,
+    previewUrl,
+    isUploading,
+    handleSelectModel,
+    handleFileSelect,
+    clearSelectedFile,
+    promptFileSelection,
+    handleSendMessage,
+    handleFlagMessage
+  } = useModerator();
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -270,234 +64,45 @@ const Moderator = () => {
           
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
             <div className="lg:col-span-1">
-              <div className={`glass-card rounded-xl overflow-hidden sticky top-24 ${
-                theme === 'dark' ? 'bg-gray-800/70 border-gray-700' : ''
-              }`}>
-                <div className={`p-4 border-b ${theme === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
-                  <h3 className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>Assigned Models</h3>
-                </div>
-                
-                <div className="p-2">
-                  <div className="relative mb-4">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Search className={`h-4 w-4 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-400'}`} />
-                    </div>
-                    <input
-                      type="text"
-                      placeholder="Search models..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className={`block w-full pl-9 pr-3 py-2 border rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary text-sm ${
-                        theme === 'dark' 
-                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                          : 'border-gray-300 text-gray-900'
-                      }`}
-                    />
-                  </div>
-                  
-                  {loading && assignedModels.length === 0 ? (
-                    <div className="text-center py-6">
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-metadite-primary mx-auto mb-2"></div>
-                      <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                        Loading assigned models...
-                      </p>
-                    </div>
-                  ) : (
-                    <ul className="space-y-2">
-                      {assignedModels
-                        .filter(model => model.name.toLowerCase().includes(searchTerm.toLowerCase()))
-                        .map((model) => (
-                        <li key={model.id}>
-                          <button 
-                            onClick={() => handleSelectModel(model)}
-                            className={`flex items-center w-full p-3 rounded-lg transition-colors ${
-                              selectedModel?.id === model.id 
-                                ? 'bg-metadite-primary/10 text-metadite-primary' 
-                                : theme === 'dark'
-                                  ? 'text-gray-200 hover:bg-gray-700'
-                                  : 'text-gray-700 hover:bg-gray-100'
-                            }`}
-                          >
-                            <div className="w-10 h-10 rounded-full overflow-hidden mr-3">
-                              <img
-                                src={model.image}
-                                alt={model.name}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                            <div className="text-left">
-                              <p className="font-medium">{model.name}</p>
-                              <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Assigned to you</p>
-                            </div>
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                  
-                  {!loading && assignedModels.length === 0 && (
-                    <div className="text-center py-6">
-                      <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>No models assigned yet.</p>
-                    </div>
-                  )}
-                </div>
-              </div>
+              <ModelList 
+                models={assignedModels}
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
+                selectedModel={selectedModel}
+                onSelectModel={handleSelectModel}
+                loading={loading}
+              />
             </div>
             
             <div className="lg:col-span-3">
-              {selectedModel ? (
-                <div className={`glass-card rounded-xl overflow-hidden h-[600px] flex flex-col transition-opacity duration-300 ${
-                  theme === 'dark' ? 'bg-gray-800/70 border-gray-700' : ''
-                } ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>
-                  <div className={`p-4 border-b flex items-center ${theme === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
-                    <div className="w-10 h-10 rounded-full overflow-hidden mr-3">
-                      <img
-                        src={selectedModel.image}
-                        alt={selectedModel.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <h2 className={`font-medium ${theme === 'dark' ? 'text-white' : ''}`}>{selectedModel.name} Conversations</h2>
-                    </div>
-                    <div className="flex space-x-2">
-                      <button className={`p-2 transition-colors ${theme === 'dark' ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'}`}>
-                        <Filter className="h-5 w-5" />
-                      </button>
-                      <button className={`p-2 transition-colors ${theme === 'dark' ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'}`}>
-                        <Clock className="h-5 w-5" />
-                      </button>
-                      <button className={`p-2 transition-colors ${theme === 'dark' ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'}`}>
-                        <User className="h-5 w-5" />
-                      </button>
-                    </div>
-                  </div>
-                  
-                  <div className="flex-1 overflow-y-auto p-4">
-                    {loading ? (
-                      <div className="h-full flex items-center justify-center">
-                        <div className="text-center">
-                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-metadite-primary mx-auto mb-2"></div>
-                          <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Loading messages...</p>
-                        </div>
-                      </div>
-                    ) : messages.length > 0 ? (
-                      <div className="space-y-1">
-                        {messages.map((message) => (
-                          <MessageItem 
-                            key={message.id} 
-                            message={message} 
-                            onFlag={() => handleFlagMessage(message.id)}
-                          />
-                        ))}
-                        <div ref={messageEndRef} />
-                      </div>
-                    ) : (
-                      <div className="h-full flex items-center justify-center">
-                        <div className="text-center p-6">
-                          <MessageSquare className={`h-10 w-10 mx-auto mb-2 ${theme === 'dark' ? 'text-gray-600' : 'text-gray-300'}`} />
-                          <h3 className={`font-medium mb-1 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>No messages yet</h3>
-                          <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                            Start the conversation by sending a message.
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* File preview area */}
-                  {selectedFile && (
-                    <div className={`p-2 border-t ${theme === 'dark' ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-100'}`}>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          {previewUrl ? (
-                            <div className="h-16 w-16 overflow-hidden rounded-md">
-                              <img src={previewUrl} alt="Preview" className="h-full w-full object-cover" />
-                            </div>
-                          ) : (
-                            <div className={`h-12 w-12 flex items-center justify-center rounded-md ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'}`}>
-                              <FileImage className={`h-6 w-6 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`} />
-                            </div>
-                          )}
-                          <span className={`text-sm truncate max-w-[150px] ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                            {selectedFile.name}
-                          </span>
-                        </div>
-                        <button 
-                          onClick={clearSelectedFile}
-                          className={`p-1 rounded-full ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'}`}
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                  
-                  <div className={`p-4 border-t ${theme === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
-                    <form onSubmit={handleSendMessage} className="flex space-x-2">
-                      <div className="relative flex-1">
-                        <textarea
-                          placeholder={`Send a message as ${selectedModel.name}...`}
-                          value={newMessage}
-                          onChange={(e) => setNewMessage(e.target.value)}
-                          className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary resize-none h-12 min-h-[3rem] max-h-[8rem] ${
-                            theme === 'dark' 
-                              ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                              : 'border-gray-300 text-gray-900'
-                          }`}
-                          rows={1}
-                        ></textarea>
-                      </div>
-                      
-                      {/* File upload button */}
-                      <button 
-                        type="button"
-                        onClick={promptFileSelection}
-                        className={`flex-shrink-0 p-3 rounded-md ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'}`}
-                      >
-                        <Paperclip className={`h-5 w-5 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`} />
-                      </button>
-                      
-                      {/* Hidden file input */}
-                      <input 
-                        ref={fileInputRef}
-                        type="file" 
-                        onChange={handleFileSelect}
-                        className="hidden"
-                        accept="image/*,.pdf,.doc,.docx"
-                      />
-                      
-                      <button 
-                        type="submit"
-                        disabled={(!newMessage.trim() && !selectedFile) || isUploading}
-                        className="flex-shrink-0 bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white p-3 rounded-md hover:opacity-90 transition-opacity disabled:opacity-50"
-                      >
-                        {isUploading ? (
-                          <span className="inline-block h-5 w-5 rounded-full border-2 border-white border-r-transparent animate-spin"></span>
-                        ) : (
-                          <Send className="h-5 w-5" />
-                        )}
-                      </button>
-                    </form>
-                  </div>
-                </div>
-              ) : (
-                <div className={`glass-card rounded-xl p-10 text-center h-[600px] flex items-center justify-center ${
-                  theme === 'dark' ? 'bg-gray-800/70 border-gray-700' : ''
-                }`}>
-                  <div>
-                    <MessageSquare className={`h-16 w-16 mx-auto mb-4 ${theme === 'dark' ? 'text-gray-600' : 'text-gray-300'}`} />
-                    <h2 className={`text-2xl font-medium mb-2 ${theme === 'dark' ? 'text-white' : ''}`}>Select a Model</h2>
-                    <p className={`mb-6 max-w-md mx-auto ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                      Choose a model from the list to view and respond to conversations from users interested in that model.
-                    </p>
-                  </div>
-                </div>
-              )}
+              <ChatContainer 
+                selectedModel={selectedModel}
+                messages={messages}
+                loading={loading}
+                handleFlagMessage={handleFlagMessage}
+                newMessage={newMessage}
+                setNewMessage={setNewMessage}
+                handleSendMessage={handleSendMessage}
+                promptFileSelection={promptFileSelection}
+                isUploading={isUploading}
+                selectedFile={selectedFile}
+                previewUrl={previewUrl}
+                clearSelectedFile={clearSelectedFile}
+                isLoaded={isLoaded}
+              />
             </div>
           </div>
         </div>
       </div>
+      
+      {/* Hidden file input */}
+      <input 
+        ref={fileInputRef}
+        type="file" 
+        onChange={handleFileSelect}
+        className="hidden"
+        accept="image/*,.pdf,.doc,.docx"
+      />
       
       <Footer />
     </div>
