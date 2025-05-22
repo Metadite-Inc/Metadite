@@ -15,7 +15,8 @@ import {
   getMessages, 
   sendMessage,
   connectWebSocket,
-  sendFileMessage
+  sendFileMessage,
+  flagMessage
 } from '../services/ChatService';
 
 const Moderator = () => {
@@ -80,6 +81,14 @@ const Moderator = () => {
     }
   }, [user]);
   
+  // Updated to clear the message input when selecting a new model
+  const handleSelectModel = (model) => {
+    // Clear input message and selected file when switching rooms
+    setNewMessage('');
+    clearSelectedFile();
+    setSelectedModel(model);
+  };
+  
   // Load messages when a model is selected
   useEffect(() => {
     const loadMessages = async () => {
@@ -102,6 +111,11 @@ const Moderator = () => {
     
     // Set up WebSocket connection for real-time updates
     if (selectedModel) {
+      // Close previous connection if it exists
+      if (websocket) {
+        websocket.close();
+      }
+      
       const ws = connectWebSocket(selectedModel.id, handleWebSocketMessage);
       setWebsocket(ws);
       
@@ -295,7 +309,7 @@ const Moderator = () => {
                         .map((model) => (
                         <li key={model.id}>
                           <button 
-                            onClick={() => setSelectedModel(model)}
+                            onClick={() => handleSelectModel(model)}
                             className={`flex items-center w-full p-3 rounded-lg transition-colors ${
                               selectedModel?.id === model.id 
                                 ? 'bg-metadite-primary/10 text-metadite-primary' 

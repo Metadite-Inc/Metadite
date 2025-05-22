@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { format } from 'date-fns';
 import { getFileUrl } from '../services/ChatService';
@@ -19,7 +20,7 @@ const MessageItem = ({ message, onFlag }) => {
           <div className="relative group">
             <div className="relative rounded-lg overflow-hidden">
               <img 
-                src={message.file_url || message.content} 
+                src={message.file_url || getFileUrl(message.content)} 
                 alt="Shared image" 
                 className="max-w-full max-h-[300px] object-contain rounded-lg hover:opacity-95 transition-opacity"
                 loading="lazy"
@@ -28,7 +29,7 @@ const MessageItem = ({ message, onFlag }) => {
             </div>
             <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
               <a 
-                href={message.file_url || message.content}
+                href={message.file_url || getFileUrl(message.content)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="p-2 bg-black/50 rounded-full hover:bg-black/70 transition-colors"
