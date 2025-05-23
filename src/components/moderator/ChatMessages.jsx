@@ -67,13 +67,6 @@ const ChatMessages = ({
     );
   }
 
-  // Sort messages in chronological order (oldest to newest)
-  const sortedMessages = [...messages].sort((a, b) => {
-    const dateA = new Date(a.created_at || a.timestamp || 0);
-    const dateB = new Date(b.created_at || b.timestamp || 0);
-    return dateA - dateB;
-  });
-
   return (
     <div className="space-y-4">
       {/* Connection status */}
@@ -103,7 +96,7 @@ const ChatMessages = ({
       
       {/* Messages */}
       <div className="space-y-6">
-        {sortedMessages.map((message) => (
+        {messages.map((message) => (
           <MessageItem 
             key={message.id} 
             message={message} 

@@ -2,175 +2,27 @@
 import axios from 'axios';
 import { toast } from 'sonner';
 import { MessageStatus, MessageType } from '../types/chat';
+import WebSocketManager from './websocket/WebSocketManager';
+import MessageQueue from './websocket/MessageQueue';
+import TokenUtils from './utils/TokenUtils';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-// WebSocket connection
-let ws: WebSocket | null = null;
-let reconnectAttempts = 0;
-const MAX_RECONNECT_ATTEMPTS = 5;
-let reconnectTimeout: NodeJS.Timeout | null = null;
-const messageQueue: any[] = [];
-
-// Helper method to extract user ID from JWT token
-const getUserIdFromToken = (token: string): number => {
-  try {
-    // JWT tokens consist of three parts separated by dots
-    const parts = token.split('.');
-    if (parts.length !== 3) {
-      throw new Error('Invalid token format');
-    }
-    
-    // Decode the payload (middle part)
-    const payload = JSON.parse(atob(parts[1]));
-    
-    // Extract the 'sub' claim which contains the user ID
-    if (payload && payload.sub) {
-      return Number(payload.sub);
-    } else {
-      throw new Error('User ID not found in token');
-    }
-  } catch (error) {
-    console.error('Failed to extract user ID from token:', error);
-    throw new Error('Failed to extract user ID from token');
-  }
-};
-
-// Get auth token from localStorage and validate
-const getAuthToken = (): string | null => {
-  const token = localStorage.getItem('access_token');
-  if (!token) {
-    toast.error('Authentication required', {
-      description: 'You must be logged in to send messages.',
-    });
-    return null;
-  }
-  return token;
-};
-
-// Helper function to process message queue
-const processMessageQueue = () => {
-  if (!ws || ws.readyState !== WebSocket.OPEN) return;
-  
-  const queue = JSON.parse(localStorage.getItem('messageQueue') || '[]');
-  if (queue.length === 0) return;
-  
-  console.log(`Processing ${queue.length} queued messages`);
-  
-  for (const message of queue) {
-    try {
-      ws.send(JSON.stringify({
-        action: "create",
-        message: message.content,
-        chat_room_id: message.chatRoomId,
-        type: message.type || "text"
-      }));
-      console.log('Sent queued message:', message);
-    } catch (error) {
-      console.error('Failed to process queued message:', error);
-    }
-  }
-  localStorage.removeItem('messageQueue');
-};
-
-// Queue message for later sending
-const queueMessage = (message: any) => {
-  const queue = JSON.parse(localStorage.getItem('messageQueue') || '[]');
-  queue.push(message);
-  localStorage.setItem('messageQueue', JSON.stringify(queue));
-  console.log('Message queued for later sending:', message);
-  toast.info('Message will be sent when connection is restored');
-};
-
-// Reconnection logic
-const reconnectWebSocket = (chatRoomId: number | string, onMessage: (data: any) => void) => {
-  if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-    toast.error('Failed to reconnect. Please refresh the page.');
-    return;
-  }
-  
-  if (reconnectTimeout) {
-    clearTimeout(reconnectTimeout);
-  }
-  
-  const backoffTime = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
-  console.log(`Attempting to reconnect in ${backoffTime/1000} seconds (attempt ${reconnectAttempts + 1}/${MAX_RECONNECT_ATTEMPTS})`);
-  
-  reconnectTimeout = setTimeout(() => {
-    reconnectAttempts++;
-    connectWebSocket(chatRoomId, onMessage);
-  }, backoffTime);
-};
-
 // Enhanced WebSocket connection
 export const connectWebSocket = (chatRoomId: number | string, onMessage: (data: any) => void) => {
-  const token = getAuthToken();
+  const token = TokenUtils.getAuthToken();
   if (!token) return null;
   
   try {
-    const userId = getUserIdFromToken(token);
+    const userId = TokenUtils.getUserIdFromToken(token);
     
-    // Close existing connection if any
-    if (ws) {
-      ws.close();
-    }
-    
-    let wsUrl;
-    
-    // Make sure chatRoomId is valid (not NaN, undefined, or null)
-    if (!chatRoomId || (typeof chatRoomId === 'number' && isNaN(chatRoomId))) {
-      console.error('Invalid chat room ID:', chatRoomId);
-      toast.error('Invalid chat room ID. Please try again later.');
-      return null;
-    }
-    
-    // Handle special case for global notifications
-    if (chatRoomId === 'global') {
-      wsUrl = `${API_BASE_URL.replace('http', 'ws')}/api/chat/ws/global/${userId}`;
-    } else {
-      wsUrl = `${API_BASE_URL.replace('http', 'ws')}/api/chat/ws/${chatRoomId}/${userId}`;
-    }
-    
-    console.log(`Connecting to WebSocket: ${wsUrl}`);
-    
-    ws = new WebSocket(wsUrl);
-    
-    ws.onopen = () => {
-      console.log('WebSocket connected');
-      toast.success('Connected to chat server');
-      reconnectAttempts = 0;
-      // Process any queued messages
-      processMessageQueue();
-      
-      // Mark messages as read on connection (only for real chat rooms, not global)
-      if (chatRoomId !== 'global') {
+    return WebSocketManager.connect(chatRoomId, userId, {
+      onMessage,
+      onOpen: () => {
+        // Mark messages as read on connection
         markMessagesAsRead(Number(chatRoomId));
       }
-    };
-    
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        console.log('WebSocket message received:', data);
-        onMessage(data);
-      } catch (error) {
-        console.error('Error parsing WebSocket message:', error);
-      }
-    };
-    
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-      toast.error('Connection error. Please check your internet connection.');
-    };
-    
-    ws.onclose = (event) => {
-      console.log('WebSocket connection closed:', event.code, event.reason);
-      if (event.code !== 1000) { // Not a normal closure
-        reconnectWebSocket(chatRoomId, onMessage);
-      }
-    };
-    
-    return ws;
+    });
   } catch (error) {
     console.error('Failed to connect WebSocket:', error);
     toast.error('Failed to establish connection. Please try again.');
@@ -183,7 +35,7 @@ export const sendMessage = async (content: string, chatRoomId: number, moderator
   console.log(`Sending message to room ${chatRoomId}:`, content);
   
   // Try WebSocket first
-  if (ws && ws.readyState === WebSocket.OPEN) {
+  if (WebSocketManager.isConnected()) {
     try {
       const message = {
         action: "create",
@@ -197,9 +49,11 @@ export const sendMessage = async (content: string, chatRoomId: number, moderator
         message['moderator_id'] = moderatorId;
       }
       
-      ws.send(JSON.stringify(message));
-      console.log('Message sent via WebSocket');
-      return true;
+      const success = WebSocketManager.send(message);
+      if (success) {
+        console.log('Message sent via WebSocket');
+        return true;
+      }
     } catch (error) {
       console.error('Error sending message via WebSocket:', error);
       // Fall back to HTTP if WebSocket fails
@@ -213,14 +67,14 @@ export const sendMessage = async (content: string, chatRoomId: number, moderator
     return result;
   } catch (error) {
     // Queue message for later if both methods fail
-    queueMessage({ content, chatRoomId, type: "text", moderatorId });
+    MessageQueue.queueMessage({ content, chatRoomId, type: "text", moderatorId });
     throw error;
   }
 };
 
 // Send messages with HTTP
 export const sendHttpMessage = async (content: string, chatRoomId: number, moderatorId?: number) => {
-  const token = getAuthToken();
+  const token = TokenUtils.getAuthToken();
   if (!token) return null;
   
   const message: any = {
@@ -252,7 +106,7 @@ export const sendHttpMessage = async (content: string, chatRoomId: number, moder
 
 // Chat Room APIs
 export const createChatRoom = async (dollId: string) => {
-  const token = getAuthToken();
+  const token = TokenUtils.getAuthToken();
   if (!token) return null;
   
   try {
@@ -273,7 +127,7 @@ export const createChatRoom = async (dollId: string) => {
 };
 
 export const getUserChatRooms = async (skip: number = 0, limit: number = 100) => {
-  const token = getAuthToken();
+  const token = TokenUtils.getAuthToken();
   if (!token) return null;
   
   try {
@@ -294,7 +148,7 @@ export const getUserChatRooms = async (skip: number = 0, limit: number = 100) =>
 };
 
 export const getModeratorChatRooms = async (skip: number = 0, limit: number = 100) => {
-  const token = getAuthToken();
+  const token = TokenUtils.getAuthToken();
   if (!token) return null;
   
   try {
@@ -315,7 +169,7 @@ export const getModeratorChatRooms = async (skip: number = 0, limit: number = 10
 };
 
 export const getChatRoomById = async (chatRoomId: number) => {
-  const token = getAuthToken();
+  const token = TokenUtils.getAuthToken();
   if (!token) return null;
   
   try {
@@ -336,7 +190,7 @@ export const getChatRoomById = async (chatRoomId: number) => {
 };
 
 export const sendFileMessage = async (file: File, chatRoomId: number, receiverId?: number) => {
-  const token = getAuthToken();
+  const token = TokenUtils.getAuthToken();
   if (!token) return null;
   
   console.log(`Uploading file to chat room ${chatRoomId}:`, file.name);
@@ -374,7 +228,7 @@ export const sendFileMessage = async (file: File, chatRoomId: number, receiverId
 };
 
 export const getMessages = async (chatRoomId: number, skip: number = 0, limit: number = 50) => {
-  const token = getAuthToken();
+  const token = TokenUtils.getAuthToken();
   if (!token) return null;
   
   try {
@@ -399,7 +253,7 @@ export const getMessages = async (chatRoomId: number, skip: number = 0, limit: n
 };
 
 export const deleteMessage = async (messageId: string | number) => {
-  const token = getAuthToken();
+  const token = TokenUtils.getAuthToken();
   if (!token) return null;
   
   try {
@@ -421,7 +275,7 @@ export const deleteMessage = async (messageId: string | number) => {
 };
 
 export const getUnreadCount = async () => {
-  const token = getAuthToken();
+  const token = TokenUtils.getAuthToken();
   if (!token) return null;
   
   try {
@@ -442,7 +296,7 @@ export const getUnreadCount = async () => {
 
 // Add a function to update message status (Read/Delivered)
 export const updateMessageStatus = async (messageId: string, status: MessageStatus) => {
-  const token = getAuthToken();
+  const token = TokenUtils.getAuthToken();
   if (!token) return null;
   
   try {
@@ -475,13 +329,12 @@ export const markMessagesAsRead = (chatRoomId: number) => {
     return false;
   }
   
-  if (ws && ws.readyState === WebSocket.OPEN) {
+  if (WebSocketManager.isConnected()) {
     console.log(`Marking all messages as read in room ${chatRoomId}`);
-    ws.send(JSON.stringify({
+    return WebSocketManager.send({
       action: "read",
       chat_room_id: chatRoomId
-    }));
-    return true;
+    });
   }
   return false;
 };
@@ -493,21 +346,20 @@ export const sendTypingIndicator = (chatRoomId: number, isTyping: boolean) => {
     return false;
   }
   
-  if (ws && ws.readyState === WebSocket.OPEN) {
+  if (WebSocketManager.isConnected()) {
     console.log(`Sending typing indicator: ${isTyping ? 'typing' : 'stopped typing'} in room ${chatRoomId}`);
-    ws.send(JSON.stringify({
+    return WebSocketManager.send({
       action: "typing",
       chat_room_id: chatRoomId,
       is_typing: isTyping
-    }));
-    return true;
+    });
   }
   return false;
 };
 
 // Flag message for review
 export const flagMessage = async (messageId: number | string, isFlagged: boolean) => {
-  const token = getAuthToken();
+  const token = TokenUtils.getAuthToken();
   if (!token) return null;
   
   try {
