@@ -67,11 +67,23 @@ const ChatMessages = ({
     );
   }
 
-  // Sort messages in chronological order (oldest to newest)
+  // Sort messages in chronological order (oldest to newest) with safe date handling
   const sortedMessages = [...messages].sort((a, b) => {
-    const dateA = new Date(a.created_at || a.timestamp || 0);
-    const dateB = new Date(b.created_at || b.timestamp || 0);
-    return dateA - dateB;
+    try {
+      const dateA = new Date(a.created_at || a.timestamp || 0);
+      const dateB = new Date(b.created_at || b.timestamp || 0);
+      
+      // Check if dates are valid before comparing
+      if (isNaN(dateA.getTime()) || isNaN(dateB.getTime())) {
+        console.warn('Invalid date encountered in messages:', { a, b });
+        return 0; // Keep original order if dates are invalid
+      }
+      
+      return dateA - dateB;
+    } catch (error) {
+      console.error('Error sorting messages:', error);
+      return 0; // Keep original order if comparison fails
+    }
   });
 
   return (

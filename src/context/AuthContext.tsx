@@ -1,9 +1,9 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { toast } from 'sonner';
 import { authApi } from '../lib/api/auth_api';
 
 interface User {
-  //name: string;
   id: string;
   email: string;
   full_name: string;
@@ -41,7 +41,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const token = localStorage.getItem('access_token');
         if (token) {
           const userData = await authApi.getCurrentUser();
-          setUser(userData);
+          // Ensure membershipLevel is one of the allowed values
+          const parsedUser = {
+            ...userData,
+            membershipLevel: parseMembershipLevel(userData.membershipLevel || 'standard')
+          };
+          
+          setUser(parsedUser);
         }
       } catch (error) {
         console.error('Failed to initialize auth:', error);
@@ -53,12 +59,27 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     initializeAuth();
   }, []);
+  
+  // Helper to ensure membership level is a valid type
+  const parseMembershipLevel = (level: string): 'standard' | 'vip' | 'vvip' => {
+    if (level === 'vip' || level === 'vvip') {
+      return level;
+    }
+    return 'standard';
+  };
 
   const login = async (email: string, password: string): Promise<void> => {
     try {
       await authApi.login({ email, password });
       const userData = await authApi.getCurrentUser();
-      setUser(userData);
+      
+      // Ensure membershipLevel is one of the allowed values
+      const parsedUser = {
+        ...userData,
+        membershipLevel: parseMembershipLevel(userData.membershipLevel || 'standard')
+      };
+      
+      setUser(parsedUser);
       toast.success('Login successful');
     } catch (error) {
       toast.error('Login failed. Please check your credentials.');

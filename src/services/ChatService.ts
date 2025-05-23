@@ -1,4 +1,3 @@
-
 import axios from 'axios';
 import { toast } from 'sonner';
 import { MessageStatus, MessageType } from '../types/chat';
@@ -10,7 +9,6 @@ let ws: WebSocket | null = null;
 let reconnectAttempts = 0;
 const MAX_RECONNECT_ATTEMPTS = 5;
 let reconnectTimeout: NodeJS.Timeout | null = null;
-const messageQueue: any[] = [];
 
 // Helper method to extract user ID from JWT token
 const getUserIdFromToken = (token: string): number => {
@@ -102,7 +100,7 @@ const reconnectWebSocket = (chatRoomId: number, onMessage: (data: any) => void) 
   }, backoffTime);
 };
 
-// Enhanced WebSocket connection
+// Enhanced WebSocket connection - Fixed to correctly handle chat room IDs
 export const connectWebSocket = (chatRoomId: number | string, onMessage: (data: any) => void) => {
   const token = getAuthToken();
   if (!token) return null;
@@ -115,14 +113,14 @@ export const connectWebSocket = (chatRoomId: number | string, onMessage: (data: 
       ws.close();
     }
     
-    let wsUrl;
-    
-    // Handle special case for global notifications
-    if (chatRoomId === 'global') {
-      wsUrl = `${API_BASE_URL.replace('http', 'ws')}/api/chat/ws/global/${userId}`;
-    } else {
-      wsUrl = `${API_BASE_URL.replace('http', 'ws')}/api/chat/ws/${chatRoomId}/${userId}`;
+    // Validate chatRoomId to prevent NaN
+    if (chatRoomId === undefined || chatRoomId === null || (typeof chatRoomId === 'number' && isNaN(chatRoomId))) {
+      console.error('Invalid chat room ID:', chatRoomId);
+      toast.error('Invalid chat room ID. Please try again or refresh the page.');
+      return null;
     }
+    
+    let wsUrl = `${API_BASE_URL.replace('http', 'ws')}/api/chat/ws/${chatRoomId}/${userId}`;
     
     console.log(`Connecting to WebSocket: ${wsUrl}`);
     
@@ -135,10 +133,8 @@ export const connectWebSocket = (chatRoomId: number | string, onMessage: (data: 
       // Process any queued messages
       processMessageQueue();
       
-      // Mark messages as read on connection (only for real chat rooms, not global)
-      if (chatRoomId !== 'global') {
-        markMessagesAsRead(Number(chatRoomId));
-      }
+      // Mark messages as read on connection
+      markMessagesAsRead(Number(chatRoomId));
     };
     
     ws.onmessage = (event) => {
@@ -172,7 +168,7 @@ export const connectWebSocket = (chatRoomId: number | string, onMessage: (data: 
 };
 
 // Send a message via WebSocket with fallback to HTTP
-export const sendMessage = async (content: string, chatRoomId: number, moderatorId?: number) => {
+export const sendMessage = async (content: string, chatRoomId: number, receiverId?: number) => {
   console.log(`Sending message to room ${chatRoomId}:`, content);
   
   // Try WebSocket first
@@ -185,9 +181,9 @@ export const sendMessage = async (content: string, chatRoomId: number, moderator
         type: "text"
       } as any;
       
-      // Add moderator_id if provided
-      if (moderatorId) {
-        message['moderator_id'] = moderatorId;
+      // Add receiver_id if provided
+      if (receiverId) {
+        message['receiver_id'] = receiverId;
       }
       
       ws.send(JSON.stringify(message));
@@ -202,17 +198,17 @@ export const sendMessage = async (content: string, chatRoomId: number, moderator
   // Fallback to HTTP
   console.log('Falling back to HTTP for sending message');
   try {
-    const result = await sendHttpMessage(content, chatRoomId, moderatorId);
+    const result = await sendHttpMessage(content, chatRoomId, receiverId);
     return result;
   } catch (error) {
     // Queue message for later if both methods fail
-    queueMessage({ content, chatRoomId, type: "text", moderatorId });
+    queueMessage({ content, chatRoomId, type: "text", receiverId });
     throw error;
   }
 };
 
 // Send messages with HTTP
-export const sendHttpMessage = async (content: string, chatRoomId: number, moderatorId?: number) => {
+export const sendHttpMessage = async (content: string, chatRoomId: number, receiverId?: number) => {
   const token = getAuthToken();
   if (!token) return null;
   
@@ -222,8 +218,8 @@ export const sendHttpMessage = async (content: string, chatRoomId: number, moder
     message_type: MessageType.TEXT
   };
   
-  if (moderatorId) {
-    message.moderator_id = moderatorId;
+  if (receiverId) {
+    message.receiver_id = receiverId;
   }
   
   try {
@@ -456,13 +452,20 @@ export const updateMessageStatus = async (messageId: string, status: MessageStat
 };
 
 // File handling
-export const getFileUrl = (filename: string) => {
+export const getFileUrl = (filename: string | undefined | null) => {
+  if (!filename) return null;
+  
+  // If the filename is already a full URL, return it as is
+  if (filename.startsWith('http')) {
+    return filename;
+  }
+  
   return `${API_BASE_URL}/api/chat/files/${filename}`;
 };
 
 // Mark messages as read via WebSocket
 export const markMessagesAsRead = (chatRoomId: number) => {
-  if (ws && ws.readyState === WebSocket.OPEN) {
+  if (ws && ws.readyState === WebSocket.OPEN && !isNaN(chatRoomId)) {
     console.log(`Marking all messages as read in room ${chatRoomId}`);
     ws.send(JSON.stringify({
       action: "read",
