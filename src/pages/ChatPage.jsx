@@ -123,8 +123,8 @@ const ChatPage = () => {
     const file = e.target.files[0];
     if (!file) return;
     
-    // Check file size (limit to 10MB)
-    if (file.size > 10 * 1024 * 1024) {
+    // Check file size (limit to 20MB)
+    if (file.size > 20 * 1024 * 1024) {
       toast.error("File too large", {
         description: "Maximum file size is 10MB"
       });
