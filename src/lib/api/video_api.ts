@@ -1,6 +1,6 @@
+
 import { toast } from "sonner";
 import { BaseApiService } from "./base_api";
-import { apiService } from "../api";
 
 const API_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -10,7 +10,7 @@ export interface VideoUploadRequest {
   description: string;
   is_featured: boolean;
   file: File;
-  created_at: Date
+  created_at: string; // Changed from Date to string
 }
 
 export interface Video {
@@ -75,7 +75,7 @@ class VideoApiService extends BaseApiService {
       formData.append('title', data.title);
       formData.append('description', data.description);
       formData.append('is_featured', data.is_featured.toString());
-      formData.append('created_at', data.created_at);
+      formData.append('created_at', data.created_at); // This is now a string
       formData.append('upload_date', new Date().toISOString());
 
       const response = await fetch(`${API_URL}/api/videos/upload`, {
@@ -100,7 +100,7 @@ class VideoApiService extends BaseApiService {
         description: error instanceof Error ? error.message : 'Unknown error occurred',
       });
       console.error('Error uploading video:', error);
-      throw error;//return null;
+      throw error;
     }
   }
 

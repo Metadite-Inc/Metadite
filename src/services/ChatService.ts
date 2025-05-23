@@ -115,14 +115,14 @@ export const connectWebSocket = (chatRoomId: number | string, onMessage: (data: 
       ws.close();
     }
     
-    let wsUrl;
-    
-    // Handle special case for global notifications
-    if (chatRoomId === 'global') {
-      wsUrl = `${API_BASE_URL.replace('http', 'ws')}/api/chat/ws/global/${userId}`;
-    } else {
-      wsUrl = `${API_BASE_URL.replace('http', 'ws')}/api/chat/ws/${chatRoomId}/${userId}`;
+    // Make sure we have a valid chatRoomId
+    if (!chatRoomId || isNaN(Number(chatRoomId))) {
+      console.error('Invalid chat room ID:', chatRoomId);
+      toast.error('Invalid chat room ID');
+      return null;
     }
+    
+    const wsUrl = `${API_BASE_URL.replace('http', 'ws')}/api/chat/ws/${chatRoomId}/${userId}`;
     
     console.log(`Connecting to WebSocket: ${wsUrl}`);
     
@@ -135,10 +135,8 @@ export const connectWebSocket = (chatRoomId: number | string, onMessage: (data: 
       // Process any queued messages
       processMessageQueue();
       
-      // Mark messages as read on connection (only for real chat rooms, not global)
-      if (chatRoomId !== 'global') {
-        markMessagesAsRead(Number(chatRoomId));
-      }
+      // Mark messages as read on connection
+      markMessagesAsRead(Number(chatRoomId));
     };
     
     ws.onmessage = (event) => {
@@ -457,6 +455,13 @@ export const updateMessageStatus = async (messageId: string, status: MessageStat
 
 // File handling
 export const getFileUrl = (filename: string) => {
+  if (!filename) return '';
+  
+  // If it's already a full URL, just return it
+  if (filename.startsWith('http://') || filename.startsWith('https://')) {
+    return filename;
+  }
+  
   return `${API_BASE_URL}/api/chat/files/${filename}`;
 };
 
