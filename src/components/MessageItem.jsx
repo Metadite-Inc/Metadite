@@ -12,6 +12,20 @@ const MessageItem = ({ message, onDelete, onFlag }) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const isOwnMessage = message.sender_id === user?.id;
 
+  // Format the date safely
+  const formatMessageDate = (dateString) => {
+    try {
+      if (!dateString) return '';
+      const date = new Date(dateString);
+      // Check if date is valid
+      if (isNaN(date.getTime())) return '';
+      return format(date, 'HH:mm');
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return '';
+    }
+  };
+
   const renderMessageContent = () => {
     switch (message.message_type) {
       case 'IMAGE':
@@ -19,7 +33,7 @@ const MessageItem = ({ message, onDelete, onFlag }) => {
           <div className="relative group">
             <div className="relative rounded-lg overflow-hidden">
               <img 
-                src={message.file_url || getFileUrl(message.content)} 
+                src={message.file_url ? getFileUrl(message.file_url) : getFileUrl(message.content)} 
                 alt="Shared image" 
                 className="max-w-full max-h-[300px] object-contain rounded-lg hover:opacity-95 transition-opacity"
                 loading="lazy"
@@ -32,7 +46,7 @@ const MessageItem = ({ message, onDelete, onFlag }) => {
             </div>
             <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
               <a 
-                href={message.file_url || getFileUrl(message.content)}
+                href={message.file_url ? getFileUrl(message.file_url) : getFileUrl(message.content)}
                 target="_blank"
                 rel="noopener noreferrer"
                 download
@@ -102,7 +116,7 @@ const MessageItem = ({ message, onDelete, onFlag }) => {
       >
         <div className="flex justify-between items-start mb-1">
           <span className={`text-xs font-medium ${isOwnMessage ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'}`}>
-            {message.sender_name || 'Unknown'} • {format(new Date(message.created_at || message.timestamp), 'HH:mm')}
+            {message.sender_name || 'Unknown'} • {formatMessageDate(message.created_at || message.timestamp)}
           </span>
           
           <button 

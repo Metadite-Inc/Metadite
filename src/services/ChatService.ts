@@ -1,4 +1,3 @@
-
 import axios from 'axios';
 import { toast } from 'sonner';
 import { MessageStatus, MessageType } from '../types/chat';
@@ -110,19 +109,21 @@ export const connectWebSocket = (chatRoomId: number | string, onMessage: (data: 
   try {
     const userId = getUserIdFromToken(token);
     
+    // Validate chat room ID to prevent NaN issues
+    const validChatRoomId = Number(chatRoomId);
+    if (isNaN(validChatRoomId)) {
+      console.error('Invalid chat room ID:', chatRoomId);
+      toast.error('Invalid chat room ID. Cannot connect to chat.');
+      return null;
+    }
+    
     // Close existing connection if any
     if (ws) {
       ws.close();
     }
     
-    let wsUrl;
-    
-    // Handle special case for global notifications
-    if (chatRoomId === 'global') {
-      wsUrl = `${API_BASE_URL.replace('http', 'ws')}/api/chat/ws/global/${userId}`;
-    } else {
-      wsUrl = `${API_BASE_URL.replace('http', 'ws')}/api/chat/ws/${chatRoomId}/${userId}`;
-    }
+    // Build the WebSocket URL
+    const wsUrl = `${API_BASE_URL.replace('http', 'ws')}/api/chat/ws/${validChatRoomId}/${userId}`;
     
     console.log(`Connecting to WebSocket: ${wsUrl}`);
     
@@ -135,10 +136,8 @@ export const connectWebSocket = (chatRoomId: number | string, onMessage: (data: 
       // Process any queued messages
       processMessageQueue();
       
-      // Mark messages as read on connection (only for real chat rooms, not global)
-      if (chatRoomId !== 'global') {
-        markMessagesAsRead(Number(chatRoomId));
-      }
+      // Mark messages as read on connection
+      markMessagesAsRead(validChatRoomId);
     };
     
     ws.onmessage = (event) => {
@@ -159,7 +158,7 @@ export const connectWebSocket = (chatRoomId: number | string, onMessage: (data: 
     ws.onclose = (event) => {
       console.log('WebSocket connection closed:', event.code, event.reason);
       if (event.code !== 1000) { // Not a normal closure
-        reconnectWebSocket(Number(chatRoomId), onMessage);
+        reconnectWebSocket(validChatRoomId, onMessage);
       }
     };
     
@@ -457,6 +456,11 @@ export const updateMessageStatus = async (messageId: string, status: MessageStat
 
 // File handling
 export const getFileUrl = (filename: string) => {
+  if (!filename) return '';
+  // Handle both cases: when we have a full URL and when we just have a filename
+  if (filename.startsWith('http')) {
+    return filename;
+  }
   return `${API_BASE_URL}/api/chat/files/${filename}`;
 };
 
