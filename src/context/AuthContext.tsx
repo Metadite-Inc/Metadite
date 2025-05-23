@@ -41,15 +41,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const token = localStorage.getItem('access_token');
         if (token) {
           const userData = await authApi.getCurrentUser();
-          // Make sure the user data matches our User interface
+          // Format the response to match our User interface
           const formattedUser: User = {
             id: userData.id,
             email: userData.email,
-            full_name: userData.full_name || userData.name || '',
-            role: userData.role,
-            membershipLevel: userData.membership_level,
+            full_name: userData.fullName || userData.full_name || userData.name || '',
+            role: (userData.role as 'admin' | 'moderator' | 'user'),
+            membershipLevel: userData.membershipLevel || userData.membership_level,
             region: userData.region,
-            created_at: userData.created_at
+            created_at: userData.createdAt || userData.created_at
           };
           setUser(formattedUser);
         }
@@ -72,11 +72,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const formattedUser: User = {
         id: userData.id,
         email: userData.email,
-        full_name: userData.full_name || userData.name || '',
-        role: userData.role,
-        membershipLevel: userData.membership_level,
+        full_name: userData.fullName || userData.full_name || userData.name || '',
+        role: (userData.role as 'admin' | 'moderator' | 'user'),
+        membershipLevel: userData.membershipLevel || userData.membership_level,
         region: userData.region,
-        created_at: userData.created_at
+        created_at: userData.createdAt || userData.created_at
       };
       setUser(formattedUser);
       toast.success('Login successful');
