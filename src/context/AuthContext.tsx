@@ -41,13 +41,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const token = localStorage.getItem('access_token');
         if (token) {
           const userData = await authApi.getCurrentUser();
-          // Ensure membershipLevel is one of the allowed values
-          const parsedUser = {
-            ...userData,
-            membershipLevel: parseMembershipLevel(userData.membershipLevel || 'standard')
+          // Make sure the user data matches our User interface
+          const formattedUser: User = {
+            id: userData.id,
+            email: userData.email,
+            full_name: userData.full_name || userData.name || '',
+            role: userData.role,
+            membershipLevel: userData.membership_level,
+            region: userData.region,
+            created_at: userData.created_at
           };
-          
-          setUser(parsedUser);
+          setUser(formattedUser);
         }
       } catch (error) {
         console.error('Failed to initialize auth:', error);
@@ -59,27 +63,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     initializeAuth();
   }, []);
-  
-  // Helper to ensure membership level is a valid type
-  const parseMembershipLevel = (level: string): 'standard' | 'vip' | 'vvip' => {
-    if (level === 'vip' || level === 'vvip') {
-      return level;
-    }
-    return 'standard';
-  };
 
   const login = async (email: string, password: string): Promise<void> => {
     try {
       await authApi.login({ email, password });
       const userData = await authApi.getCurrentUser();
-      
-      // Ensure membershipLevel is one of the allowed values
-      const parsedUser = {
-        ...userData,
-        membershipLevel: parseMembershipLevel(userData.membershipLevel || 'standard')
+      // Format user data to match our User interface
+      const formattedUser: User = {
+        id: userData.id,
+        email: userData.email,
+        full_name: userData.full_name || userData.name || '',
+        role: userData.role,
+        membershipLevel: userData.membership_level,
+        region: userData.region,
+        created_at: userData.created_at
       };
-      
-      setUser(parsedUser);
+      setUser(formattedUser);
       toast.success('Login successful');
     } catch (error) {
       toast.error('Login failed. Please check your credentials.');

@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { getFileUrl, deleteMessage } from '../services/ChatService';
-import { MoreVertical, Download, Image as ImageIcon, Trash, File } from 'lucide-react';
+import { MoreVertical, Download, Trash, File } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
 
@@ -11,18 +11,6 @@ const MessageItem = ({ message, onDelete, onFlag }) => {
   const [showActions, setShowActions] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const isOwnMessage = message.sender_id === user?.id;
-
-  // Safe date formatting with fallback
-  const formatTimestamp = (timestamp) => {
-    if (!timestamp) return '';
-    
-    try {
-      return format(new Date(timestamp), 'HH:mm');
-    } catch (error) {
-      console.error('Invalid date format:', timestamp, error);
-      return '';
-    }
-  };
 
   const renderMessageContent = () => {
     switch (message.message_type) {
@@ -56,10 +44,9 @@ const MessageItem = ({ message, onDelete, onFlag }) => {
           </div>
         );
       case 'FILE':
-        const fileUrl = message.file_url || getFileUrl(message.content);
         return (
           <a 
-            href={fileUrl} 
+            href={getFileUrl(message.file_url || message.content)} 
             target="_blank" 
             rel="noopener noreferrer"
             download
@@ -104,9 +91,6 @@ const MessageItem = ({ message, onDelete, onFlag }) => {
     }
   };
 
-  // Safely get timestamp with fallbacks
-  const timestamp = message.created_at || message.timestamp || null;
-
   return (
     <div className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} mb-4 group`}>
       <div 
@@ -118,7 +102,7 @@ const MessageItem = ({ message, onDelete, onFlag }) => {
       >
         <div className="flex justify-between items-start mb-1">
           <span className={`text-xs font-medium ${isOwnMessage ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'}`}>
-            {message.sender_name || 'Unknown'} • {timestamp ? formatTimestamp(timestamp) : ''}
+            {message.sender_name || 'Unknown'} • {format(new Date(message.created_at || message.timestamp), 'HH:mm')}
           </span>
           
           <button 

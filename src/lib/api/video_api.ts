@@ -221,3 +221,10 @@ class VideoApiService extends BaseApiService {
 }
 
 export const videoApiService = new VideoApiService();
+
+// This is a placeholder function to fix the error
+export function fixDateInFormData(formData: FormData, fieldName: string, date: Date) {
+  // Convert Date to ISO string before appending to FormData
+  formData.append(fieldName, date.toISOString());
+  return formData;
+}
