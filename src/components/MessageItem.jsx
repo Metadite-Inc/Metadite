@@ -19,7 +19,27 @@ const MessageItem = ({ message, onDelete, onFlag }) => {
     }
     
     // Otherwise use the getFileUrl helper with either file_url or content
-    return getFileUrl(message.file_url || message.content);
+    const fileIdentifier = message.file_url || message.content;
+    if (fileIdentifier) {
+      return getFileUrl(fileIdentifier);
+    }
+    
+    // Fallback to placeholder
+    return 'https://placehold.co/400x300?text=Image+Not+Found';
+  };
+
+  // Format date safely
+  const formatSafeDate = (dateStr) => {
+    try {
+      const date = new Date(dateStr || Date.now());
+      if (isNaN(date.getTime())) {
+        return format(new Date(), 'HH:mm');
+      }
+      return format(date, 'HH:mm');
+    } catch (error) {
+      console.error("Date formatting error:", error);
+      return format(new Date(), 'HH:mm');
+    }
   };
 
   const renderMessageContent = () => {
@@ -112,7 +132,7 @@ const MessageItem = ({ message, onDelete, onFlag }) => {
       >
         <div className="flex justify-between items-start mb-1">
           <span className={`text-xs font-medium ${isOwnMessage ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'}`}>
-            {message.sender_name || 'Unknown'} • {format(new Date(message.created_at || message.timestamp), 'HH:mm')}
+            {message.sender_name || 'Unknown'} • {formatSafeDate(message.created_at || message.timestamp)}
           </span>
           
           <button 

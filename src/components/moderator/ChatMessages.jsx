@@ -20,26 +20,29 @@ const ChatMessages = ({
 
   // Connection status indicator
   const renderConnectionStatus = () => {
-    if (connectionStatus === 'connected') {
-      return (
-        <div className="text-center py-1 bg-green-500 text-white text-xs font-medium rounded-b-lg animate-fade-in">
-          Connected
-        </div>
-      );
-    } else if (connectionStatus === 'connecting') {
-      return (
-        <div className="text-center py-1 bg-yellow-500 text-white text-xs font-medium rounded-b-lg animate-fade-in">
-          Connecting...
-        </div>
-      );
-    } else if (connectionStatus === 'disconnected' || connectionStatus === 'error') {
-      return (
-        <div className="text-center py-1 bg-red-500 text-white text-xs font-medium rounded-b-lg animate-fade-in">
-          {connectionStatus === 'error' ? 'Connection Error' : 'Disconnected'}
-        </div>
-      );
+    switch (connectionStatus) {
+      case 'connected':
+        return (
+          <div className="text-center py-1 bg-green-500 text-white text-xs font-medium rounded-b-lg animate-fade-in">
+            Connected
+          </div>
+        );
+      case 'connecting':
+        return (
+          <div className="text-center py-1 bg-yellow-500 text-white text-xs font-medium rounded-b-lg animate-fade-in">
+            Connecting...
+          </div>
+        );
+      case 'disconnected':
+      case 'error':
+        return (
+          <div className="text-center py-1 bg-red-500 text-white text-xs font-medium rounded-b-lg animate-fade-in">
+            {connectionStatus === 'error' ? 'Connection Error' : 'Disconnected'}
+          </div>
+        );
+      default:
+        return null;
     }
-    return null;
   };
 
   if (loading) {
@@ -66,6 +69,15 @@ const ChatMessages = ({
       </div>
     );
   }
+
+  // Ensure all messages have valid timestamps to prevent date formatting errors
+  const validatedMessages = messages.map(message => {
+    // If created_at is undefined or invalid, set it to current timestamp
+    if (!message.created_at || isNaN(new Date(message.created_at).getTime())) {
+      return { ...message, created_at: new Date().toISOString() };
+    }
+    return message;
+  });
 
   return (
     <div className="space-y-4">
@@ -94,7 +106,7 @@ const ChatMessages = ({
       
       {/* Messages */}
       <div className="space-y-6">
-        {messages.map((message) => (
+        {validatedMessages.map((message) => (
           <MessageItem 
             key={message.id} 
             message={message} 
