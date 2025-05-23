@@ -1,9 +1,9 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { toast } from 'sonner';
 import { authApi } from '../lib/api/auth_api';
 
 interface User {
+  //name: string;
   id: string;
   email: string;
   full_name: string;
@@ -41,17 +41,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const token = localStorage.getItem('access_token');
         if (token) {
           const userData = await authApi.getCurrentUser();
-          // Format the response to match our User interface
-          const formattedUser: User = {
-            id: userData.id,
-            email: userData.email,
-            full_name: userData.fullName || userData.full_name || userData.name || '',
-            role: (userData.role as 'admin' | 'moderator' | 'user'),
-            membershipLevel: userData.membershipLevel || userData.membership_level,
-            region: userData.region,
-            created_at: userData.createdAt || userData.created_at
-          };
-          setUser(formattedUser);
+          setUser(userData);
         }
       } catch (error) {
         console.error('Failed to initialize auth:', error);
@@ -68,17 +58,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       await authApi.login({ email, password });
       const userData = await authApi.getCurrentUser();
-      // Format user data to match our User interface
-      const formattedUser: User = {
-        id: userData.id,
-        email: userData.email,
-        full_name: userData.fullName || userData.full_name || userData.name || '',
-        role: (userData.role as 'admin' | 'moderator' | 'user'),
-        membershipLevel: userData.membershipLevel || userData.membership_level,
-        region: userData.region,
-        created_at: userData.createdAt || userData.created_at
-      };
-      setUser(formattedUser);
+      setUser(userData);
       toast.success('Login successful');
     } catch (error) {
       toast.error('Login failed. Please check your credentials.');
