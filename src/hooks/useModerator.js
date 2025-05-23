@@ -11,7 +11,9 @@ import {
   flagMessage,
   sendTypingIndicator,
   markMessagesAsRead,
-  deleteMessage
+  deleteMessage,
+  addConnectionListener,
+  cleanup
 } from '../services/ChatService';
 
 const useModerator = () => {
@@ -46,6 +48,15 @@ const useModerator = () => {
     }
   }, [user, navigate]);
   
+  // Set up connection state listener
+  useEffect(() => {
+    const unsubscribe = addConnectionListener((state) => {
+      setConnectionStatus(state.status);
+    });
+    
+    return unsubscribe;
+  }, []);
+  
   // Load assigned models/dolls when component mounts
   useEffect(() => {
     const loadAssignedModels = async () => {
@@ -53,12 +64,17 @@ const useModerator = () => {
       try {
         const rooms = await getModeratorChatRooms();
         
+        if (!rooms) {
+          toast.error('Failed to load assigned models');
+          return;
+        }
+        
         // Format the rooms data for display
         const models = rooms.map(room => ({
           id: room.id,
           name: room.doll_name || `Model ${room.id}`,
           image: room.doll_image || 'https://images.unsplash.com/photo-1611042553365-9b101d749e31?q=80&w=1000&auto=format&fit=crop',
-          receiverId: room.user_id, // Save the user_id for sending messages
+          receiverId: room.user_id,
           lastMessage: room.last_message?.content || 'No messages yet',
           lastMessageTime: room.last_message?.created_at || null,
           unreadCount: room.unread_count || 0
@@ -98,28 +114,31 @@ const useModerator = () => {
       
       setLoading(true);
       try {
+        console.log(`Loading messages for chat room ${selectedModel.id}`);
         const chatMessages = await getMessages(selectedModel.id);
-        setMessages(chatMessages);
-        setReceiverId(selectedModel.receiverId);
-        setHasMoreMessages(chatMessages.length === 50); // Assuming default limit is 50
+        if (chatMessages) {
+          console.log(`Loaded ${chatMessages.length} messages`);
+          setMessages(chatMessages);
+          setReceiverId(selectedModel.receiverId);
+          setHasMoreMessages(chatMessages.length === 50);
+        }
       } catch (error) {
         console.error('Error loading messages:', error);
         toast.error('Failed to load messages');
       } finally {
         setLoading(false);
         
-        // Scroll to bottom after loading messages
         setTimeout(() => {
           messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
         }, 100);
       }
     };
     
+    // Load messages first
     loadMessages();
     
     // Set up WebSocket connection for real-time updates
     if (selectedModel && selectedModel.id) {
-      // Ensure we have a valid chat room ID
       const chatRoomId = Number(selectedModel.id);
       if (isNaN(chatRoomId)) {
         console.error('Invalid chat room ID:', selectedModel.id);
@@ -127,49 +146,67 @@ const useModerator = () => {
         return;
       }
       
+      // Clear messages and reset state when switching rooms
+      setMessages([]);
+      setTypingUsers(new Set());
+      
       // Close previous connection if it exists
       if (websocket) {
+        console.log('Closing previous WebSocket connection');
         websocket.close();
+        setWebsocket(null);
       }
       
-      setConnectionStatus('connecting');
-      const ws = connectWebSocket(chatRoomId, handleWebSocketMessage);
-      
-      if (ws) {
-        setWebsocket(ws);
+      // Small delay to ensure previous connection is closed
+      const connectTimer = setTimeout(() => {
+        console.log(`Moderator connecting to WebSocket for room ${chatRoomId}`);
+        const ws = connectWebSocket(chatRoomId, handleWebSocketMessage);
         
-        // Update WebSocket event handlers to manage connection status
-        ws.onopen = () => {
-          setConnectionStatus('connected');
-          // Mark messages as read when joining a chat room
-          markMessagesAsRead(chatRoomId);
+        if (ws) {
+          setWebsocket(ws);
           
-          // Update the model's unread count to 0
-          setAssignedModels(prev => 
-            prev.map(model => 
-              model.id === selectedModel.id 
-                ? { ...model, unreadCount: 0 }
-                : model
-            )
-          );
-        };
-        
-        ws.onclose = () => {
-          setConnectionStatus('disconnected');
-        };
-        
-        ws.onerror = () => {
-          setConnectionStatus('error');
-        };
-      }
+          // Store original handlers
+          const originalOnOpen = ws.onopen;
+          const originalOnClose = ws.onclose;
+          
+          // Override the onopen event
+          ws.onopen = (event) => {
+            console.log('Moderator WebSocket connected');
+            markMessagesAsRead(chatRoomId);
+            
+            setAssignedModels(prev => 
+              prev.map(model => 
+                model.id === selectedModel.id 
+                  ? { ...model, unreadCount: 0 }
+                  : model
+              )
+            );
+            
+            if (originalOnOpen) originalOnOpen.call(ws, event);
+          };
+          
+          // Override onclose to prevent automatic reconnection for moderators
+          ws.onclose = (event) => {
+            console.log('Moderator WebSocket disconnected:', event.code, event.reason);
+            
+            // Don't call original onclose which might trigger reconnection
+            // Only log the disconnection for moderators
+            if (event.code !== 1000) {
+              console.warn('WebSocket closed unexpectedly, but not reconnecting for moderator');
+            }
+          };
+        }
+      }, 100);
       
       return () => {
-        if (ws) {
-          ws.close();
+        clearTimeout(connectTimer);
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          console.log('Cleaning up WebSocket connection');
+          ws.close(1000, 'Component unmounting'); // Clean close
         }
       };
     }
-  }, [selectedModel]);
+  }, [selectedModel?.id]); // Only depend on selectedModel.id, not the whole object or websocket
   
   // Scroll to bottom when new messages arrive
   useEffect(() => {
@@ -184,7 +221,7 @@ const useModerator = () => {
     try {
       const olderMessages = await getMessages(selectedModel.id, messages.length);
       
-      if (olderMessages.length > 0) {
+      if (olderMessages && olderMessages.length > 0) {
         setMessages(prev => [...olderMessages, ...prev]);
         setHasMoreMessages(olderMessages.length === 50); // Assuming default limit is 50
       } else {
@@ -200,15 +237,28 @@ const useModerator = () => {
   
   // Handle incoming WebSocket messages
   const handleWebSocketMessage = useCallback((data) => {
-    console.log('Received WebSocket message:', data);
+    console.log('Moderator received WebSocket message:', data);
     
     if (data.type === 'new_message' && data.message) {
-      setMessages(prev => [...prev, data.message]);
+      console.log('Adding new message to moderator chat:', data.message);
+      setMessages(prev => {
+        // Prevent duplicate messages by checking ID and timestamp
+        const exists = prev.some(msg => 
+          msg.id === data.message.id || 
+          (msg.content === data.message.content && 
+           Math.abs(new Date(msg.created_at) - new Date(data.message.created_at)) < 1000)
+        );
+        if (exists) {
+          console.log('Duplicate message detected, skipping');
+          return prev;
+        }
+        return [...prev, data.message];
+      });
       
       // Update the model's last message in the sidebar
       setAssignedModels(prev => 
         prev.map(model => 
-          model.id === data.message.chat_room_id 
+          model.id.toString() === data.message.chat_room_id.toString()
             ? {
                 ...model,
                 lastMessage: data.message.content,
@@ -232,28 +282,12 @@ const useModerator = () => {
     } else if (data.type === 'message_updated' && data.message) {
       setMessages(prev => 
         prev.map(msg => 
-          msg.id === data.message.id ? data.message : msg
+          msg.id === data.message.id ? { ...msg, ...data.message } : msg
         )
       );
-    } else if (data.type === 'new_chat_room' && data.chat_room) {
-      setAssignedModels(prev => {
-        // Check if we already have this chat room
-        const exists = prev.some(model => model.id === data.chat_room.id);
-        if (exists) return prev;
-        
-        return [...prev, {
-          id: data.chat_room.id,
-          name: data.chat_room.doll_name || `Model ${data.chat_room.id}`,
-          image: data.chat_room.doll_image || 'https://images.unsplash.com/photo-1611042553365-9b101d749e31?q=80&w=1000&auto=format&fit=crop',
-          receiverId: data.chat_room.user_id,
-          lastMessage: 'New conversation',
-          lastMessageTime: new Date().toISOString(),
-          unreadCount: 1
-        }];
-      });
     }
-  }, []);
-  
+  }, []); // No dependencies to prevent recreation
+
   // Handle file selection
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
@@ -312,12 +346,13 @@ const useModerator = () => {
     }
   }, [selectedModel]);
   
-  // Clean up typing timeout on unmount
+  // Clean up typing timeout and WebSocket on unmount
   useEffect(() => {
     return () => {
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
+      cleanup();
     };
   }, []);
   
@@ -325,22 +360,41 @@ const useModerator = () => {
   const handleSendMessage = async (e) => {
     e.preventDefault();
     
-    if ((!newMessage.trim() && !selectedFile) || !selectedModel || !receiverId) return;
+    if ((!newMessage.trim() && !selectedFile) || !selectedModel) return;
+    
+    if (connectionStatus !== 'connected') {
+      toast.warning('Connection unstable', {
+        description: 'Message will be sent when connection is restored.'
+      });
+    }
     
     setIsUploading(true);
     
     try {
-      // Make sure we have the user ID from the context for moderator_id
       const moderatorId = user?.id;
       
+      // Handle file upload
       if (selectedFile) {
+        console.log('Moderator sending file:', selectedFile.name);
         const sentMessage = await sendFileMessage(selectedFile, selectedModel.id, receiverId);
         if (sentMessage) {
-          // Add the message manually to ensure it appears in the UI immediately
-          setMessages(prev => [...prev, sentMessage]);
+          // Create immediate feedback message
+          const fileMessage = {
+            id: `temp-${Date.now()}`,
+            chat_room_id: selectedModel.id,
+            sender_id: user.id,
+            sender_name: user.full_name || 'Moderator',
+            content: selectedFile.name,
+            file_name: selectedFile.name,
+            created_at: new Date().toISOString(),
+            flagged: false,
+            message_type: selectedFile.type.startsWith('image/') ? 'IMAGE' : 'FILE',
+            file_url: selectedFile.type.startsWith('image/') ? URL.createObjectURL(selectedFile) : null
+          };
+          
+          setMessages(prev => [...prev, fileMessage]);
           clearSelectedFile();
           
-          // Update the model's last message in the sidebar
           setAssignedModels(prev => 
             prev.map(model => 
               model.id === selectedModel.id 
@@ -355,34 +409,41 @@ const useModerator = () => {
         }
       }
       
+      // Handle text message
       if (newMessage.trim()) {
+        console.log('Moderator sending message:', newMessage);
         const sentMessage = await sendMessage(newMessage, selectedModel.id, moderatorId);
-        if (sentMessage) {
-          // Add the message manually to ensure it appears in the UI immediately
-          setMessages(prev => [...prev, sentMessage]);
-          
-          // Update the model's last message in the sidebar
-          setAssignedModels(prev => 
-            prev.map(model => 
-              model.id === selectedModel.id 
-                ? {
-                    ...model,
-                    lastMessage: newMessage,
-                    lastMessageTime: new Date().toISOString()
-                  }
-                : model
-            )
-          );
-        }
+        
+        // Always create immediate feedback for better UX
+        const textMessage = {
+          id: `temp-${Date.now()}-text`,
+          chat_room_id: selectedModel.id,
+          sender_id: user.id,
+          sender_name: user.full_name || 'Moderator',
+          content: newMessage,
+          created_at: new Date().toISOString(),
+          flagged: false,
+          message_type: 'TEXT'
+        };
+        
+        setMessages(prev => [...prev, textMessage]);
+        
+        setAssignedModels(prev => 
+          prev.map(model => 
+            model.id === selectedModel.id 
+              ? {
+                  ...model,
+                  lastMessage: newMessage,
+                  lastMessageTime: new Date().toISOString()
+                }
+              : model
+          )
+        );
+        
+        setNewMessage('');
+        sendTypingIndicator(selectedModel.id, false);
       }
       
-      // Clear input after sending
-      setNewMessage('');
-      
-      // Stop typing indicator
-      sendTypingIndicator(selectedModel.id, false);
-      
-      // Scroll to bottom after sending
       setTimeout(() => {
         messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
       }, 100);
@@ -418,7 +479,7 @@ const useModerator = () => {
       }
     } catch (error) {
       console.error('Error flagging message:', error);
-      toast.error('Failed to update message flag');
+      // ChatService handles the error toast
     }
   };
   
@@ -430,7 +491,7 @@ const useModerator = () => {
       toast.success('Message deleted');
     } catch (error) {
       console.error('Error deleting message:', error);
-      toast.error('Failed to delete message');
+      // ChatService handles the error toast
     }
   };
 

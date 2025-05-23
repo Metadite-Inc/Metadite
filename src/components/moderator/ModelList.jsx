@@ -1,31 +1,33 @@
-
 import React from 'react';
 import { Search, MessageSquare } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
-import { format, isToday, isYesterday } from 'date-fns';
 
 const ModelList = ({ models, searchTerm, setSearchTerm, selectedModel, onSelectModel, loading }) => {
   const { theme } = useTheme();
 
   // Filter models based on search term
-  const filteredModels = searchTerm
-    ? models.filter(model => 
-        model.name.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    : models;
+  const filteredModels = models.filter(model =>
+    model.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-  // Format the last message time
-  const formatLastMessageTime = (timestamp) => {
-    if (!timestamp) return '';
-    
-    const date = new Date(timestamp);
-    
-    if (isToday(date)) {
-      return format(date, 'HH:mm');
-    } else if (isYesterday(date)) {
-      return 'Yesterday';
-    } else {
-      return format(date, 'dd/MM/yyyy');
+  // Format last message time
+  const formatLastMessageTime = (dateString) => {
+    if (!dateString) return '';
+    try {
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffInHours = (now - date) / (1000 * 60 * 60);
+      
+      if (diffInHours < 1) {
+        const diffInMinutes = Math.floor((now - date) / (1000 * 60));
+        return `${diffInMinutes}m ago`;
+      } else if (diffInHours < 24) {
+        return `${Math.floor(diffInHours)}h ago`;
+      } else {
+        return date.toLocaleDateString();
+      }
+    } catch (error) {
+      return '';
     }
   };
 

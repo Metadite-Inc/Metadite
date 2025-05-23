@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { ChevronLeft, MessageSquare, Send, Paperclip, FileImage, X, File } from 'lucide-react';
@@ -69,11 +68,13 @@ const ModelChat = () => {
         // If we have a room ID, get chat room details
         let chatRoomData;
         if (roomIdFromUrl) {
+          console.log(`Loading existing chat room: ${roomIdFromUrl}`);
           chatRoomData = await getChatRoomById(parseInt(roomIdFromUrl));
         }
         
         // If no room ID in URL or failed to get room, create a new one
         if (!chatRoomData) {
+          console.log(`Creating new chat room for doll ${id}`);
           chatRoomData = await createChatRoom(id.toString());
           if (!chatRoomData) {
             toast.error("Failed to create chat session");
@@ -83,34 +84,56 @@ const ModelChat = () => {
           }
         }
         
+        console.log('Chat room data:', chatRoomData);
         setChatRoom(chatRoomData);
         
-        // Load messages for this chat room
+        // Load messages for this chat room using the same method as the working example
+        console.log(`Loading messages for chat room ${chatRoomData.id}`);
         const chatMessages = await getMessages(chatRoomData.id);
         if (chatMessages && chatMessages.length) {
+          console.log(`Loaded ${chatMessages.length} messages`);
           setMessages(chatMessages);
-          setHasMoreMessages(chatMessages.length === 50); // Assuming default limit is 50
+          setHasMoreMessages(chatMessages.length === 50);
+        } else {
+          console.log('No existing messages found');
+          setMessages([]);
         }
         
         // Connect to WebSocket for this chat room
         setConnectionStatus('connecting');
+        console.log(`Connecting to WebSocket for chat room ${chatRoomData.id}`);
         const ws = connectWebSocket(chatRoomData.id, handleWebSocketMessage);
         
         if (ws) {
           wsRef.current = ws;
           
+          // Store original handlers
+          const originalOnOpen = ws.onopen;
+          const originalOnClose = ws.onclose;
+          const originalOnError = ws.onerror;
+          
           // Add custom event handlers
-          ws.onopen = () => {
+          ws.onopen = (event) => {
+            console.log('User WebSocket connected');
             setConnectionStatus('connected');
             markMessagesAsRead(chatRoomData.id);
+            
+            if (originalOnOpen) originalOnOpen.call(ws, event);
           };
           
-          ws.onclose = () => {
+          ws.onclose = (event) => {
+            console.log('User WebSocket disconnected:', event.code, event.reason);
             setConnectionStatus('disconnected');
+            
+            // Let the original handler manage reconnection logic
+            if (originalOnClose) originalOnClose.call(ws, event);
           };
           
-          ws.onerror = () => {
+          ws.onerror = (event) => {
+            console.error('User WebSocket error:', event);
             setConnectionStatus('error');
+            
+            if (originalOnError) originalOnError.call(ws, event);
           };
         }
         
@@ -122,27 +145,43 @@ const ModelChat = () => {
       }
     };
 
-    initializeChat();
+    if (user) {
+      initializeChat();
+    }
     
     // Cleanup WebSocket connection when component unmounts
     return () => {
       if (wsRef.current) {
-        wsRef.current.close();
+        console.log('Cleaning up WebSocket connection on unmount');
+        wsRef.current.close(1000, 'Component unmounting');
       }
       
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
     };
-  }, [id, roomIdFromUrl]);
+  }, [id, roomIdFromUrl, user?.id]); // Add user.id to dependencies
   
   // Handle incoming WebSocket messages
   const handleWebSocketMessage = (data) => {
-    console.log("WebSocket message received:", data);
+    console.log("User WebSocket message received:", data);
     
     // Handle different types of messages
     if (data.type === 'new_message' && data.message) {
-      setMessages(prev => [...prev, data.message]);
+      setMessages(prev => {
+        // Prevent duplicate messages
+        const exists = prev.some(msg => 
+          msg.id === data.message.id ||
+          (msg.content === data.message.content && 
+           Math.abs(new Date(msg.created_at) - new Date(data.message.created_at)) < 1000)
+        );
+        if (exists) {
+          console.log('Duplicate message detected, skipping');
+          return prev;
+        }
+        console.log('Adding new message:', data.message);
+        return [...prev, data.message];
+      });
     } else if (data.type === 'typing' && data.user_id) {
       setTypingUsers(prev => {
         const newSet = new Set(prev);
@@ -169,12 +208,15 @@ const ModelChat = () => {
     
     setIsLoadingMore(true);
     try {
+      console.log(`Loading more messages from offset ${messages.length}`);
       const olderMessages = await getMessages(chatRoom.id, messages.length);
       
       if (olderMessages.length > 0) {
+        console.log(`Loaded ${olderMessages.length} older messages`);
         setMessages(prev => [...olderMessages, ...prev]);
-        setHasMoreMessages(olderMessages.length === 50); // Assuming default limit is 50
+        setHasMoreMessages(olderMessages.length === 50);
       } else {
+        console.log('No more messages to load');
         setHasMoreMessages(false);
       }
     } catch (error) {

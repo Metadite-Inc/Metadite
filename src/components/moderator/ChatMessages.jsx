@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { MessageSquare } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
@@ -13,34 +12,9 @@ const ChatMessages = ({
   hasMoreMessages,
   loadMoreMessages,
   isLoadingMore,
-  typingUsers,
-  connectionStatus
+  typingUsers
 }) => {
   const { theme } = useTheme();
-
-  // Connection status indicator
-  const renderConnectionStatus = () => {
-    if (connectionStatus === 'connected') {
-      return (
-        <div className="text-center py-1 bg-green-500 text-white text-xs font-medium rounded-b-lg animate-fade-in">
-          Connected
-        </div>
-      );
-    } else if (connectionStatus === 'connecting') {
-      return (
-        <div className="text-center py-1 bg-yellow-500 text-white text-xs font-medium rounded-b-lg animate-fade-in">
-          Connecting...
-        </div>
-      );
-    } else if (connectionStatus === 'disconnected' || connectionStatus === 'error') {
-      return (
-        <div className="text-center py-1 bg-red-500 text-white text-xs font-medium rounded-b-lg animate-fade-in">
-          {connectionStatus === 'error' ? 'Connection Error' : 'Disconnected'}
-        </div>
-      );
-    }
-    return null;
-  };
 
   if (loading) {
     return (
@@ -76,25 +50,26 @@ const ChatMessages = ({
 
   return (
     <div className="space-y-4">
-      {/* Connection status */}
-      {renderConnectionStatus()}
-      
       {/* Load more button */}
       {hasMoreMessages && (
         <div className="text-center my-2">
           <button
             onClick={loadMoreMessages}
             disabled={isLoadingMore}
-            className={`px-4 py-1 text-xs rounded-full ${
+            className={`px-4 py-1 text-xs rounded-full transition-colors ${
               theme === 'dark' 
-                ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' 
-                : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                ? 'bg-gray-700 hover:bg-gray-600 text-gray-200 disabled:opacity-50' 
+                : 'bg-gray-200 hover:bg-gray-300 text-gray-700 disabled:opacity-50'
             }`}
           >
             {isLoadingMore ? (
-              <span className="inline-block h-3 w-3 rounded-full border-2 border-current border-r-transparent animate-spin mr-1"></span>
-            ) : null}
-            {isLoadingMore ? 'Loading...' : 'Load older messages'}
+              <>
+                <span className="inline-block h-3 w-3 rounded-full border-2 border-current border-r-transparent animate-spin mr-1"></span>
+                Loading...
+              </>
+            ) : (
+              'Load older messages'
+            )}
           </button>
         </div>
       )}
@@ -103,7 +78,7 @@ const ChatMessages = ({
       <div className="space-y-6">
         {sortedMessages.map((message) => (
           <MessageItem 
-            key={message.id} 
+            key={`${message.id}-${message.created_at}`}
             message={message} 
             onFlag={handleFlagMessage ? () => handleFlagMessage(message.id) : null}
             onDelete={handleDeleteMessage ? () => handleDeleteMessage(message.id) : null}
@@ -122,7 +97,9 @@ const ChatMessages = ({
               <span className="w-2 h-2 rounded-full bg-current animate-bounce" style={{ animationDelay: '150ms' }}></span>
               <span className="w-2 h-2 rounded-full bg-current animate-bounce" style={{ animationDelay: '300ms' }}></span>
             </div>
-            <span className="text-xs">Someone is typing...</span>
+            <span className="text-xs">
+              {Array.from(typingUsers).length === 1 ? 'Someone is typing...' : 'Multiple people are typing...'}
+            </span>
           </div>
         </div>
       )}

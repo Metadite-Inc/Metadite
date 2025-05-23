@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { MessageSquare } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
@@ -68,7 +67,6 @@ const ChatContainer = ({
           loadMoreMessages={loadMoreMessages}
           isLoadingMore={isLoadingMore}
           typingUsers={typingUsers}
-          connectionStatus={connectionStatus}
         />
       </div>
       

@@ -1,4 +1,3 @@
-
 // Chat message types
 export enum MessageType {
   TEXT = "TEXT",
@@ -66,4 +65,28 @@ export interface TypingIndicator {
   user_id: string;
   username?: string;
   timestamp: number;
+}
+
+// Add additional types for better chat system robustness
+export interface ChatError {
+  type: 'connection' | 'authentication' | 'validation' | 'server';
+  message: string;
+  details?: any;
+}
+
+export interface ConnectionState {
+  status: 'connected' | 'connecting' | 'disconnected' | 'error' | 'reconnecting';
+  lastConnected?: Date;
+  reconnectAttempts: number;
+  maxReconnectAttempts: number;
+}
+
+export interface QueuedMessage {
+  id: string;
+  content: string;
+  chatRoomId: number;
+  type: MessageType;
+  moderatorId?: number;
+  timestamp: Date;
+  retryCount: number;
 }
