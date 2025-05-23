@@ -1,0 +1,860 @@
+<!-- html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat System Test</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            max-width: 800px; 
+            margin: 0 auto; 
+            padding: 20px; 
+        }
+        .container { 
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        .setup-panel, .login-panel {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .form-group {
+            margin-bottom: 10px;
+        }
+        .form-group label {
+            display: inline-block;
+            width: 120px;
+            margin-bottom: 5px;
+        }
+        .chat-container {
+            flex-grow: 1;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            overflow: hidden;
+            display: none;  /* Changed from flex to none by default */
+            flex-direction: column;
+            min-height: 400px; /* Ensure minimum height for visibility */
+        }
+        .messages {
+            flex-grow: 1;
+            padding: 15px;
+            overflow-y: auto;
+            max-height: 400px;
+            background-color: #f9f9f9;
+        }
+        .message {
+            margin: 8px 0;
+            padding: 8px 12px;
+            border-radius: 18px;
+            max-width: 70%;
+            word-break: break-word;
+        }
+        .user-message {
+            background-color: #dcf8c6;
+            align-self: flex-end;
+            margin-left: auto;
+        }
+        .moderator-message {
+            background-color: #ececec;
+            align-self: flex-start;
+        }
+        .input-area {
+            display: flex;
+            padding: 10px;
+            border-top: 1px solid #ddd;
+        }
+        .input-area input {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .input-area button {
+            margin-left: 10px;
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button {
+            padding: 8px 12px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .role-select {
+            margin-bottom: 15px;
+        }
+        .message-time {
+            font-size: 11px;
+            color: #777;
+            margin-top: 3px;
+            text-align: right;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #f8f8f8;
+        }
+        .error {
+            background-color: #ffdddd;
+            color: #f44336;
+        }
+        .success {
+            background-color: #ddffdd;
+            color: #4CAF50;
+        }
+        .user-info {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #eef;
+            border-radius: 5px;
+        }
+        .connection-status {
+            padding: 5px 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            text-align: center;
+        }
+        .connected {
+            background-color: #ddffdd;
+            color: #4CAF50;
+        }
+        .disconnected {
+            background-color: #ffdddd;
+            color: #f44336;
+        }
+        .notification {
+            text-align: center;
+            font-style: italic;
+            color: #777;
+            margin: 8px 0;
+        }
+        .action-buttons {
+            margin-top: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .message-actions {
+            margin-top: 5px;
+            text-align: right;
+            display: none;  /* Hidden by default, shown on hover */
+        }
+        .user-message:hover .message-actions {
+            display: block;
+        }
+        .message-actions button {
+            padding: 2px 8px;
+            font-size: 12px;
+            margin-left: 5px;
+        }
+        .edit-mode {
+            padding: 10px;
+            background-color: #f0f8ff;
+            border-radius: 10px;
+        }
+        .edit-input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+            color: #666;
+        }
+        .message-divider {
+            text-align: center;
+            margin: 15px 0;
+            color: #777;
+            font-size: 12px;
+            position: relative;
+        }
+        .message-divider::before, .message-divider::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            width: 35%;
+            height: 1px;
+            background-color: #ddd;
+        }
+        .message-divider::before {
+            left: 0;
+        }
+        .message-divider::after {
+            right: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Chat System Test</h1>
+        
+        <!-- Login Panel -->
+        <div class="login-panel">
+            <h3>Authentication</h3>
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" placeholder="Enter your email">
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" placeholder="Enter your password">
+            </div>
+            <button onclick="login()">Login</button>
+            <button onclick="logout()">Logout</button>
+            <div id="loginStatus" class="status"></div>
+            <div id="userInfo" class="user-info" style="display:none;"></div>
+        </div>
+        
+        <div class="setup-panel">
+            <div class="role-select">
+                <h3>Select Your Role:</h3>
+                <button id="userRoleBtn" class="role-btn active" onclick="selectRole('user')">User</button>
+                <button id="moderatorRoleBtn" class="role-btn" onclick="selectRole('moderator')">Moderator</button>
+            </div>
+            
+            <div id="userSetup">
+                <h3>User Setup</h3>
+                <div class="form-group">
+                    <label for="dollId">Doll ID to chat about:</label>
+                    <input type="number" id="dollId" value="1" min="1">
+                </div>
+                <button onclick="createChatRoom()">Create Chat Room</button>
+            </div>
+            
+            <div id="moderatorSetup" style="display:none">
+                <h3>Moderator Setup</h3>
+                <div class="form-group">
+                    <label for="chatRoomIdMod">Enter Chat Room ID:</label>
+                    <input type="number" id="chatRoomIdMod" value="" min="1">
+                </div>
+                <button onclick="joinAsModerator()">Join Chat Room</button>
+            </div>
+            
+            <div id="status" class="status"></div>
+        </div>
+
+        <div id="chatContainer" class="chat-container">
+            <h2 id="chatRoomTitle">Chat Room #<span id="roomIdDisplay"></span></h2>
+            
+            <div id="connectionStatus" class="connection-status disconnected">
+                Disconnected
+            </div>
+            
+            <div id="messages" class="messages"></div>
+            <div class="input-area">
+                <input type="text" id="messageInput" placeholder="Type a message...">
+                <button onclick="sendMessage()">Send</button>
+            </div>
+            
+            <div class="action-buttons">
+                <button onclick="refreshChat()">Refresh Chat</button>
+                <button onclick="closeChatRoom()">Close Chat</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentRole = 'user';
+        let currentUserId = null;
+        let currentChatRoomId = null;
+        let ws = null;
+        let currentUser = null;
+        
+        // Check if user is already logged in
+        window.addEventListener('load', function() {
+            const token = localStorage.getItem('token');
+            if (token) {
+                getCurrentUser()
+                    .then(user => {
+                        currentUser = user;
+                        updateUserInfoDisplay();
+                    })
+                    .catch(error => {
+                        console.error('Error loading user:', error);
+                        logout();
+                    });
+            }
+        });
+        
+        async function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            if (!email || !password) {
+                showLoginStatus("Please enter both email and password", "error");
+                return;
+            }
+            
+            try {
+                showLoginStatus("Logging in...");
+                
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        password: password
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || `Login failed: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                localStorage.setItem('token', data.access_token);
+                
+                // Get user info
+                currentUser = await getCurrentUser();
+                currentUserId = currentUser.id;
+                
+                showLoginStatus(`Logged in successfully!`, "success");
+                updateUserInfoDisplay();
+                
+                // Update UI based on role
+                updateUIForRole();
+                
+            } catch (error) {
+                showLoginStatus(`Login failed: ${error.message}`, "error");
+            }
+        }
+        
+        function logout() {
+            localStorage.removeItem('token');
+            currentUser = null;
+            currentUserId = null;
+            document.getElementById('userInfo').style.display = 'none';
+            showLoginStatus("Logged out", "success");
+            
+            // Reset chat
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.close();
+            }
+            closeChatRoom();
+        }
+        
+        function closeChatRoom() {
+            document.getElementById('chatContainer').style.display = 'none';
+            document.getElementById('messages').innerHTML = '';
+            document.getElementById('messageInput').value = '';
+        }
+        
+        async function getCurrentUser() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                throw new Error("Not logged in");
+            }
+            
+            const response = await fetch('/api/auth/me', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error(`Failed to get user info: ${response.status}`);
+            }
+            
+            return await response.json();
+        }
+        
+        function updateUserInfoDisplay() {
+            if (!currentUser) return;
+            
+            const userInfoDiv = document.getElementById('userInfo');
+            userInfoDiv.style.display = 'block';
+            userInfoDiv.innerHTML = `
+                <strong>Logged in as:</strong> ${currentUser.email}<br>
+                <strong>Role:</strong> ${currentUser.role}<br>
+                <strong>Type:</strong> ${currentUser.user_type || 'user'}<br>
+                <strong>ID:</strong> ${currentUser.id}
+            `;
+        }
+        
+        function updateUIForRole() {
+            if (!currentUser) return;
+            
+            if (currentUser.user_type === 'moderator') {
+                selectRole('moderator');
+            } else {
+                selectRole('user');
+            }
+        }
+        
+        function selectRole(role) {
+            currentRole = role;
+            document.getElementById('userSetup').style.display = role === 'user' ? 'block' : 'none';
+            document.getElementById('moderatorSetup').style.display = role === 'moderator' ? 'block' : 'none';
+            document.getElementById('userRoleBtn').classList.toggle('active', role === 'user');
+            document.getElementById('moderatorRoleBtn').classList.toggle('active', role === 'moderator');
+            
+            closeChatRoom();
+        }
+        
+        async function createChatRoom() {
+            if (!currentUser) {
+                showStatus("Please login first", "error");
+                return;
+            }
+            
+            const token = localStorage.getItem('token');
+            const dollId = parseInt(document.getElementById('dollId').value);
+            
+            if (!dollId) {
+                showStatus("Please enter valid Doll ID", "error");
+                return;
+            }
+            
+            try {
+                showStatus("Creating chat room...");
+                
+                const response = await fetch('/api/chat/rooms/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        doll_id: dollId
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || `HTTP error! Status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                currentChatRoomId = data.id;
+                
+                showStatus(`Chat room created successfully! Room ID: ${currentChatRoomId}`, "success");
+                initializeChat(currentUser.id, currentChatRoomId);
+                
+            } catch (error) {
+                showStatus(`Error creating chat room: ${error.message}`, "error");
+            }
+        }
+        
+        function joinAsModerator() {
+            if (!currentUser) {
+                showStatus("Please login first", "error");
+                return;
+            }
+            
+            const chatRoomId = parseInt(document.getElementById('chatRoomIdMod').value);
+            
+            if (!chatRoomId) {
+                showStatus("Please enter valid Chat Room ID", "error");
+                return;
+            }
+            
+            currentChatRoomId = chatRoomId;
+            showStatus(`Joining chat room ${chatRoomId} as moderator...`, "success");
+            initializeChat(currentUser.id, chatRoomId);
+        }
+        
+        function initializeChat(userId, roomId) {
+            document.getElementById('chatContainer').style.display = 'flex';
+            document.getElementById('roomIdDisplay').textContent = roomId;
+            document.getElementById('connectionStatus').className = 'connection-status disconnected';
+            document.getElementById('connectionStatus').textContent = 'Connecting...';
+            
+            // Clear previous messages and show loading
+            const messagesContainer = document.getElementById('messages');
+            messagesContainer.innerHTML = '<div class="loading">Loading message history...</div>';
+            
+            // First, fetch message history from database via REST API
+            fetchChatHistory(roomId).then(() => {
+                // After history is loaded, establish WebSocket connection
+                connectWebSocket(userId, roomId);
+            }).catch(error => {
+                showStatus(`Error loading message history: ${error.message}`, "error");
+                // Still try to connect via WebSocket even if history loading fails
+                connectWebSocket(userId, roomId);
+            });
+        }
+        
+        async function fetchChatHistory(roomId) {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                throw new Error("Not authenticated");
+            }
+            
+            showStatus("Fetching message history from database...");
+            
+            try {
+                // Call the API endpoint that gets a room with its messages
+                const response = await fetch(`/api/chat/rooms/${roomId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || `HTTP error! Status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // Display the messages
+                const messagesContainer = document.getElementById('messages');
+                messagesContainer.innerHTML = '';
+                
+                // Add header for database messages
+                if (data.messages && data.messages.length > 0) {
+                    const historyHeader = document.createElement('div');
+                    historyHeader.className = 'message-divider';
+                    historyHeader.textContent = 'Previous Messages';
+                    messagesContainer.appendChild(historyHeader);
+                    
+                    // Display each message
+                    data.messages.forEach(msg => {
+                        displayMessage({
+                            action: "create",
+                            id: msg.id,
+                            content: msg.content,
+                            sender_id: msg.sender_id,
+                            timestamp: msg.created_at,
+                            updated: msg.updated_at !== msg.created_at ? msg.updated_at : null,
+                        });
+                    });
+                    
+                    showStatus(`Loaded ${data.messages.length} messages from history`, "success");
+                } else {
+                    const emptyHistory = document.createElement('div');
+                    emptyHistory.className = 'notification';
+                    emptyHistory.textContent = 'No previous messages';
+                    messagesContainer.appendChild(emptyHistory);
+                    
+                    showStatus("No previous messages found", "success");
+                }
+                
+                return data;
+            } catch (error) {
+                console.error("Error fetching chat history:", error);
+                showStatus(`Failed to load message history: ${error.message}`, "error");
+                throw error;
+            }
+        }
+        
+        function connectWebSocket(userId, roomId) {
+            setTimeout(() => {
+                const messageInput = document.getElementById('messageInput');
+                if (messageInput) messageInput.focus();
+            }, 100);
+            
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.close();
+            }
+            
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const token = encodeURIComponent(localStorage.getItem('token') || '');
+            const wsUrl = `${protocol}//${window.location.host}/api/chat/ws/${roomId}/${userId}`;
+            
+            showStatus(`Connecting to WebSocket: ${wsUrl}`, "");
+            
+            ws = new WebSocket(wsUrl);
+            
+            ws.onopen = function() {
+                document.getElementById('connectionStatus').className = 'connection-status connected';
+                document.getElementById('connectionStatus').textContent = 'Connected';
+                showStatus(`Connected to chat room ${roomId}`, "success");
+                
+                const messagesContainer = document.getElementById('messages');
+                
+                // Add a divider between history and new messages
+                const divider = document.createElement('div');
+                divider.className = 'message-divider';
+                divider.textContent = 'New Messages';
+                messagesContainer.appendChild(divider);
+                
+                // Add join notification
+                const notificationDiv = document.createElement('div');
+                notificationDiv.className = 'notification';
+                notificationDiv.textContent = `You joined the chat as ${currentUser.user_type || 'user'}`;
+                messagesContainer.appendChild(notificationDiv);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                
+                // Mark messages as read
+                ws.send(JSON.stringify({
+                    action: "read", 
+                    chatRoomId: roomId
+                }));
+            };
+            
+            ws.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                handleIncomingMessage(data);
+            };
+            
+            ws.onerror = function(error) {
+                document.getElementById('connectionStatus').className = 'connection-status disconnected';
+                document.getElementById('connectionStatus').textContent = 'Connection Error';
+                showStatus(`WebSocket Error: ${error}`, "error");
+            };
+            
+            ws.onclose = function() {
+                document.getElementById('connectionStatus').className = 'connection-status disconnected';
+                document.getElementById('connectionStatus').textContent = 'Disconnected';
+                showStatus("WebSocket connection closed", "error");
+            };
+        }
+        
+        function handleIncomingMessage(data) {
+            if (data.action === "create") {
+                displayMessage(data);
+                console.log("Message received:", data);
+            } else if (data.action === "delete") {
+                const messageElement = document.getElementById(`msg-${data.id}`);
+                if (messageElement) {
+                    messageElement.style.transition = "opacity 0.5s";
+                    messageElement.style.opacity = 0;
+                    setTimeout(() => messageElement.remove(), 500);
+                }
+            } else if (data.action === "update") {
+                const messageElement = document.getElementById(`msg-${data.id}`);
+                if (messageElement) {
+                    const contentDiv = messageElement.querySelector('.message-content');
+                    if (contentDiv) {
+                        contentDiv.style.backgroundColor = "#ffffd0";
+                        contentDiv.textContent = data.content;
+                        setTimeout(() => contentDiv.style.backgroundColor = "", 1000);
+                    }
+                    
+                    const timeDiv = messageElement.querySelector('.message-time');
+                    if (timeDiv) {
+                        const time = new Date(data.updated).toLocaleTimeString();
+                        timeDiv.textContent = `${time} (edited)`;
+                    }
+                }
+            } else if (data.type === "history") {
+                const messagesContainer = document.getElementById('messages');
+                
+                if (data.messages && data.messages.length) {
+                    const existingMsgIds = Array.from(
+                        document.querySelectorAll('.message'))
+                        .map(el => el.id.replace('msg-', ''));
+                    
+                    data.messages.forEach(msg => {
+                        if (!existingMsgIds.includes(msg.id)) {
+                            displayMessage({
+                                action: "create",
+                                ...msg
+                            });
+                        }
+                    });
+                }
+            } else if (data.action === "notification") {
+                const messagesContainer = document.getElementById('messages');
+                const notificationDiv = document.createElement('div');
+                notificationDiv.className = 'notification';
+                notificationDiv.textContent = data.message;
+                messagesContainer.appendChild(notificationDiv);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+        }
+        
+        function displayMessage(data) {
+            const messagesContainer = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.id = `msg-${data.id || Date.now()}`;
+            
+            const isCurrentUser = data.sender_id == currentUser.id;
+            messageDiv.className = `message ${isCurrentUser ? 'user-message' : 'moderator-message'}`;
+            
+            const time = new Date(data.timestamp).toLocaleTimeString();
+            
+            let messageHTML = `
+                <div class="message-content">${data.content}</div>
+                <div class="message-time">${time}${data.updated ? ' (edited)' : ''}</div>
+            `;
+            
+            if (isCurrentUser) {
+                messageHTML += `
+                <div class="message-actions">
+                    <button onclick="editMessage('${data.id || Date.now()}')">Edit</button>
+                    <button onclick="deleteMessage('${data.id || Date.now()}')">Delete</button>
+                </div>`;
+            }
+            
+            messageDiv.innerHTML = messageHTML;
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+        
+        function sendMessage() {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                showStatus("Not connected to chat", "error");
+                return;
+            }
+            
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            showStatus("Sending message...");
+            
+            ws.send(JSON.stringify({
+                action: "create",
+                message: message,
+                type: "text",
+                sender_id: currentUser.id,
+                chat_room_id: currentChatRoomId
+            }));
+            
+            input.value = '';
+            input.focus();
+            
+            setTimeout(() => {
+                showStatus("Message sent", "success");
+            }, 300);
+        }
+        
+        function refreshChat() {
+            if (currentChatRoomId && currentUser) {
+                showStatus("Refreshing chat connection...");
+                initializeChat(currentUser.id, currentChatRoomId);
+            } else {
+                showStatus("No active chat to refresh", "error");
+            }
+        }
+        
+        function showStatus(message, type = "") {
+            const statusElement = document.getElementById('status');
+            statusElement.textContent = message;
+            statusElement.className = `status ${type}`;
+        }
+        
+        function showLoginStatus(message, type = "") {
+            const statusElement = document.getElementById('loginStatus');
+            statusElement.textContent = message;
+            statusElement.className = `status ${type}`;
+        }
+        
+        function editMessage(messageId) {
+            const messageElement = document.getElementById(`msg-${messageId}`);
+            if (!messageElement) return;
+            
+            const contentDiv = messageElement.querySelector('.message-content');
+            if (!contentDiv) return;
+            
+            const currentContent = contentDiv.textContent;
+            const originalHTML = messageElement.innerHTML;
+            
+            messageElement.classList.add('edit-mode');
+            messageElement.innerHTML = `
+                <div>
+                    <textarea class="edit-input" id="edit-${messageId}">${currentContent}</textarea>
+                    <button onclick="saveEdit('${messageId}')">Save</button>
+                    <button onclick="cancelEdit('${messageId}', '${encodeURIComponent(originalHTML)}')">Cancel</button>
+                </div>
+            `;
+            
+            const textarea = document.getElementById(`edit-${messageId}`);
+            textarea.focus();
+            textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+            
+            textarea.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    saveEdit(messageId);
+                }
+            });
+        }
+        
+        function saveEdit(messageId) {
+            const textarea = document.getElementById(`edit-${messageId}`);
+            if (!textarea) return;
+            
+            const updatedContent = textarea.value.trim();
+            if (!updatedContent) {
+                alert("Message cannot be empty");
+                return;
+            }
+            
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    action: "update",
+                    id: messageId,
+                    message: updatedContent,
+                    chat_room_id: currentChatRoomId
+                }));
+                
+                showStatus("Message updated", "success");
+            } else {
+                showStatus("Failed to update message: Not connected", "error");
+                cancelEdit(messageId);
+            }
+        }
+        
+        function cancelEdit(messageId, originalHTML) {
+            const messageElement = document.getElementById(`msg-${messageId}`);
+            if (!messageElement) return;
+            
+            messageElement.classList.remove('edit-mode');
+            
+            if (originalHTML) {
+                try {
+                    messageElement.innerHTML = decodeURIComponent(originalHTML);
+                } catch (e) {
+                    console.error("Error restoring message HTML:", e);
+                    location.reload();
+                }
+            } else {
+                refreshChat();
+            }
+        }
+        
+        function deleteMessage(messageId) {
+            if (!confirm("Are you sure you want to delete this message?")) {
+                return;
+            }
+            
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    action: "delete",
+                    id: messageId,
+                    chat_room_id: currentChatRoomId
+                }));
+                
+                showStatus("Message deleted", "success");
+            } else {
+                showStatus("Failed to delete message: Not connected", "error");
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const messageInput = document.getElementById('messageInput');
+            if (messageInput) {
+                messageInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        sendMessage();
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
