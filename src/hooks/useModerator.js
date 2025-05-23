@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -78,6 +79,60 @@ const useModerator = () => {
     }
   }, [user]);
   
+  // Set up a global WebSocket connection for notifications
+  useEffect(() => {
+    if (user?.role !== 'moderator') return;
+    
+    // This WebSocket will be used for global notifications like new chat rooms
+    const globalWs = connectWebSocket('global', handleGlobalWebSocketMessage);
+    
+    if (globalWs) {
+      globalWs.onopen = () => {
+        console.log('Global WebSocket connected');
+      };
+      
+      return () => {
+        if (globalWs) {
+          globalWs.close();
+        }
+      };
+    }
+  }, [user]);
+  
+  // Handle global WebSocket messages (new chat rooms, etc.)
+  const handleGlobalWebSocketMessage = useCallback((data) => {
+    console.log('Received global WebSocket message:', data);
+    
+    if (data.type === 'new_chat_room' && data.chat_room) {
+      // Update the assigned models list with the new chat room
+      setAssignedModels(prev => {
+        // Check if we already have this chat room
+        const exists = prev.some(model => model.id === data.chat_room.id);
+        if (exists) return prev;
+        
+        const newModel = {
+          id: data.chat_room.id,
+          name: data.chat_room.doll_name || `Model ${data.chat_room.id}`,
+          image: data.chat_room.doll_image || 'https://images.unsplash.com/photo-1611042553365-9b101d749e31?q=80&w=1000&auto=format&fit=crop',
+          receiverId: data.chat_room.user_id,
+          lastMessage: 'New conversation',
+          lastMessageTime: new Date().toISOString(),
+          unreadCount: 1
+        };
+        
+        toast.info(`New chat room created for ${newModel.name}`, {
+          description: 'Click to view the conversation',
+          action: {
+            label: 'View',
+            onClick: () => handleSelectModel(newModel)
+          }
+        });
+        
+        return [...prev, newModel];
+      });
+    }
+  }, []);
+  
   // Handle model selection
   const handleSelectModel = useCallback((model) => {
     // Clear input message and selected file when switching rooms
@@ -118,22 +173,14 @@ const useModerator = () => {
     loadMessages();
     
     // Set up WebSocket connection for real-time updates
-    if (selectedModel && selectedModel.id) {
-      // Ensure we have a valid chat room ID
-      const chatRoomId = Number(selectedModel.id);
-      if (isNaN(chatRoomId)) {
-        console.error('Invalid chat room ID:', selectedModel.id);
-        toast.error('Invalid chat room ID');
-        return;
-      }
-      
+    if (selectedModel) {
       // Close previous connection if it exists
       if (websocket) {
         websocket.close();
       }
       
       setConnectionStatus('connecting');
-      const ws = connectWebSocket(chatRoomId, handleWebSocketMessage);
+      const ws = connectWebSocket(selectedModel.id, handleWebSocketMessage);
       
       if (ws) {
         setWebsocket(ws);
@@ -142,7 +189,7 @@ const useModerator = () => {
         ws.onopen = () => {
           setConnectionStatus('connected');
           // Mark messages as read when joining a chat room
-          markMessagesAsRead(chatRoomId);
+          markMessagesAsRead(selectedModel.id);
           
           // Update the model's unread count to 0
           setAssignedModels(prev => 
@@ -330,9 +377,6 @@ const useModerator = () => {
     setIsUploading(true);
     
     try {
-      // Make sure we have the user ID from the context for moderator_id
-      const moderatorId = user?.id;
-      
       if (selectedFile) {
         const sentMessage = await sendFileMessage(selectedFile, selectedModel.id, receiverId);
         if (sentMessage) {
@@ -356,7 +400,7 @@ const useModerator = () => {
       }
       
       if (newMessage.trim()) {
-        const sentMessage = await sendMessage(newMessage, selectedModel.id, moderatorId);
+        const sentMessage = await sendMessage(newMessage, selectedModel.id, receiverId);
         if (sentMessage) {
           // Add the message manually to ensure it appears in the UI immediately
           setMessages(prev => [...prev, sentMessage]);
