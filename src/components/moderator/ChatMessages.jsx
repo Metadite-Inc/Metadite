@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { MessageSquare, ArrowDown } from 'lucide-react';
+import { MessageSquare } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import MessageItem from '../MessageItem';
 
@@ -20,26 +20,29 @@ const ChatMessages = ({
 
   // Connection status indicator
   const renderConnectionStatus = () => {
-    if (connectionStatus === 'connected') {
-      return (
-        <div className="text-center py-1 bg-green-500 text-white text-xs font-medium rounded-b-lg animate-fade-in">
-          Connected
-        </div>
-      );
-    } else if (connectionStatus === 'connecting') {
-      return (
-        <div className="text-center py-1 bg-yellow-500 text-white text-xs font-medium rounded-b-lg animate-fade-in">
-          Connecting...
-        </div>
-      );
-    } else if (connectionStatus === 'disconnected' || connectionStatus === 'error') {
-      return (
-        <div className="text-center py-1 bg-red-500 text-white text-xs font-medium rounded-b-lg animate-fade-in">
-          {connectionStatus === 'error' ? 'Connection Error' : 'Disconnected'}
-        </div>
-      );
+    switch (connectionStatus) {
+      case 'connected':
+        return (
+          <div className="text-center py-1 bg-green-500 text-white text-xs font-medium rounded-b-lg animate-fade-in">
+            Connected
+          </div>
+        );
+      case 'connecting':
+        return (
+          <div className="text-center py-1 bg-yellow-500 text-white text-xs font-medium rounded-b-lg animate-fade-in">
+            Connecting...
+          </div>
+        );
+      case 'disconnected':
+      case 'error':
+        return (
+          <div className="text-center py-1 bg-red-500 text-white text-xs font-medium rounded-b-lg animate-fade-in">
+            {connectionStatus === 'error' ? 'Connection Error' : 'Disconnected'}
+          </div>
+        );
+      default:
+        return null;
     }
-    return null;
   };
 
   if (loading) {
@@ -67,6 +70,15 @@ const ChatMessages = ({
     );
   }
 
+  // Ensure all messages have valid timestamps to prevent date formatting errors
+  const validatedMessages = messages.map(message => {
+    // If created_at is undefined or invalid, set it to current timestamp
+    if (!message.created_at || isNaN(new Date(message.created_at).getTime())) {
+      return { ...message, created_at: new Date().toISOString() };
+    }
+    return message;
+  });
+
   return (
     <div className="space-y-4">
       {/* Connection status */}
@@ -78,7 +90,7 @@ const ChatMessages = ({
           <button
             onClick={loadMoreMessages}
             disabled={isLoadingMore}
-            className={`px-4 py-1 text-xs rounded-full flex items-center justify-center mx-auto space-x-1 ${
+            className={`px-4 py-1 text-xs rounded-full ${
               theme === 'dark' 
                 ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' 
                 : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
@@ -86,17 +98,15 @@ const ChatMessages = ({
           >
             {isLoadingMore ? (
               <span className="inline-block h-3 w-3 rounded-full border-2 border-current border-r-transparent animate-spin mr-1"></span>
-            ) : (
-              <ArrowDown className="h-3 w-3" />
-            )}
-            <span>{isLoadingMore ? 'Loading...' : 'Load older messages'}</span>
+            ) : null}
+            {isLoadingMore ? 'Loading...' : 'Load older messages'}
           </button>
         </div>
       )}
       
       {/* Messages */}
       <div className="space-y-6">
-        {messages.map((message) => (
+        {validatedMessages.map((message) => (
           <MessageItem 
             key={message.id} 
             message={message} 

@@ -30,6 +30,20 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+// Interface to match the actual response from backend
+interface UserResponse {
+  id: string;
+  email: string;
+  role: string;
+  membershipLevel?: string;
+  region?: string;
+  fullName?: string;
+  full_name?: string;
+  membership_level?: string;
+  createdAt?: string;
+  created_at?: string;
+}
+
 // Provider component that wraps your app and makes auth object available to any child component that calls useAuth().
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
@@ -40,18 +54,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
       try {
         const token = localStorage.getItem('access_token');
         if (token) {
-          const userData = await authApi.getCurrentUser();
-          // Format the response to match our User interface
-          const formattedUser: User = {
+          const userData: UserResponse = await authApi.getCurrentUser();
+          setUser({
             id: userData.id,
             email: userData.email,
-            full_name: userData.fullName || userData.full_name || userData.name || '',
-            role: (userData.role as 'admin' | 'moderator' | 'user'),
-            membershipLevel: userData.membershipLevel || userData.membership_level,
+            full_name: userData.full_name || userData.fullName || '',
+            role: (userData.role || 'user') as 'admin' | 'moderator' | 'user',
+            membershipLevel: userData.membershipLevel || userData.membership_level as 'standard' | 'vip' | 'vvip' | undefined,
             region: userData.region,
-            created_at: userData.createdAt || userData.created_at
-          };
-          setUser(formattedUser);
+            created_at: userData.created_at || userData.createdAt
+          });
         }
       } catch (error) {
         console.error('Failed to initialize auth:', error);
@@ -67,18 +79,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const login = async (email: string, password: string): Promise<void> => {
     try {
       await authApi.login({ email, password });
-      const userData = await authApi.getCurrentUser();
-      // Format user data to match our User interface
-      const formattedUser: User = {
+      const userData: UserResponse = await authApi.getCurrentUser();
+      setUser({
         id: userData.id,
         email: userData.email,
-        full_name: userData.fullName || userData.full_name || userData.name || '',
-        role: (userData.role as 'admin' | 'moderator' | 'user'),
-        membershipLevel: userData.membershipLevel || userData.membership_level,
+        full_name: userData.full_name || userData.fullName || '',
+        role: (userData.role || 'user') as 'admin' | 'moderator' | 'user',
+        membershipLevel: userData.membershipLevel || userData.membership_level as 'standard' | 'vip' | 'vvip' | undefined,
         region: userData.region,
-        created_at: userData.createdAt || userData.created_at
-      };
-      setUser(formattedUser);
+        created_at: userData.created_at || userData.createdAt
+      });
       toast.success('Login successful');
     } catch (error) {
       toast.error('Login failed. Please check your credentials.');
