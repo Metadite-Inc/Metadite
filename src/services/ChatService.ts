@@ -83,7 +83,7 @@ const queueMessage = (message: any) => {
 };
 
 // Reconnection logic
-const reconnectWebSocket = (chatRoomId: number, onMessage: (data: any) => void) => {
+const reconnectWebSocket = (chatRoomId: number | string, onMessage: (data: any) => void) => {
   if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
     toast.error('Failed to reconnect. Please refresh the page.');
     return;
@@ -116,6 +116,13 @@ export const connectWebSocket = (chatRoomId: number | string, onMessage: (data: 
     }
     
     let wsUrl;
+    
+    // Make sure chatRoomId is valid (not NaN, undefined, or null)
+    if (!chatRoomId || (typeof chatRoomId === 'number' && isNaN(chatRoomId))) {
+      console.error('Invalid chat room ID:', chatRoomId);
+      toast.error('Invalid chat room ID. Please try again later.');
+      return null;
+    }
     
     // Handle special case for global notifications
     if (chatRoomId === 'global') {
@@ -159,7 +166,7 @@ export const connectWebSocket = (chatRoomId: number | string, onMessage: (data: 
     ws.onclose = (event) => {
       console.log('WebSocket connection closed:', event.code, event.reason);
       if (event.code !== 1000) { // Not a normal closure
-        reconnectWebSocket(Number(chatRoomId), onMessage);
+        reconnectWebSocket(chatRoomId, onMessage);
       }
     };
     
@@ -457,11 +464,17 @@ export const updateMessageStatus = async (messageId: string, status: MessageStat
 
 // File handling
 export const getFileUrl = (filename: string) => {
+  if (!filename) return '';
   return `${API_BASE_URL}/api/chat/files/${filename}`;
 };
 
 // Mark messages as read via WebSocket
 export const markMessagesAsRead = (chatRoomId: number) => {
+  if (!chatRoomId || isNaN(chatRoomId)) {
+    console.error('Invalid chat room ID for marking messages as read:', chatRoomId);
+    return false;
+  }
+  
   if (ws && ws.readyState === WebSocket.OPEN) {
     console.log(`Marking all messages as read in room ${chatRoomId}`);
     ws.send(JSON.stringify({
@@ -475,6 +488,11 @@ export const markMessagesAsRead = (chatRoomId: number) => {
 
 // Send typing indicator via WebSocket
 export const sendTypingIndicator = (chatRoomId: number, isTyping: boolean) => {
+  if (!chatRoomId || isNaN(chatRoomId)) {
+    console.error('Invalid chat room ID for typing indicator:', chatRoomId);
+    return false;
+  }
+  
   if (ws && ws.readyState === WebSocket.OPEN) {
     console.log(`Sending typing indicator: ${isTyping ? 'typing' : 'stopped typing'} in room ${chatRoomId}`);
     ws.send(JSON.stringify({

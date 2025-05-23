@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { getFileUrl, deleteMessage } from '../services/ChatService';
-import { MoreVertical, Download, Image as ImageIcon, Trash, File } from 'lucide-react';
+import { MoreVertical, Download, Trash, File } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
 

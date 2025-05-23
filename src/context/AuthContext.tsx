@@ -1,9 +1,9 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { toast } from 'sonner';
 import { authApi } from '../lib/api/auth_api';
 
 interface User {
-  //name: string;
   id: string;
   email: string;
   full_name: string;
@@ -41,7 +41,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const token = localStorage.getItem('access_token');
         if (token) {
           const userData = await authApi.getCurrentUser();
-          setUser(userData);
+          // Make sure the user data matches our User interface
+          const formattedUser: User = {
+            id: userData.id,
+            email: userData.email,
+            full_name: userData.full_name || userData.name || '',
+            role: userData.role,
+            membershipLevel: userData.membership_level,
+            region: userData.region,
+            created_at: userData.created_at
+          };
+          setUser(formattedUser);
         }
       } catch (error) {
         console.error('Failed to initialize auth:', error);
@@ -58,7 +68,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       await authApi.login({ email, password });
       const userData = await authApi.getCurrentUser();
-      setUser(userData);
+      // Format user data to match our User interface
+      const formattedUser: User = {
+        id: userData.id,
+        email: userData.email,
+        full_name: userData.full_name || userData.name || '',
+        role: userData.role,
+        membershipLevel: userData.membership_level,
+        region: userData.region,
+        created_at: userData.created_at
+      };
+      setUser(formattedUser);
       toast.success('Login successful');
     } catch (error) {
       toast.error('Login failed. Please check your credentials.');

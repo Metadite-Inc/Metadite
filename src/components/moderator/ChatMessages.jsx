@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { MessageSquare } from 'lucide-react';
+import { MessageSquare, ArrowDown } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import MessageItem from '../MessageItem';
 
@@ -85,7 +85,7 @@ const ChatMessages = ({
           <button
             onClick={loadMoreMessages}
             disabled={isLoadingMore}
-            className={`px-4 py-1 text-xs rounded-full ${
+            className={`px-4 py-1 text-xs rounded-full flex items-center justify-center mx-auto space-x-1 ${
               theme === 'dark' 
                 ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' 
                 : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
@@ -93,8 +93,10 @@ const ChatMessages = ({
           >
             {isLoadingMore ? (
               <span className="inline-block h-3 w-3 rounded-full border-2 border-current border-r-transparent animate-spin mr-1"></span>
-            ) : null}
-            {isLoadingMore ? 'Loading...' : 'Load older messages'}
+            ) : (
+              <ArrowDown className="h-3 w-3" />
+            )}
+            <span>{isLoadingMore ? 'Loading...' : 'Load older messages'}</span>
           </button>
         </div>
       )}

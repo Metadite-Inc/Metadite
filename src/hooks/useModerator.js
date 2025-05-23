@@ -173,7 +173,7 @@ const useModerator = () => {
     loadMessages();
     
     // Set up WebSocket connection for real-time updates
-    if (selectedModel) {
+    if (selectedModel && selectedModel.id && !isNaN(selectedModel.id)) {
       // Close previous connection if it exists
       if (websocket) {
         websocket.close();
@@ -372,13 +372,16 @@ const useModerator = () => {
   const handleSendMessage = async (e) => {
     e.preventDefault();
     
-    if ((!newMessage.trim() && !selectedFile) || !selectedModel || !receiverId) return;
+    if ((!newMessage.trim() && !selectedFile) || !selectedModel) return;
+    
+    // Make sure we have a valid receiver ID
+    const userReceiverId = selectedModel.receiverId || null;
     
     setIsUploading(true);
     
     try {
       if (selectedFile) {
-        const sentMessage = await sendFileMessage(selectedFile, selectedModel.id, receiverId);
+        const sentMessage = await sendFileMessage(selectedFile, selectedModel.id, userReceiverId);
         if (sentMessage) {
           // Add the message manually to ensure it appears in the UI immediately
           setMessages(prev => [...prev, sentMessage]);
@@ -400,7 +403,7 @@ const useModerator = () => {
       }
       
       if (newMessage.trim()) {
-        const sentMessage = await sendMessage(newMessage, selectedModel.id, receiverId);
+        const sentMessage = await sendMessage(newMessage, selectedModel.id, userReceiverId);
         if (sentMessage) {
           // Add the message manually to ensure it appears in the UI immediately
           setMessages(prev => [...prev, sentMessage]);
