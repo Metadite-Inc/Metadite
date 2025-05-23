@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { getFileUrl, deleteMessage } from '../services/ChatService';
@@ -11,37 +12,6 @@ const MessageItem = ({ message, onDelete, onFlag }) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const isOwnMessage = message.sender_id === user?.id;
 
-  // Helper to get the correct file URL
-  const getCorrectFileUrl = (message) => {
-    // If the message has a complete file_url, use it directly
-    if (message.file_url && (message.file_url.startsWith('http://') || message.file_url.startsWith('https://'))) {
-      return message.file_url;
-    }
-    
-    // Otherwise use the getFileUrl helper with either file_url or content
-    const fileIdentifier = message.file_url || message.content;
-    if (fileIdentifier) {
-      return getFileUrl(fileIdentifier);
-    }
-    
-    // Fallback to placeholder
-    return 'https://placehold.co/400x300?text=Image+Not+Found';
-  };
-
-  // Format date safely
-  const formatSafeDate = (dateStr) => {
-    try {
-      const date = new Date(dateStr || Date.now());
-      if (isNaN(date.getTime())) {
-        return format(new Date(), 'HH:mm');
-      }
-      return format(date, 'HH:mm');
-    } catch (error) {
-      console.error("Date formatting error:", error);
-      return format(new Date(), 'HH:mm');
-    }
-  };
-
   const renderMessageContent = () => {
     switch (message.message_type) {
       case 'IMAGE':
@@ -49,7 +19,7 @@ const MessageItem = ({ message, onDelete, onFlag }) => {
           <div className="relative group">
             <div className="relative rounded-lg overflow-hidden">
               <img 
-                src={getCorrectFileUrl(message)} 
+                src={message.file_url || getFileUrl(message.content)} 
                 alt="Shared image" 
                 className="max-w-full max-h-[300px] object-contain rounded-lg hover:opacity-95 transition-opacity"
                 loading="lazy"
@@ -62,7 +32,7 @@ const MessageItem = ({ message, onDelete, onFlag }) => {
             </div>
             <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
               <a 
-                href={getCorrectFileUrl(message)}
+                href={message.file_url || getFileUrl(message.content)}
                 target="_blank"
                 rel="noopener noreferrer"
                 download
@@ -76,7 +46,7 @@ const MessageItem = ({ message, onDelete, onFlag }) => {
       case 'FILE':
         return (
           <a 
-            href={getCorrectFileUrl(message)} 
+            href={getFileUrl(message.file_url || message.content)} 
             target="_blank" 
             rel="noopener noreferrer"
             download
@@ -132,7 +102,7 @@ const MessageItem = ({ message, onDelete, onFlag }) => {
       >
         <div className="flex justify-between items-start mb-1">
           <span className={`text-xs font-medium ${isOwnMessage ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'}`}>
-            {message.sender_name || 'Unknown'} • {formatSafeDate(message.created_at || message.timestamp)}
+            {message.sender_name || 'Unknown'} • {format(new Date(message.created_at || message.timestamp), 'HH:mm')}
           </span>
           
           <button 

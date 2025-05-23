@@ -1,9 +1,9 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { toast } from 'sonner';
 import { authApi } from '../lib/api/auth_api';
 
 interface User {
+  //name: string;
   id: string;
   email: string;
   full_name: string;
@@ -30,20 +30,6 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
-// Interface to match the actual response from backend
-interface UserResponse {
-  id: string;
-  email: string;
-  role: string;
-  membershipLevel?: string;
-  region?: string;
-  fullName?: string;
-  full_name?: string;
-  membership_level?: string;
-  createdAt?: string;
-  created_at?: string;
-}
-
 // Provider component that wraps your app and makes auth object available to any child component that calls useAuth().
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
@@ -54,16 +40,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       try {
         const token = localStorage.getItem('access_token');
         if (token) {
-          const userData: UserResponse = await authApi.getCurrentUser();
-          setUser({
-            id: userData.id,
-            email: userData.email,
-            full_name: userData.full_name || userData.fullName || '',
-            role: (userData.role || 'user') as 'admin' | 'moderator' | 'user',
-            membershipLevel: userData.membershipLevel || userData.membership_level as 'standard' | 'vip' | 'vvip' | undefined,
-            region: userData.region,
-            created_at: userData.created_at || userData.createdAt
-          });
+          const userData = await authApi.getCurrentUser();
+          setUser(userData);
         }
       } catch (error) {
         console.error('Failed to initialize auth:', error);
@@ -79,16 +57,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const login = async (email: string, password: string): Promise<void> => {
     try {
       await authApi.login({ email, password });
-      const userData: UserResponse = await authApi.getCurrentUser();
-      setUser({
-        id: userData.id,
-        email: userData.email,
-        full_name: userData.full_name || userData.fullName || '',
-        role: (userData.role || 'user') as 'admin' | 'moderator' | 'user',
-        membershipLevel: userData.membershipLevel || userData.membership_level as 'standard' | 'vip' | 'vvip' | undefined,
-        region: userData.region,
-        created_at: userData.created_at || userData.createdAt
-      });
+      const userData = await authApi.getCurrentUser();
+      setUser(userData);
       toast.success('Login successful');
     } catch (error) {
       toast.error('Login failed. Please check your credentials.');

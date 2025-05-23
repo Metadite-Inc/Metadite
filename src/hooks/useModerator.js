@@ -79,6 +79,172 @@ const useModerator = () => {
     }
   }, [user]);
   
+  // Set up a global WebSocket connection for notifications
+  useEffect(() => {
+    if (user?.role !== 'moderator') return;
+    
+    // This WebSocket will be used for global notifications like new chat rooms
+    const globalWs = connectWebSocket('global', handleGlobalWebSocketMessage);
+    
+    if (globalWs) {
+      globalWs.onopen = () => {
+        console.log('Global WebSocket connected');
+      };
+      
+      return () => {
+        if (globalWs) {
+          globalWs.close();
+        }
+      };
+    }
+  }, [user]);
+  
+  // Handle global WebSocket messages (new chat rooms, etc.)
+  const handleGlobalWebSocketMessage = useCallback((data) => {
+    console.log('Received global WebSocket message:', data);
+    
+    if (data.type === 'new_chat_room' && data.chat_room) {
+      // Update the assigned models list with the new chat room
+      setAssignedModels(prev => {
+        // Check if we already have this chat room
+        const exists = prev.some(model => model.id === data.chat_room.id);
+        if (exists) return prev;
+        
+        const newModel = {
+          id: data.chat_room.id,
+          name: data.chat_room.doll_name || `Model ${data.chat_room.id}`,
+          image: data.chat_room.doll_image || 'https://images.unsplash.com/photo-1611042553365-9b101d749e31?q=80&w=1000&auto=format&fit=crop',
+          receiverId: data.chat_room.user_id,
+          lastMessage: 'New conversation',
+          lastMessageTime: new Date().toISOString(),
+          unreadCount: 1
+        };
+        
+        toast.info(`New chat room created for ${newModel.name}`, {
+          description: 'Click to view the conversation',
+          action: {
+            label: 'View',
+            onClick: () => handleSelectModel(newModel)
+          }
+        });
+        
+        return [...prev, newModel];
+      });
+    }
+  }, []);
+  
+  // Handle model selection
+  const handleSelectModel = useCallback((model) => {
+    // Clear input message and selected file when switching rooms
+    setNewMessage('');
+    clearSelectedFile();
+    setSelectedModel(model);
+    
+    // Scroll to bottom after switching rooms
+    setTimeout(() => {
+      messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 300);
+  }, []);
+  
+  // Load messages when a model is selected
+  useEffect(() => {
+    const loadMessages = async () => {
+      if (!selectedModel) return;
+      
+      setLoading(true);
+      try {
+        const chatMessages = await getMessages(selectedModel.id);
+        setMessages(chatMessages);
+        setReceiverId(selectedModel.receiverId);
+        setHasMoreMessages(chatMessages.length === 50); // Assuming default limit is 50
+      } catch (error) {
+        console.error('Error loading messages:', error);
+        toast.error('Failed to load messages');
+      } finally {
+        setLoading(false);
+        
+        // Scroll to bottom after loading messages
+        setTimeout(() => {
+          messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      }
+    };
+    
+    loadMessages();
+    
+    // Set up WebSocket connection for real-time updates
+    if (selectedModel) {
+      // Close previous connection if it exists
+      if (websocket) {
+        websocket.close();
+      }
+      
+      setConnectionStatus('connecting');
+      const ws = connectWebSocket(selectedModel.id, handleWebSocketMessage);
+      
+      if (ws) {
+        setWebsocket(ws);
+        
+        // Update WebSocket event handlers to manage connection status
+        ws.onopen = () => {
+          setConnectionStatus('connected');
+          // Mark messages as read when joining a chat room
+          markMessagesAsRead(selectedModel.id);
+          
+          // Update the model's unread count to 0
+          setAssignedModels(prev => 
+            prev.map(model => 
+              model.id === selectedModel.id 
+                ? { ...model, unreadCount: 0 }
+                : model
+            )
+          );
+        };
+        
+        ws.onclose = () => {
+          setConnectionStatus('disconnected');
+        };
+        
+        ws.onerror = () => {
+          setConnectionStatus('error');
+        };
+      }
+      
+      return () => {
+        if (ws) {
+          ws.close();
+        }
+      };
+    }
+  }, [selectedModel]);
+  
+  // Scroll to bottom when new messages arrive
+  useEffect(() => {
+    messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+  
+  // Load more messages when scrolling up
+  const loadMoreMessages = async () => {
+    if (!selectedModel || isLoadingMore || !hasMoreMessages) return;
+    
+    setIsLoadingMore(true);
+    try {
+      const olderMessages = await getMessages(selectedModel.id, messages.length);
+      
+      if (olderMessages.length > 0) {
+        setMessages(prev => [...olderMessages, ...prev]);
+        setHasMoreMessages(olderMessages.length === 50); // Assuming default limit is 50
+      } else {
+        setHasMoreMessages(false);
+      }
+    } catch (error) {
+      console.error('Error loading more messages:', error);
+      toast.error('Failed to load more messages');
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
+  
   // Handle incoming WebSocket messages
   const handleWebSocketMessage = useCallback((data) => {
     console.log('Received WebSocket message:', data);
@@ -122,7 +288,7 @@ const useModerator = () => {
         const exists = prev.some(model => model.id === data.chat_room.id);
         if (exists) return prev;
         
-        const newModel = {
+        return [...prev, {
           id: data.chat_room.id,
           name: data.chat_room.doll_name || `Model ${data.chat_room.id}`,
           image: data.chat_room.doll_image || 'https://images.unsplash.com/photo-1611042553365-9b101d749e31?q=80&w=1000&auto=format&fit=crop',
@@ -130,138 +296,10 @@ const useModerator = () => {
           lastMessage: 'New conversation',
           lastMessageTime: new Date().toISOString(),
           unreadCount: 1
-        };
-        
-        toast.success(`New chat room created for ${newModel.name}`, {
-          description: 'Click to view the conversation',
-          action: {
-            label: 'View',
-            onClick: () => handleSelectModel(newModel)
-          }
-        });
-        
-        return [...prev, newModel];
+        }];
       });
     }
   }, []);
-  
-  // Handle model selection
-  const handleSelectModel = useCallback((model) => {
-    console.log("Selected model:", model);
-    // Clear input message and selected file when switching rooms
-    setNewMessage('');
-    clearSelectedFile();
-    setSelectedModel(model);
-    
-    // Scroll to bottom after switching rooms
-    setTimeout(() => {
-      messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, 300);
-  }, []);
-  
-  // Load messages when a model is selected
-  useEffect(() => {
-    const loadMessages = async () => {
-      if (!selectedModel) return;
-      
-      console.log("Loading messages for model:", selectedModel);
-      setLoading(true);
-      try {
-        const chatMessages = await getMessages(selectedModel.id);
-        setMessages(chatMessages);
-        setReceiverId(selectedModel.receiverId);
-        setHasMoreMessages(chatMessages.length === 50); // Assuming default limit is 50
-      } catch (error) {
-        console.error('Error loading messages:', error);
-        toast.error('Failed to load messages');
-      } finally {
-        setLoading(false);
-        
-        // Scroll to bottom after loading messages
-        setTimeout(() => {
-          messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-        }, 100);
-      }
-    };
-    
-    loadMessages();
-    
-    // Set up WebSocket connection for real-time updates
-    if (selectedModel) {
-      // Close previous connection if it exists
-      if (websocket) {
-        websocket.close();
-      }
-      
-      setConnectionStatus('connecting');
-      console.log("Connecting to WebSocket for room ID:", selectedModel.id);
-      const ws = connectWebSocket(selectedModel.id, handleWebSocketMessage);
-      
-      if (ws) {
-        setWebsocket(ws);
-        
-        // Update WebSocket event handlers to manage connection status
-        ws.onopen = () => {
-          setConnectionStatus('connected');
-          console.log("WebSocket connected for room:", selectedModel.id);
-          // Mark messages as read when joining a chat room
-          markMessagesAsRead(selectedModel.id);
-          
-          // Update the model's unread count to 0
-          setAssignedModels(prev => 
-            prev.map(model => 
-              model.id === selectedModel.id 
-                ? { ...model, unreadCount: 0 }
-                : model
-            )
-          );
-        };
-        
-        ws.onclose = () => {
-          setConnectionStatus('disconnected');
-          console.log("WebSocket disconnected for room:", selectedModel.id);
-        };
-        
-        ws.onerror = (error) => {
-          setConnectionStatus('error');
-          console.error("WebSocket error for room:", selectedModel.id, error);
-        };
-      }
-      
-      return () => {
-        if (ws) {
-          ws.close();
-        }
-      };
-    }
-  }, [selectedModel, handleWebSocketMessage]);
-  
-  // Scroll to bottom when new messages arrive
-  useEffect(() => {
-    messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-  
-  // Load more messages when scrolling up
-  const loadMoreMessages = async () => {
-    if (!selectedModel || isLoadingMore || !hasMoreMessages) return;
-    
-    setIsLoadingMore(true);
-    try {
-      const olderMessages = await getMessages(selectedModel.id, messages.length);
-      
-      if (olderMessages.length > 0) {
-        setMessages(prev => [...olderMessages, ...prev]);
-        setHasMoreMessages(olderMessages.length === 50); // Assuming default limit is 50
-      } else {
-        setHasMoreMessages(false);
-      }
-    } catch (error) {
-      console.error('Error loading more messages:', error);
-      toast.error('Failed to load more messages');
-    } finally {
-      setIsLoadingMore(false);
-    }
-  };
   
   // Handle file selection
   const handleFileSelect = (e) => {
@@ -334,9 +372,8 @@ const useModerator = () => {
   const handleSendMessage = async (e) => {
     e.preventDefault();
     
-    if ((!newMessage.trim() && !selectedFile) || !selectedModel) return;
+    if ((!newMessage.trim() && !selectedFile) || !selectedModel || !receiverId) return;
     
-    console.log("Sending message to room:", selectedModel.id, "receiver:", receiverId);
     setIsUploading(true);
     
     try {

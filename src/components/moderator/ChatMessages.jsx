@@ -20,29 +20,26 @@ const ChatMessages = ({
 
   // Connection status indicator
   const renderConnectionStatus = () => {
-    switch (connectionStatus) {
-      case 'connected':
-        return (
-          <div className="text-center py-1 bg-green-500 text-white text-xs font-medium rounded-b-lg animate-fade-in">
-            Connected
-          </div>
-        );
-      case 'connecting':
-        return (
-          <div className="text-center py-1 bg-yellow-500 text-white text-xs font-medium rounded-b-lg animate-fade-in">
-            Connecting...
-          </div>
-        );
-      case 'disconnected':
-      case 'error':
-        return (
-          <div className="text-center py-1 bg-red-500 text-white text-xs font-medium rounded-b-lg animate-fade-in">
-            {connectionStatus === 'error' ? 'Connection Error' : 'Disconnected'}
-          </div>
-        );
-      default:
-        return null;
+    if (connectionStatus === 'connected') {
+      return (
+        <div className="text-center py-1 bg-green-500 text-white text-xs font-medium rounded-b-lg animate-fade-in">
+          Connected
+        </div>
+      );
+    } else if (connectionStatus === 'connecting') {
+      return (
+        <div className="text-center py-1 bg-yellow-500 text-white text-xs font-medium rounded-b-lg animate-fade-in">
+          Connecting...
+        </div>
+      );
+    } else if (connectionStatus === 'disconnected' || connectionStatus === 'error') {
+      return (
+        <div className="text-center py-1 bg-red-500 text-white text-xs font-medium rounded-b-lg animate-fade-in">
+          {connectionStatus === 'error' ? 'Connection Error' : 'Disconnected'}
+        </div>
+      );
     }
+    return null;
   };
 
   if (loading) {
@@ -70,13 +67,11 @@ const ChatMessages = ({
     );
   }
 
-  // Ensure all messages have valid timestamps to prevent date formatting errors
-  const validatedMessages = messages.map(message => {
-    // If created_at is undefined or invalid, set it to current timestamp
-    if (!message.created_at || isNaN(new Date(message.created_at).getTime())) {
-      return { ...message, created_at: new Date().toISOString() };
-    }
-    return message;
+  // Sort messages in chronological order (oldest to newest)
+  const sortedMessages = [...messages].sort((a, b) => {
+    const dateA = new Date(a.created_at || a.timestamp || 0);
+    const dateB = new Date(b.created_at || b.timestamp || 0);
+    return dateA - dateB;
   });
 
   return (
@@ -106,7 +101,7 @@ const ChatMessages = ({
       
       {/* Messages */}
       <div className="space-y-6">
-        {validatedMessages.map((message) => (
+        {sortedMessages.map((message) => (
           <MessageItem 
             key={message.id} 
             message={message} 
