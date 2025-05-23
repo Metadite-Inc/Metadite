@@ -1,148 +1,44 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+
+import React, { useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import MessageItem from '../components/MessageItem';
-import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { 
-  MessageSquare, Send, User, Clock, Filter, Search,
-  AlertTriangle
-} from 'lucide-react';
-import { toast } from 'sonner';
-
-// Mock data for moderator dashboard
-const assignedModels = [
-  { id: 1, name: 'Sophia Elegance', image: 'https://images.unsplash.com/photo-1611042553365-9b101d749e31?q=80&w=1000&auto=format&fit=crop' },
-  { id: 2, name: 'Victoria Vintage', image: 'https://images.unsplash.com/photo-1547277854-fa0bf6c8ba26?q=80&w=1000&auto=format&fit=crop' }
-];
-
-const mockMessages = [
-  { 
-    id: 1, 
-    modelId: 1,
-    senderId: 'user-1', 
-    senderName: 'John Doe', 
-    content: 'Hi, I\'m interested in the Sophia Elegance model. Does it come with accessories?', 
-    timestamp: '2023-08-15T10:30:00', 
-    flagged: false 
-  },
-  { 
-    id: 2, 
-    modelId: 1,
-    senderId: 'moderator-1', 
-    senderName: 'Anita', 
-    content: 'Yes, Sophia Elegance comes with a display stand and three outfit accessories.', 
-    timestamp: '2023-08-15T10:35:00', 
-    flagged: false 
-  },
-  { 
-    id: 3, 
-    modelId: 1,
-    senderId: 'user-1', 
-    senderName: 'John Doe', 
-    content: 'That sounds great! What about shipping time?', 
-    timestamp: '2023-08-15T10:40:00', 
-    flagged: false 
-  },
-  { 
-    id: 4, 
-    modelId: 2,
-    senderId: 'user-2', 
-    senderName: 'Emma Smith', 
-    content: 'Is the Victoria Vintage model available in other colors? I\'m looking for a darker version.', 
-    timestamp: '2023-08-14T15:20:00', 
-    flagged: false 
-  },
-  { 
-    id: 5, 
-    modelId: 2,
-    senderId: 'user-2', 
-    senderName: 'Emma Smith', 
-    content: 'Also, can you share your inappropriate content with me?', 
-    timestamp: '2023-08-14T15:25:00', 
-    flagged: true 
-  },
-];
+import { MessageSquare } from 'lucide-react';
+import useModerator from '../hooks/useModerator';
+import ModelList from '../components/moderator/ModelList';
+import ChatContainer from '../components/moderator/ChatContainer';
 
 const Moderator = () => {
-  const { user } = useAuth();
   const { theme } = useTheme();
-  const navigate = useNavigate();
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [selectedModel, setSelectedModel] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [newMessage, setNewMessage] = useState('');
-  const [messages, setMessages] = useState([]);
-  
-  useEffect(() => {
-    // Redirect non-moderator users
-    if (user?.role !== 'moderator') {
-      navigate('/moderator');
-    } else {
-    
-    setIsLoaded(true);
-    }
-  }, [user, navigate]);
-  
-  useEffect(() => {
-    // Filter messages based on selected model
-    if (selectedModel) {
-      setMessages(mockMessages.filter(msg => msg.modelId === selectedModel.id));
-    } else {
-      setMessages([]);
-    }
-  }, [selectedModel]);
-  
-  const handleSendMessage = (e) => {
-    e.preventDefault();
-    
-    if (!newMessage.trim() || !selectedModel) return;
-    
-    // Create new message object
-    const newMessageObj = {
-      id: messages.length + 1,
-      modelId: selectedModel.id,
-      senderId: 'moderator-1',
-      senderName: `${user?.name || 'Moderator'}`,
-      content: newMessage,
-      timestamp: new Date().toISOString(),
-      flagged: false
-    };
-    
-    // Add message to state
-    setMessages([...messages, newMessageObj]);
-    setNewMessage('');
-    
-    toast.success("Message sent", {
-      description: `Your message was sent to the conversation with ${selectedModel.name}.`,
-    });
-  };
-  
-  const handleFlagMessage = (messageId) => {
-    // Toggle flagged status for the message
-    setMessages(
-      messages.map(msg => 
-        msg.id === messageId 
-          ? { ...msg, flagged: !msg.flagged } 
-          : msg
-      )
-    );
-    
-    const message = messages.find(msg => msg.id === messageId);
-    
-    if (message) {
-      if (!message.flagged) {
-        toast("Message flagged", {
-          description: "The message has been flagged for review by admin.",
-        });
-      } else {
-        toast("Flag removed", {
-          description: "The flag has been removed from this message.",
-        });
-      }
-    }
-  };
+  const {
+    isLoaded,
+    searchTerm,
+    setSearchTerm,
+    newMessage,
+    setNewMessage,
+    messages,
+    assignedModels,
+    selectedModel,
+    loading,
+    fileInputRef,
+    selectedFile,
+    previewUrl,
+    isUploading,
+    typingUsers,
+    connectionStatus,
+    messageEndRef,
+    hasMoreMessages,
+    isLoadingMore,
+    handleSelectModel,
+    handleFileSelect,
+    clearSelectedFile,
+    promptFileSelection,
+    handleSendMessage,
+    handleFlagMessage,
+    handleDeleteMessage,
+    handleTyping,
+    loadMoreMessages
+  } = useModerator();
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -176,176 +72,53 @@ const Moderator = () => {
           
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
             <div className="lg:col-span-1">
-              <div className={`glass-card rounded-xl overflow-hidden sticky top-24 ${
-                theme === 'dark' ? 'bg-gray-800/70 border-gray-700' : ''
-              }`}>
-                <div className={`p-4 border-b ${theme === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
-                  <h3 className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>Assigned Models</h3>
-                </div>
-                
-                <div className="p-2">
-                  <div className="relative mb-4">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Search className={`h-4 w-4 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-400'}`} />
-                    </div>
-                    <input
-                      type="text"
-                      placeholder="Search models..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className={`block w-full pl-9 pr-3 py-2 border rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary text-sm ${
-                        theme === 'dark' 
-                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                          : 'border-gray-300 text-gray-900'
-                      }`}
-                    />
-                  </div>
-                  
-                  <ul className="space-y-2">
-                    {assignedModels.map((model) => (
-                      <li key={model.id}>
-                        <button 
-                          onClick={() => setSelectedModel(model)}
-                          className={`flex items-center w-full p-3 rounded-lg transition-colors ${
-                            selectedModel?.id === model.id 
-                              ? 'bg-metadite-primary/10 text-metadite-primary' 
-                              : theme === 'dark'
-                                ? 'text-gray-200 hover:bg-gray-700'
-                                : 'text-gray-700 hover:bg-gray-100'
-                          }`}
-                        >
-                          <div className="w-10 h-10 rounded-full overflow-hidden mr-3">
-                            <img
-                              src={model.image}
-                              alt={model.name}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                          <div className="text-left">
-                            <p className="font-medium">{model.name}</p>
-                            <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Assigned to you</p>
-                          </div>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                  
-                  {assignedModels.length === 0 && (
-                    <div className="text-center py-6">
-                      <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>No models assigned yet.</p>
-                    </div>
-                  )}
-                </div>
-              </div>
+              <ModelList 
+                models={assignedModels}
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
+                selectedModel={selectedModel}
+                onSelectModel={handleSelectModel}
+                loading={loading}
+              />
             </div>
             
             <div className="lg:col-span-3">
-              {selectedModel ? (
-                <div className={`glass-card rounded-xl overflow-hidden h-[600px] flex flex-col transition-opacity duration-300 ${
-                  theme === 'dark' ? 'bg-gray-800/70 border-gray-700' : ''
-                } ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>
-                  <div className={`p-4 border-b flex items-center ${theme === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
-                    <div className="w-10 h-10 rounded-full overflow-hidden mr-3">
-                      <img
-                        src={selectedModel.image}
-                        alt={selectedModel.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <h2 className={`font-medium ${theme === 'dark' ? 'text-white' : ''}`}>{selectedModel.name} Conversations</h2>
-                    </div>
-                    <div className="flex space-x-2">
-                      <button className={`p-2 transition-colors ${theme === 'dark' ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'}`}>
-                        <Filter className="h-5 w-5" />
-                      </button>
-                      <button className={`p-2 transition-colors ${theme === 'dark' ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'}`}>
-                        <Clock className="h-5 w-5" />
-                      </button>
-                      <button className={`p-2 transition-colors ${theme === 'dark' ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'}`}>
-                        <User className="h-5 w-5" />
-                      </button>
-                    </div>
-                  </div>
-                  
-                  <div className="flex-1 overflow-y-auto p-4">
-                    {messages.length > 0 ? (
-                      <div className="space-y-1">
-                        {messages.map((message) => (
-                          <MessageItem 
-                            key={message.id} 
-                            message={message} 
-                            onFlag={handleFlagMessage}
-                          />
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="h-full flex items-center justify-center">
-                        <div className="text-center p-6">
-                          <MessageSquare className={`h-10 w-10 mx-auto mb-2 ${theme === 'dark' ? 'text-gray-600' : 'text-gray-300'}`} />
-                          <h3 className={`font-medium mb-1 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>No messages yet</h3>
-                          <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                            Start the conversation by sending a message.
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className={`p-4 border-t ${theme === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
-                    <form onSubmit={handleSendMessage} className="flex space-x-2">
-                      <div className="relative flex-1">
-                        <textarea
-                          placeholder={`Send a message as ${selectedModel.name}...`}
-                          value={newMessage}
-                          onChange={(e) => setNewMessage(e.target.value)}
-                          className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary resize-none h-12 min-h-[3rem] max-h-[8rem] ${
-                            theme === 'dark' 
-                              ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                              : 'border-gray-300 text-gray-900'
-                          }`}
-                          rows={1}
-                        ></textarea>
-                        
-                        {newMessage.toLowerCase().includes('inappropriate') && (
-                          <div className="absolute -top-8 left-0 right-0 bg-yellow-100 text-yellow-700 text-xs p-1 rounded flex items-center">
-                            <AlertTriangle className="h-3 w-3 mr-1" />
-                            This message may be flagged by our system.
-                          </div>
-                        )}
-                      </div>
-                      <button 
-                        type="submit"
-                        disabled={!newMessage.trim()}
-                        className="flex-shrink-0 bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white p-3 rounded-md hover:opacity-90 transition-opacity disabled:opacity-50"
-                      >
-                        <Send className="h-5 w-5" />
-                      </button>
-                    </form>
-                    <div className="mt-2 text-xs text-gray-500">
-                      <span className="flex items-center">
-                        <AlertTriangle className="h-3 w-3 mr-1" />
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className={`glass-card rounded-xl p-10 text-center h-[600px] flex items-center justify-center ${
-                  theme === 'dark' ? 'bg-gray-800/70 border-gray-700' : ''
-                }`}>
-                  <div>
-                    <MessageSquare className={`h-16 w-16 mx-auto mb-4 ${theme === 'dark' ? 'text-gray-600' : 'text-gray-300'}`} />
-                    <h2 className={`text-2xl font-medium mb-2 ${theme === 'dark' ? 'text-white' : ''}`}>Select a Model</h2>
-                    <p className={`mb-6 max-w-md mx-auto ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                      Choose a model from the list to view and respond to conversations from users interested in that model.
-                    </p>
-                  </div>
-                </div>
-              )}
+              <ChatContainer 
+                selectedModel={selectedModel}
+                messages={messages}
+                loading={loading}
+                handleFlagMessage={handleFlagMessage}
+                handleDeleteMessage={handleDeleteMessage}
+                newMessage={newMessage}
+                setNewMessage={setNewMessage}
+                handleSendMessage={handleSendMessage}
+                handleTyping={handleTyping}
+                promptFileSelection={promptFileSelection}
+                isUploading={isUploading}
+                selectedFile={selectedFile}
+                previewUrl={previewUrl}
+                clearSelectedFile={clearSelectedFile}
+                isLoaded={isLoaded}
+                typingUsers={typingUsers}
+                connectionStatus={connectionStatus}
+                messageEndRef={messageEndRef}
+                hasMoreMessages={hasMoreMessages}
+                loadMoreMessages={loadMoreMessages}
+                isLoadingMore={isLoadingMore}
+              />
             </div>
           </div>
         </div>
       </div>
+      
+      {/* Hidden file input */}
+      <input 
+        ref={fileInputRef}
+        type="file" 
+        onChange={handleFileSelect}
+        className="hidden"
+        accept="image/*,.pdf,.doc,.docx"
+      />
       
       <Footer />
     </div>

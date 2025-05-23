@@ -144,7 +144,7 @@ const OrderDetail = () => {
           <div className="container mx-auto max-w-4xl">
             <div className="flex flex-col items-center justify-center min-h-[60vh]">
               <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-metadite-primary"></div>
-              <p className={`mt-4 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>Loading order details...</p>
+              <div className={`mt-4 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>Loading order details...</div>
             </div>
           </div>
         </div>
@@ -171,9 +171,9 @@ const OrderDetail = () => {
                 <h2 className={`text-xl font-semibold mb-2 ${theme === 'dark' ? 'text-white' : ''}`}>
                   Order Not Found
                 </h2>
-                <p className={`max-w-md mx-auto ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                  We couldn't find the order you're looking for. It may have been deleted or the ID is incorrect.
-                </p>
+                <div className={`max-w-md mx-auto ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+  We couldn't find the order you're looking for. It may have been deleted or the ID is incorrect.
+</div>
                 <Button 
                   className="mt-6" 
                   onClick={() => navigate('/dashboard')}
@@ -242,13 +242,13 @@ const OrderDetail = () => {
                     <Info className="h-4 w-4 text-muted-foreground cursor-help" title="Order ID" />
                   </CardTitle>
                   <CardDescription className={`${theme === 'dark' ? 'text-gray-400' : ''}`}>
-                    <div className="flex flex-wrap items-center mt-2 gap-1">
-                      <Calendar className="h-3.5 w-3.5 mr-1" /> 
-                      <span className="mr-2">Order Date: {order.date}</span>
-                      <Clock className="h-3.5 w-3.5 mr-1" /> 
-                      <span>Order Time: {order.time}</span>
-                    </div>
-                  </CardDescription>
+  <div className="flex flex-wrap items-center mt-2 gap-1">
+    <Calendar className="h-3.5 w-3.5 mr-1" /> 
+    <span className="mr-2">Order Date: {order.date}</span>
+    <Clock className="h-3.5 w-3.5 mr-1" /> 
+    <span>Order Time: {order.time}</span>
+  </div>
+</CardDescription>
                 </div>
                 
                 {order.status === 'shipped' && (

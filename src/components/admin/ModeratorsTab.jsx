@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Users, Search, Edit, Trash2, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
@@ -21,6 +20,8 @@ const ModeratorsTab = ({ isLoaded }) => {
     password: ''
   });
   
+  const [assignedDolls, setAssignedDolls] = useState({});
+  
   // Fetch moderators and models on component mount
   useEffect(() => {
     const fetchData = async () => {
@@ -34,6 +35,23 @@ const ModeratorsTab = ({ isLoaded }) => {
         const modelsData = await moderatorApiService.getModelsForAssignment();
         setModels(modelsData || []);
         setModelsLoading(false);
+
+        // Fetch assigned dolls for each moderator
+        if (moderatorsData && moderatorsData.length > 0) {
+          const dollsMap = {};
+          await Promise.all(
+            moderatorsData.map(async (mod) => {
+              try {
+                const dolls = await moderatorApiService.getDollsAssignedToModerator(mod.id);
+                dollsMap[mod.id] = dolls || [];
+              } catch (error) {
+                console.error(`Failed to fetch dolls for moderator ${mod.id}:`, error);
+                dollsMap[mod.id] = [];
+              }
+            })
+          );
+          setAssignedDolls(dollsMap);
+        }
       } catch (error) {
         toast.error("Failed to load data", {
           description: error instanceof Error ? error.message : "Unknown error occurred",
@@ -118,43 +136,6 @@ const ModeratorsTab = ({ isLoaded }) => {
       }
     }
   };
-
-  const [assignedDolls, setAssignedDolls] = useState({});
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Fetch moderators
-        const moderatorsData = await adminApiService.getModerators();
-        setModerators(moderatorsData || []);
-        setLoading(false);
-
-        // Fetch models for assignment
-        const modelsData = await moderatorApiService.getModelsForAssignment();
-        setModels(modelsData || []);
-        setModelsLoading(false);
-
-        // Fetch assigned dolls for each moderator
-        if (moderatorsData && moderatorsData.length > 0) {
-          const dollsMap = {};
-          await Promise.all(
-            moderatorsData.map(async (mod) => {
-              const dolls = await moderatorApiService.getDollsAssignedToModerator(mod.id);
-              dollsMap[mod.id] = dolls || [];
-            })
-          );
-          setAssignedDolls(dollsMap);
-        }
-      } catch (error) {
-        toast.error("Failed to load data", {
-          description: error instanceof Error ? error.message : "Unknown error occurred",
-        });
-        setLoading(false);
-        setModelsLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
 
   return (
     <div className={`space-y-6 transition-opacity duration-300 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>

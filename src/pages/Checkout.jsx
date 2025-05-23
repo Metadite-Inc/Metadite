@@ -7,6 +7,8 @@ import { CreditCard, ShoppingBag, Lock, Check, ChevronsUp, Phone, Mail } from 'l
 import { toast } from 'sonner';
 import countries from '../components/countries';
 import { useTheme } from '../context/ThemeContext';
+import stripePromise from './stripePromise';
+import { createStripeCheckoutSession } from '../lib/api/payment_api';
 
 const Checkout = () => {
   const { items, totalAmount, totalItems, clearCart } = useCart();
@@ -24,7 +26,6 @@ const Checkout = () => {
   });
   const [isProcessing, setIsProcessing] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
-  const [expirationDate, setExpirationDate] = useState("");
   const { theme } = useTheme();
 
   const handleInputChange = (e) => {
@@ -35,27 +36,32 @@ const Checkout = () => {
     });
   };
 
-  const handleExpirationDateChange = (e) => {
-    let value = e.target.value.replace(/\D/g, ""); // Remove non-numeric characters
-    if (value.length > 2) {
-      value = value.slice(0, 2) + " / " + value.slice(2, 4); // Add the "/" separator
-    }
-    setExpirationDate(value);
-  };
-  
-  const handleSubmit = (e) => {
+  // Stripe Checkout integration
+  const handleStripeCheckout = async (e) => {
     e.preventDefault();
     setIsProcessing(true);
-    
-    // Simulate payment processing
-    setTimeout(() => {
+    try {
+      // Prepare data for backend (cart items + shipping details)
+      const data = {
+        items,
+        shippingDetails,
+        success_url: window.location.origin + '/success',
+        cancel_url: window.location.origin + '/cancel',
+      };
+      // Call backend to create Stripe session
+      const result = await createStripeCheckoutSession(data);
+      const stripe = await stripePromise;
+      localStorage.setItem('cartShouldClear', 'true');
+      const { error } = await stripe.redirectToCheckout({ sessionId: result.id });
+      if (error) {
+        toast.error('Stripe redirect failed', { description: error.message });
+        setIsProcessing(false);
+      }
+      // On success, Stripe will redirect. No need to set isComplete here.
+    } catch (err) {
       setIsProcessing(false);
-      setIsComplete(true);
-      clearCart(); // Clear the cart after successful checkout
-      toast.success("Payment successful!", {
-        description: "Your order has been placed successfully.",
-      });
-    }, 2000);
+      toast.error('Checkout failed', { description: err.message });
+    }
   };
 
   if (items.length === 0 && !isComplete) {
@@ -90,55 +96,7 @@ const Checkout = () => {
     );
   }
 
-  if (isComplete) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <Navbar />
-        
-        <div className={`flex-1 pt-24 pb-12 px-4 ${
-          theme === 'dark' 
-          ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' 
-          : 'bg-gradient-to-br from-white via-metadite-light to-white'
-        }`}>
-          <div className="container mx-auto max-w-md animate-fade-in">
-            <div className={`glass-card rounded-xl p-10 text-center ${theme === 'dark' ? 'bg-gray-800/70' : ''}`}>
-              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Check className="h-10 w-10 text-green-500" />
-              </div>
-              <h2 className={`text-2xl font-bold mb-2 ${theme === 'dark' ? 'text-white' : ''}`}>Order Confirmed!</h2>
-              <p className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-6`}>
-                Thank you for your purchase. We've sent a confirmation email to {shippingDetails.email} with your order details.
-              </p>
-              <div className={`${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'} rounded-lg p-4 mb-6`}>
-                <div className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} mb-1`}>Order number</div>
-                <div className={`font-medium ${theme === 'dark' ? 'text-white' : ''}`}>ORD-{Math.floor(100000 + Math.random() * 900000)}</div>
-              </div>
-              <div className="space-y-4">
-                <Link 
-                  to="/dashboard"
-                  className="block w-full bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white py-3 rounded-md hover:opacity-90 transition-opacity"
-                >
-                  View Order Status
-                </Link>
-                <Link 
-                  to="/"
-                  className={`block w-full border py-3 rounded-md transition-colors ${
-                    theme === 'dark' 
-                      ? 'border-gray-600 hover:bg-gray-700' 
-                      : 'border-gray-300 hover:bg-gray-50'
-                  }`}
-                >
-                  Return to Home
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <Footer />
-      </div>
-    );
-  }
+  
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -165,7 +123,7 @@ const Checkout = () => {
                 </div>
                 
                 <div className="p-6">
-                  <form onSubmit={handleSubmit}>
+                  <form onSubmit={handleStripeCheckout}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                       <div>
                         <label htmlFor="firstName" className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
@@ -392,58 +350,7 @@ const Checkout = () => {
                         </div>
                       </div>
                       
-                      {paymentMethod === 'card' && (
-                        <div className="mt-4 pl-8">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="md:col-span-2">
-                              <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
-                                Card Number
-                              </label>
-                              <input
-                                type="text"
-                                placeholder="1234 5678 9012 3456"
-                                className={`block w-full px-3 py-2 rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary ${
-                                  theme === 'dark'
-                                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
-                                    : 'border-gray-300 text-gray-900'
-                                }`}
-                              />
-                            </div>
-                            
-                            <div>
-                              <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
-                                Expiration Date
-                              </label>
-                              <input
-                                type="text"
-                                placeholder="MM / YY"
-                                value={expirationDate}
-                                onChange={handleExpirationDateChange}
-                                className={`block w-full px-3 py-2 rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary ${
-                                  theme === 'dark'
-                                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
-                                    : 'border-gray-300 text-gray-900'
-                                }`}
-                              />
-                            </div>
-                            
-                            <div>
-                              <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
-                                Security Code (CVV)
-                              </label>
-                              <input
-                                type="text"
-                                placeholder="123"
-                                className={`block w-full px-3 py-2 rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary ${
-                                  theme === 'dark'
-                                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
-                                    : 'border-gray-300 text-gray-900'
-                                }`}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      )}
+                      
                     </div>
                     
                     {/*<div 
@@ -535,8 +442,8 @@ const Checkout = () => {
                 
                 <div className="p-4">
                   <div className="max-h-60 overflow-y-auto mb-4">
-                    {items.map((item) => (
-                      <div key={item.id} className={`flex items-center py-2 border-b last:border-0 ${
+                    {items.map((item, index) => (
+                      <div key={`${item.id}-${index}`} className={`flex items-center py-2 border-b last:border-0 ${
                         theme === 'dark' ? 'border-gray-700' : 'border-gray-100'
                       }`}>
                         <div className={`w-16 h-16 ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'} rounded overflow-hidden mr-3`}>
@@ -578,7 +485,7 @@ const Checkout = () => {
                   
                   <div className="mt-6">
                     <button
-                      onClick={handleSubmit}
+                      onClick={handleStripeCheckout}
                       disabled={isProcessing}
                       className="w-full flex items-center justify-center bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white py-3 px-4 rounded-md hover:opacity-90 transition-opacity disabled:opacity-70"
                     >

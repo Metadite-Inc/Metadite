@@ -88,17 +88,19 @@ const HeroSection = ({ isLoaded, user, hasVipAccess, theme }) => {
                     // Drop-in (slide from top)
                     currentSlide === idx ? 'translate-y-0 opacity-100 z-20 transition-all duration-700 ease-in-out' : '-translate-y-16 opacity-0 z-0 transition-all duration-700 ease-in-out',
                     // Water ripple (scale/skew)
-                    currentSlide === idx ? 'scale-110 opacity-100 z-20 transition-all duration-700 ease-in-out' : 'scale-90 skew-y-0 opacity-0 z-0 transition-all duration-700 ease-in-out',
-                    // Love (pulse/scale with pink shadow)
-                    currentSlide === idx ? 'scale-105 animate-pulse shadow-pink-300 shadow-lg opacity-100 z-20 transition-all duration-700 ease-in-out' : 'scale-90 opacity-0 z-0 transition-all duration-700 ease-in-out',
+                    currentSlide === idx ? 'scale-110 skew-y-0 opacity-100 z-20 transition-all duration-700 ease-in-out' : 'scale-90 skew-y-0 opacity-0 z-0 transition-all duration-700 ease-in-out',
+                    // Love (scale with pink shadow, no pulse)
+                    currentSlide === idx ? 'scale-105 shadow-pink-300 shadow-lg opacity-100 z-20 transition-all duration-700 ease-in-out' : 'scale-90 opacity-0 z-0 transition-all duration-700 ease-in-out',
+                    // Classic fade/zoom
+                    currentSlide === idx ? 'scale-100 opacity-100 z-20 transition-all duration-700 ease-in-out' : 'scale-90 opacity-0 z-0 transition-all duration-700 ease-in-out',
                     // Rotate/zoom
                     currentSlide === idx ? 'scale-105 rotate-2 opacity-100 z-20 transition-all duration-700 ease-in-out' : 'scale-90 opacity-0 z-0 transition-all duration-700 ease-in-out',
                     // Water drop (scaleY)
                     currentSlide === idx ? 'scale-y-110 opacity-100 z-20 transition-all duration-700 ease-in-out' : 'scale-y-90 opacity-0 z-0 transition-all duration-700 ease-in-out',
                   ];
                   const effect = effects[idx % effects.length];
-                  // For love effect, add a pink shadow only on the active slide
-                  const loveShadow = (idx % effects.length === 2 && currentSlide === idx) ? 'shadow-pink-400/70' : '';
+                  // Add pink shadow to all videos
+                  const loveShadow = item.type === 'video' ? 'shadow-pink-400/70' : '';
                   return (
                     <div
                       key={item.url || idx}

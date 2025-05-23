@@ -114,7 +114,8 @@ class FavoriteApiService {
    */
   async removeFromFavorites(favoriteId: number): Promise<boolean> {
     try {
-      await this.request<void>(`/api/favorites/${favoriteId}`, {
+      // Use the new endpoint that deletes by unique favorite ID
+      await this.request<void>(`/api/favorites/by-id/${favoriteId}`, {
         method: 'DELETE',
       });
       

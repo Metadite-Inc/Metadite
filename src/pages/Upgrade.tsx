@@ -9,11 +9,16 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { createStripeSubscriptionSession } from '../lib/api/payment_api';
+import { loadStripe } from '@stripe/stripe-js';
+
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 const tiers = [
   {
     name: 'Standard',
     price: 10,
+    priceId: 'price_1RQYya00H2IuN3FqYfKZc81Q',
     description: 'Perfect for casual users',
     features: [
       '10 messages',// per day',
@@ -29,6 +34,7 @@ const tiers = [
   {
     name: 'VIP',
     price: 20,
+    priceId: 'price_1RQcqz00H2IuN3FqSosRPfli',
     description: 'Enhanced experience for enthusiasts',
     features: [
       '30 messages',// per day',
@@ -45,6 +51,7 @@ const tiers = [
   {
     name: 'VVIP',
     price: 50,
+    priceId: 'price_1RQcsN00H2IuN3Fq6fvhsx6g',
     description: 'Ultimate experience for collectors',
     features: [
       'Unlimited messages',
@@ -68,21 +75,13 @@ const Upgrade: React.FC = () => {
   const navigate = useNavigate();
   const { theme } = useTheme();
 
-  const handleUpgrade = (tierLevel: 'standard' | 'vip' | 'vvip', price: number) => {
-    setLoading({ ...loading, [tierLevel]: true });
-    
-    // Simulate payment processing
-    setTimeout(() => {
-      // Update user membership level
-      updateMembership(tierLevel);
-      
-      toast.success(`Upgraded to ${tierLevel} tier!`, {
-        description: `Your payment of $${price} has been processed successfully.`,
-      });
-      setLoading({ ...loading, [tierLevel]: false });
-      navigate('/dashboard');
-    }, 2000);
+
+
+  // Navigate to the dedicated subscription checkout route with plan info
+  const handleUpgrade = (tierLevel: 'standard' | 'vip' | 'vvip', priceId: string) => {
+    navigate('/subscription-checkout', { state: { tierLevel, priceId } });
   };
+
 
   const getCurrentPlan = () => {
     return user?.membershipLevel || 'standard';
@@ -171,7 +170,7 @@ const Upgrade: React.FC = () => {
                       : `border-2 border-${tier.color}-500 ${currentPlan === tier.level ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50' : ''}`
                   }`}
                   variant={tier.recommended ? "default" : currentPlan === tier.level ? "outline" : "outline"}
-                  onClick={() => handleUpgrade(tier.level as 'standard' | 'vip' | 'vvip', tier.price)}
+                  onClick={() => handleUpgrade(tier.level as 'standard' | 'vip' | 'vvip', tier.priceId)}
                   disabled={loading[tier.level] || currentPlan === tier.level}
                 >
                   {loading[tier.level] ? (
