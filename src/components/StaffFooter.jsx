@@ -36,9 +36,6 @@ const StaffFooter = () => {
           
           {/* Right side - Social Icons */}
           <div className="flex items-center space-x-4">
-            <span className={`text-sm mr-4 font-medium ${theme === 'dark' ? 'text-purple-300' : 'text-purple-700'}`}>
-              Connect with us
-            </span>
             <div className="flex space-x-3">
               <a 
                 href="#" 
