@@ -1,7 +1,6 @@
-
 import React, { useEffect } from 'react';
 import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
+import StaffFooter from '../components/StaffFooter';
 import { useTheme } from '../context/ThemeContext';
 import { MessageSquare } from 'lucide-react';
 import useModerator from '../hooks/useModerator';
@@ -119,8 +118,8 @@ const Moderator = () => {
         className="hidden"
         accept="image/*,.pdf,.doc,.docx"
       />
-      
-      <Footer />
+
+      <StaffFooter />
     </div>
   );
 };
