@@ -38,7 +38,6 @@ const useModerator = () => {
   const [hasMoreMessages, setHasMoreMessages] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState('disconnected');
-  const wsRef = useRef(null); // Add ref to store WebSocket connection
   
   // Redirect non-moderator users
   useEffect(() => {
@@ -152,10 +151,10 @@ const useModerator = () => {
       setTypingUsers(new Set());
       
       // Close previous connection if it exists
-      if (wsRef.current) {
+      if (websocket) {
         console.log('Closing previous WebSocket connection');
-        wsRef.current.close();
-        wsRef.current = null;
+        websocket.close();
+        setWebsocket(null);
       }
       
       // Small delay to ensure previous connection is closed
@@ -164,7 +163,6 @@ const useModerator = () => {
         const ws = connectWebSocket(chatRoomId, handleWebSocketMessage);
         
         if (ws) {
-          wsRef.current = ws; // Store in ref for cleanup
           setWebsocket(ws);
           
           // Store original handlers
@@ -191,6 +189,8 @@ const useModerator = () => {
           ws.onclose = (event) => {
             console.log('Moderator WebSocket disconnected:', event.code, event.reason);
             
+            // Don't call original onclose which might trigger reconnection
+            // Only log the disconnection for moderators
             if (event.code !== 1000) {
               console.warn('WebSocket closed unexpectedly, but not reconnecting for moderator');
             }
@@ -200,9 +200,9 @@ const useModerator = () => {
       
       return () => {
         clearTimeout(connectTimer);
-        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        if (ws && ws.readyState === WebSocket.OPEN) {
           console.log('Cleaning up WebSocket connection');
-          wsRef.current.close(1000, 'Component unmounting'); // Clean close
+          ws.close(1000, 'Component unmounting'); // Clean close
         }
       };
     }
@@ -256,20 +256,17 @@ const useModerator = () => {
       });
       
       // Update the model's last message in the sidebar
-      const chatRoomId = data.message.chat_room_id || selectedModel?.id;
-      if (chatRoomId) {
-        setAssignedModels(prev => 
-          prev.map(model => 
-            model.id.toString() === chatRoomId.toString()
-              ? {
-                  ...model,
-                  lastMessage: data.message.content || 'New message',
-                  lastMessageTime: data.message.created_at || new Date().toISOString()
-                }
-              : model
-          )
-        );
-      }
+      setAssignedModels(prev => 
+        prev.map(model => 
+          model.id.toString() === data.message.chat_room_id.toString()
+            ? {
+                ...model,
+                lastMessage: data.message.content,
+                lastMessageTime: data.message.created_at
+              }
+            : model
+        )
+      );
     } else if (data.type === 'typing' && data.user_id) {
       setTypingUsers(prev => {
         const newSet = new Set(prev);
@@ -354,10 +351,6 @@ const useModerator = () => {
     return () => {
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
-      }
-      if (wsRef.current) {
-        wsRef.current.close();
-        wsRef.current = null;
       }
       cleanup();
     };
