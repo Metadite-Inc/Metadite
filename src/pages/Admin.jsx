@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
+import StaffFooter from '../components/StaffFooter';
 import { useAuth } from '../context/AuthContext';
 import { Settings } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
@@ -116,7 +115,7 @@ const Admin = () => {
         </div>
       </div>
 
-      <Footer />
+      <StaffFooter />
     </div>
   );
 };
