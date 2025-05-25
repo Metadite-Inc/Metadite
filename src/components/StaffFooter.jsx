@@ -9,8 +9,8 @@ const StaffFooter = () => {
   return (
     <footer className={`py-6 border-t ${
       theme === 'dark' 
-        ? 'bg-gray-900/50 border-gray-800' 
-        : 'bg-white/80 border-gray-200'
+        ? 'bg-gradient-to-r from-purple-900/20 to-pink-900/20 border-purple-800/30' 
+        : 'bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200/50'
     } backdrop-blur-sm`}>
       <div className="container mx-auto px-4">
         <div className="flex flex-col md:flex-row items-center justify-between">
@@ -29,14 +29,14 @@ const StaffFooter = () => {
                 Metadite
               </span>
             </div>
-            <div className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+            <div className={`text-sm font-medium ${theme === 'dark' ? 'text-purple-300' : 'text-purple-700'}`}>
               © 2025 Metadite, Inc
             </div>
           </div>
           
           {/* Right side - Social Icons */}
           <div className="flex items-center space-x-4">
-            <span className={`text-sm mr-4 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+            <span className={`text-sm mr-4 font-medium ${theme === 'dark' ? 'text-purple-300' : 'text-purple-700'}`}>
               Connect with us
             </span>
             <div className="flex space-x-3">
@@ -44,8 +44,8 @@ const StaffFooter = () => {
                 href="#" 
                 className={`p-2 rounded-full transition-all duration-200 ${
                   theme === 'dark'
-                    ? 'text-gray-400 hover:text-white hover:bg-gray-800'
-                    : 'text-gray-500 hover:text-metadite-primary hover:bg-gray-100'
+                    ? 'text-purple-300 hover:text-white hover:bg-gradient-to-r hover:from-purple-600 hover:to-pink-600'
+                    : 'text-purple-600 hover:text-white hover:bg-gradient-to-r hover:from-metadite-primary hover:to-metadite-secondary'
                 }`}
                 aria-label="Facebook"
               >
@@ -55,8 +55,8 @@ const StaffFooter = () => {
                 href="#" 
                 className={`p-2 rounded-full transition-all duration-200 ${
                   theme === 'dark'
-                    ? 'text-gray-400 hover:text-white hover:bg-gray-800'
-                    : 'text-gray-500 hover:text-metadite-primary hover:bg-gray-100'
+                    ? 'text-purple-300 hover:text-white hover:bg-gradient-to-r hover:from-purple-600 hover:to-pink-600'
+                    : 'text-purple-600 hover:text-white hover:bg-gradient-to-r hover:from-metadite-primary hover:to-metadite-secondary'
                 }`}
                 aria-label="Twitter"
               >
@@ -66,8 +66,8 @@ const StaffFooter = () => {
                 href="#" 
                 className={`p-2 rounded-full transition-all duration-200 ${
                   theme === 'dark'
-                    ? 'text-gray-400 hover:text-white hover:bg-gray-800'
-                    : 'text-gray-500 hover:text-metadite-primary hover:bg-gray-100'
+                    ? 'text-purple-300 hover:text-white hover:bg-gradient-to-r hover:from-purple-600 hover:to-pink-600'
+                    : 'text-purple-600 hover:text-white hover:bg-gradient-to-r hover:from-metadite-primary hover:to-metadite-secondary'
                 }`}
                 aria-label="Instagram"
               >
@@ -77,8 +77,8 @@ const StaffFooter = () => {
                 href="#" 
                 className={`p-2 rounded-full transition-all duration-200 ${
                   theme === 'dark'
-                    ? 'text-gray-400 hover:text-white hover:bg-gray-800'
-                    : 'text-gray-500 hover:text-metadite-primary hover:bg-gray-100'
+                    ? 'text-purple-300 hover:text-white hover:bg-gradient-to-r hover:from-purple-600 hover:to-pink-600'
+                    : 'text-purple-600 hover:text-white hover:bg-gradient-to-r hover:from-metadite-primary hover:to-metadite-secondary'
                 }`}
                 aria-label="Email"
               >
