@@ -118,7 +118,7 @@ const Moderator = () => {
         className="hidden"
         accept="image/*,.pdf,.doc,.docx"
       />
-      
+
       <StaffFooter />
     </div>
   );
