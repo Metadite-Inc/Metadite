@@ -1,1 +1,1 @@
-// chat page that will display user chatrooms, and chat messages
+// chat page that will display user chatrooms, and chat messages.
