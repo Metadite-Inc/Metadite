@@ -20,7 +20,7 @@ const Models = () => {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [totalModels, setTotalModels] = useState(0);
-  const modelsPerPage = 10; // Match this with the API limit
+  const modelsPerPage = 12;
   
   // Categories derived from fetched models
   const [categories, setCategories] = useState(['all']);
@@ -56,9 +56,9 @@ const Models = () => {
     const matchesCategory = categoryFilter === 'all' || model.category === categoryFilter;
 
     let matchesPrice = true;
-    if (priceFilter === 'under100' && model.price < 100) matchesPrice = true;
-    else if (priceFilter === '100to150' && model.price >= 100 && model.price <= 150) matchesPrice = true;
-    else if (priceFilter === 'over150' && model.price > 150) matchesPrice = true;
+    if (priceFilter === 'under200' && model.price < 200) matchesPrice = true;
+    else if (priceFilter === '200to550' && model.price >= 200 && model.price <= 550) matchesPrice = true;
+    else if (priceFilter === 'over550' && model.price > 550) matchesPrice = true;
     else if (priceFilter !== 'all') matchesPrice = false;
 
     return matchesSearch && matchesCategory && matchesPrice;
