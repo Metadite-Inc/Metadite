@@ -24,11 +24,11 @@ const RelatedModels = ({ models }) => {
             to={`/model/${model.id}`}
             className="glass-card rounded-xl overflow-hidden hover:shadow-lg transition-shadow"
           >
-            <div className="w-full h-[444px] overflow-hidden flex items-center justify-center bg-white">
+            <div className="aspect-[3/4.5] h-100 overflow-hidden flex items-center justify-center bg-white">
               <img 
                 src={model.image} 
                 alt={model.name} 
-                className="w-full h-full object-cover"
+                className="w-100 h-98 object-contain"
               />
             </div>
             
