@@ -1,3 +1,4 @@
+
 import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -26,7 +27,7 @@ interface RegisterRequest {
 interface UserResponse {
   id: string;
   email: string;
-  name: string;
+  full_name: string;
   role: string;
   membershipLevel?: string;
   region?: string;
