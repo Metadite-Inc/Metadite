@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
@@ -27,7 +28,6 @@ const Dashboard = () => {
     setIsLoaded(true);
   }, []);
 
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -35,6 +35,20 @@ const Dashboard = () => {
       </div>
     );
   }
+
+  // Helper function to get membership display name
+  const getMembershipDisplayName = (level) => {
+    const levelMap = {
+      free: 'Free',
+      standard: 'Standard',
+      vip: 'VIP',
+      vvip: 'VVIP'
+    };
+    return levelMap[level] || 'Free';
+  };
+
+  // Check if user has VIP access
+  const hasVipAccess = user?.membership_level === 'vip' || user?.membership_level === 'vvip';
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -59,9 +73,9 @@ const Dashboard = () => {
               </div>
               
               <div className="flex space-x-3">
-                {user?.vip ? (
+                {hasVipAccess ? (
                   <span className="bg-white/20 px-3 py-1 rounded-full font-medium animate-pulse-soft">
-                    VIP Member
+                    {getMembershipDisplayName(user?.membership_level)} Member
                   </span>
                 ) : user?.role === 'user' ? ( // Show Upgrade to VIP only for regular users
                   <Link to="/upgrade" className="bg-white text-metadite-primary px-3 py-1 rounded-full font-medium hover:bg-opacity-90 transition-opacity">
@@ -78,7 +92,7 @@ const Dashboard = () => {
                 activeTab={activeTab} 
                 setActiveTab={setActiveTab} 
                 logout={logout} 
-                userVip={user?.vip}
+                userVip={hasVipAccess}
                 user={user}
               />
             </div>

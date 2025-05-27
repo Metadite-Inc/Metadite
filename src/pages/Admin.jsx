@@ -1,6 +1,7 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Navbar from '../components/Navbar';
+import StaffNavbar from '../components/StaffNavbar';
 import StaffFooter from '../components/StaffFooter';
 import { useAuth } from '../context/AuthContext';
 import { Settings } from 'lucide-react';
@@ -45,7 +46,7 @@ const Admin = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar />
+      <StaffNavbar />
       
       <div className={`flex-1 pt-20 pb-12 px-4 ${
         theme === 'dark' 

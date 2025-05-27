@@ -82,7 +82,7 @@ const Upgrade: React.FC = () => {
   };
 
   const getCurrentPlan = () => {
-    return user?.membershipLevel || 'standard';
+    return user?.membership_level || 'free';
   };
 
   const currentPlan = getCurrentPlan();
