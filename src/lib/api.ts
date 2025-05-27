@@ -82,7 +82,7 @@ class ApiService {
   }
 
   // Get all models (dolls) with pagination
-  async getModels(skip = 0, limit = 50): Promise<PaginationResponse<ModelBasic>> {
+  async getModels(skip = 0, limit = 10): Promise<PaginationResponse<ModelBasic>> {
     try {
       // Add pagination parameters to the API request
       const dolls = await this.request<any[]>(`/api/dolls?skip=${skip}&limit=${limit}`);
@@ -107,7 +107,7 @@ class ApiService {
 
       // For now, estimate the total from what we have
       // In a real API, this would come from the backend
-      const total = Math.max(skip + dolls.length + (dolls.length === limit ? 22 : 0), dolls.length);
+      const total = Math.max(skip + dolls.length + (dolls.length === limit ? 10 : 0), dolls.length);
 
       return {
         data: transformedData,

@@ -116,7 +116,7 @@ const MessageItem = ({ message, onDelete, onFlag }) => {
       >
         <div className="flex justify-between items-start mb-1">
           <span className={`text-xs font-medium ${isOwnMessage ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'}`}>
-            {message.sender_name || 'Anonymous'} • {formatMessageDate(message.created_at || message.timestamp)}
+            {message.sender_name || 'Unknown'} • {formatMessageDate(message.created_at || message.timestamp)}
           </span>
           
           <button 
