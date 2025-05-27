@@ -17,10 +17,10 @@ import { useAuth } from '../context/AuthContext';
 const UserMenu = () => {
   const { user, logout } = useAuth();
   const { theme } = useTheme();
-  const navigate = useNavigate(); // Add navigate for redirection
+  const navigate = useNavigate();
   
   // Check if user has VIP access
-  const hasVipAccess = user?.membershipLevel === 'vip' || user?.membershipLevel === 'vvip';
+  const hasVipAccess = user?.membership_level === 'vip' || user?.membership_level === 'vvip';
   
   // Check if user is regular (not admin or moderator)
   const isRegularUser = user?.role === 'user';
@@ -79,9 +79,9 @@ const UserMenu = () => {
         
         <DropdownMenuItem 
           onClick={() => {
-            logout(); // Log the user out
+            logout();
             if (user?.role === 'moderator') {
-              navigate('/'); // Redirect to home page if the user is a moderator
+              navigate('/');
             }
           }} 
           className={`cursor-pointer ${theme === 'dark' ? 'hover:bg-gray-700 focus:bg-gray-700 text-red-400' : 'text-red-600'}`}
