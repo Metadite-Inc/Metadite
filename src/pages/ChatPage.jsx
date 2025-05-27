@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
@@ -30,10 +31,10 @@ const ChatPage = () => {
       setLoadingRooms(true);
       console.log('Loading chat rooms for user:', user?.id);
       
-      // Use getUserChatRooms instead of getModeratorChatRooms for regular users
+      // Use getUserChatRooms for regular users
       const rooms = await getUserChatRooms();
       
-      if (rooms) {
+      if (rooms && Array.isArray(rooms)) {
         // Transform the rooms data to match the expected format
         const userRooms = rooms.map(room => ({
           id: room.id,
@@ -48,10 +49,14 @@ const ChatPage = () => {
         
         setChatRooms(userRooms);
         console.log('Loaded chat rooms:', userRooms);
+      } else {
+        console.log('No chat rooms found or invalid response');
+        setChatRooms([]);
       }
     } catch (error) {
       console.error('Error loading chat rooms:', error);
       toast.error('Failed to load chat rooms');
+      setChatRooms([]);
     } finally {
       setLoadingRooms(false);
     }
