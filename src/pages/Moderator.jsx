@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import Navbar from '../components/Navbar';
+import StaffNavbar from '../components/StaffNavbar';
 import StaffFooter from '../components/StaffFooter';
 import { useTheme } from '../context/ThemeContext';
 import { MessageSquare } from 'lucide-react';
@@ -41,7 +41,7 @@ const Moderator = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar />
+      <StaffNavbar />
       
       <div className={`flex-1 pt-20 pb-12 px-4 ${
         theme === 'dark' 

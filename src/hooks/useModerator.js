@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { apiService } from '../lib/api';
 import { toast } from 'sonner';
 import { 
   getModeratorChatRooms, 
@@ -64,23 +65,31 @@ const useModerator = () => {
       setLoading(true);
       try {
         const rooms = await getModeratorChatRooms();
-        
+
         if (!rooms) {
           toast.error('Failed to load assigned models');
           return;
         }
-        
+
+        // Fetch model details for all rooms in parallel
+        const modelDetailsList = await Promise.all(
+          rooms.map(room => apiService.getModelDetails(room.doll_id))
+        );
+
         // Format the rooms data for display
-        const models = rooms.map(room => ({
-          id: room.id,
-          name: room.doll_name || `Model ${room.id}`,
-          image: room.doll_image || 'https://images.unsplash.com/photo-1611042553365-9b101d749e31?q=80&w=1000&auto=format&fit=crop',
-          receiverId: room.user_id,
-          lastMessage: room.last_message?.content || 'No messages yet',
-          lastMessageTime: room.last_message?.created_at || null,
-          unreadCount: room.unread_count || 0
-        }));
-        
+        const models = rooms.map((room, index) => {
+          const model = modelDetailsList[index];
+          return {
+            id: room.id,
+            name: model?.name || 'Unknown',
+            image: model?.image || null,
+            receiverId: room.user_id,
+            lastMessage: room.last_message?.content || 'Check for messages',
+            lastMessageTime: room.last_message?.created_at || null,
+            unreadCount: room.unread_count || 0,
+          };
+        });
+
         setAssignedModels(models);
       } catch (error) {
         console.error('Error loading assigned models:', error);
@@ -390,7 +399,7 @@ const useModerator = () => {
             id: `temp-${Date.now()}`,
             chat_room_id: selectedModel.id,
             sender_id: user.id,
-            sender_name: user.full_name || 'Moderator',
+            sender_name: user.full_name || 'You',
             content: selectedFile.name,
             file_name: selectedFile.name,
             created_at: new Date().toISOString(),
@@ -426,7 +435,7 @@ const useModerator = () => {
           id: `temp-${Date.now()}-text`,
           chat_room_id: selectedModel.id,
           sender_id: user.id,
-          sender_name: user.full_name || 'Moderator',
+          sender_name: user.full_name || 'You',
           content: newMessage,
           created_at: new Date().toISOString(),
           flagged: false,

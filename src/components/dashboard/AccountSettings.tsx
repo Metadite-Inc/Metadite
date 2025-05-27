@@ -28,6 +28,26 @@ const AccountSettings: React.FC = () => {
     }
   };
 
+  const getMembershipDisplayName = (level: string) => {
+    const levelMap = {
+      free: 'Free',
+      standard: 'Standard',
+      vip: 'VIP',
+      vvip: 'VVIP'
+    };
+    return levelMap[level as keyof typeof levelMap] || 'Free';
+  };
+
+  const getMembershipColor = (level: string) => {
+    const colorMap = {
+      free: 'text-gray-500',
+      standard: 'text-green-500',
+      vip: 'text-amber-500',
+      vvip: 'text-purple-500'
+    };
+    return colorMap[level as keyof typeof colorMap] || 'text-gray-500';
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -74,12 +94,21 @@ const AccountSettings: React.FC = () => {
             <div>
               <h3 className="text-lg font-medium">Membership Level</h3>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Current plan: <span className="font-semibold capitalize">{user?.membershipLevel || 'Standard'}</span>
+                Current plan: <span className={`font-semibold ${getMembershipColor(user?.membership_level || 'free')}`}>
+                  {getMembershipDisplayName(user?.membership_level || 'free')}
+                </span>
               </p>
+              {user?.video_access_count !== undefined && (
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Video access count: <span className="font-semibold">{user.video_access_count}</span>
+                </p>
+              )}
             </div>
-            <Button variant="outline" asChild>
-              <a href="/upgrade">Upgrade Plan</a>
-            </Button>
+            {(user?.membership_level === 'free' || user?.membership_level === 'standard') && (
+              <Button variant="outline" asChild>
+                <a href="/upgrade">Upgrade Plan</a>
+              </Button>
+            )}
           </div>
           
           <div className="flex justify-end">

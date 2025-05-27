@@ -1,7 +1,11 @@
+
 import { Link } from 'react-router-dom';
 import { Facebook, Twitter, Instagram, Mail, ShoppingCart, Heart, User, Home } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
-const Footer = ({ user }) => {
+const Footer = () => {
+  const { user } = useAuth();
+
   return (
     <>
       <footer className="bg-gradient-to-r from-metadite-dark to-metadite-primary text-white py-6">
