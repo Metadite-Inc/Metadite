@@ -1,3 +1,4 @@
+
 import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -118,6 +119,41 @@ export const videoApi = {
     async incrementVideoLikes(id: number): Promise<void> {
         await api.post(`/api/videos/${id}/likes`);
     },
+};
+
+// Create videoApiService with methods expected by useVipVideos
+export const videoApiService = {
+    // Get all videos - alias for compatibility
+    async getAllVideos(): Promise<VideoInDB[]> {
+        return videoApi.getVideos(0, 100); // Get more videos for VIP content
+    },
+
+    // Get video by ID - alias for compatibility
+    async getVideoById(id: number): Promise<VideoInDB> {
+        return videoApi.getVideo(id);
+    },
+
+    // Get featured videos
+    async getFeaturedVideos(): Promise<VideoInDB[]> {
+        // For now, return all videos but could be filtered by a featured flag
+        return videoApi.getVideos(0, 20);
+    },
+
+    // Get videos by model (doll) ID
+    async getModelVideos(modelId: number): Promise<VideoInDB[]> {
+        return videoApi.getVideosByDollId(modelId);
+    },
+
+    // Delete video - alias for compatibility
+    async deleteVideo(id: number): Promise<boolean> {
+        try {
+            await videoApi.deleteVideo(id);
+            return true;
+        } catch (error) {
+            console.error('Error deleting video:', error);
+            return false;
+        }
+    }
 };
 
 export const uploadVideo = async (
