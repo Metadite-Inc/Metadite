@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
@@ -7,7 +6,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { MessageSquare, Users, Clock, ArrowRight, Search } from 'lucide-react';
 import { toast } from 'sonner';
-import { getModeratorChatRooms } from '../services/ChatService';
+import { getUserChatRooms } from '../services/ChatService';
 
 const ChatPage = () => {
   const { theme } = useTheme();
@@ -31,11 +30,11 @@ const ChatPage = () => {
       setLoadingRooms(true);
       console.log('Loading chat rooms for user:', user?.id);
       
-      // Try to get user's chat rooms
-      const rooms = await getModeratorChatRooms();
+      // Use getUserChatRooms instead of getModeratorChatRooms for regular users
+      const rooms = await getUserChatRooms();
       
       if (rooms) {
-        // Filter to show rooms where the user is either the user_id or has participated
+        // Transform the rooms data to match the expected format
         const userRooms = rooms.map(room => ({
           id: room.id,
           modelId: room.doll_id,
