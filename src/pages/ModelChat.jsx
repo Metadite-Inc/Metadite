@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { ChevronLeft, MessageSquare, Send, Paperclip, FileImage, X, File } from 'lucide-react';
@@ -202,7 +203,6 @@ const ModelChat = () => {
     messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Load more messages when scrolling up
   const loadMoreMessages = async () => {
     if (!chatRoom || isLoadingMore || !hasMoreMessages) return;
     
@@ -255,7 +255,6 @@ const ModelChat = () => {
     }
   };
   
-  // Clear selected file
   const clearSelectedFile = () => {
     setSelectedFile(null);
     setPreviewUrl(null);
@@ -285,6 +284,7 @@ const ModelChat = () => {
     }
   };
   
+  // Fixed handleSendMessage to prevent event object rendering
   const handleSendMessage = async (e) => {
     e.preventDefault();
     
@@ -600,7 +600,9 @@ const ModelChat = () => {
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey) {
                         e.preventDefault();
-                        handleSendMessage(e);
+                        // Fixed: Create a synthetic event instead of passing the actual event
+                        const syntheticEvent = { preventDefault: () => {} };
+                        handleSendMessage(syntheticEvent);
                       }
                     }}
                   />
