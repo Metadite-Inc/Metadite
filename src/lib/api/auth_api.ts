@@ -17,7 +17,7 @@ interface RegisterRequest {
   password: string;
   full_name: string;
   role?: 'admin' | 'moderator' | 'user';
-  membership_level?: 'standard' | 'vip' | 'vvip';
+  membership_level?: 'free' | 'standard' | 'vip' | 'vvip';
   region?: string;
   is_active?: boolean;
   assigned_dolls?: string[];
@@ -25,12 +25,14 @@ interface RegisterRequest {
 }
 
 interface UserResponse {
-  id: string;
+  id: number;
   email: string;
   full_name: string;
-  role: string;
-  membershipLevel?: string;
+  role: 'admin' | 'moderator' | 'user';
+  membership_level: 'free' | 'standard' | 'vip' | 'vvip';
   region?: string;
+  is_active: boolean;
+  video_access_count: number;
 }
 
 interface TokenResponse {

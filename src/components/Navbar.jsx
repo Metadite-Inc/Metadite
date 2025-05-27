@@ -18,7 +18,7 @@ const Navbar = () => {
   const toggleMobileMenu = () => setMobileMenuOpen(!mobileMenuOpen);
   const toggleChat = () => setChatOpen(!chatOpen);
 
-  const hasVipAccess = user?.membershipLevel === 'vip' || user?.membershipLevel === 'vvip';
+  const hasVipAccess = user?.membership_level === 'vip' || user?.membership_level === 'vvip';
 
   useEffect(() => {
     if (user?.role === 'admin' && location.pathname === '/') {
