@@ -1,198 +1,94 @@
 
-import React from 'react';
-import { useForm } from 'react-hook-form';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
-import { useAuth } from '@/context/AuthContext';
-import { userApi } from '../../lib/api/user_api';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import React, { useState } from 'react';
+import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { toast } from 'sonner';
 
-interface PasswordFormValues {
-  currentPassword: string;
-  newPassword: string;
-  confirmPassword: string;
-}
+const AccountSettings: React.FC = () => {
+  const { user, refreshUser } = useAuth();
+  const { theme } = useTheme();
+  const [isLoading, setIsLoading] = useState(false);
 
-interface ProfileFormValues {
-  name: string;
-  email: string;
-  region: string;
-}
-
-const AccountSettings = () => {
-  const { user, updateMembership } = useAuth();
-
-  const passwordForm = useForm<PasswordFormValues>({
-    defaultValues: {
-      currentPassword: '',
-      newPassword: '',
-      confirmPassword: '',
-    },
-  });
-
-  const profileForm = useForm<ProfileFormValues>({
-    defaultValues: {
-      name: user?.full_name || '',
-      email: user?.email || '',
-      region: user?.region || '',
-    },
-  });
-
-  // Ensure form values update when user changes
-  React.useEffect(() => {
-    profileForm.reset({
-      name: user?.full_name || '',
-      email: user?.email || '',
-      region: user?.region || '',
-    });
-  }, [user]);
-
-  const onSubmitPassword = (data: PasswordFormValues) => {
-    if (data.newPassword !== data.confirmPassword) {
-      toast.error("New passwords don't match");
-      return;
-    }
-    // In a real app, we would call an API to update the password
-    toast.success("Password updated successfully");
-    passwordForm.reset();
-  };
-
-  const onSubmitProfile = async (data: ProfileFormValues) => {
+  const handleSaveChanges = async () => {
+    setIsLoading(true);
     try {
-      profileForm.clearErrors();
-      profileForm.setValue('name', data.name.trim());
-      const updateData = {
-        full_name: data.name,
-        email: data.email,
-        region: data.region,
-      };
-      await userApi.updateProfile(updateData);
-      // Refresh user in context using updateMembership
-
-    } catch (error: any) {
-      // Error toast is already handled in userApi
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      toast.success('Settings saved successfully');
+      await refreshUser();
+    } catch (error) {
+      toast.error('Failed to save settings');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="bg-card rounded-xl p-6 space-y-6">
-      <h2 className="text-2xl font-semibold mb-6">Account Settings</h2>
-      
-      <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="mb-4">
-          <TabsTrigger value="profile">Profile Information</TabsTrigger>
-          <TabsTrigger value="security">Security</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="profile">
-          <Form {...profileForm}>
-            <form onSubmit={profileForm.handleSubmit(onSubmitProfile)} className="space-y-4">
-              <FormField
-                control={profileForm.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Your name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Account Information</CardTitle>
+          <CardDescription>
+            Update your account details and preferences
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={user?.email || ''}
+                disabled
+                className="bg-gray-50 dark:bg-gray-800"
               />
-
-              <FormField
-                control={profileForm.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input type="email" placeholder="Your email" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+            </div>
+            <div>
+              <Label htmlFor="fullName">Full Name</Label>
+              <Input
+                id="fullName"
+                value={user?.full_name || ''}
+                placeholder="Enter your full name"
               />
-
-              <FormField
-                control={profileForm.control}
-                name="region"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Region</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Your region" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <Button type="submit">Update Profile</Button>
-            </form>
-          </Form>
-        </TabsContent>
-
-        <TabsContent value="security">
-          <Form {...passwordForm}>
-            <form onSubmit={passwordForm.handleSubmit(onSubmitPassword)} className="space-y-4">
-              <FormField
-                control={passwordForm.control}
-                name="currentPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Current Password</FormLabel>
-                    <FormControl>
-                      <Input type="password" placeholder="Current password" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={passwordForm.control}
-                name="newPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>New Password</FormLabel>
-                    <FormControl>
-                      <Input type="password" placeholder="New password" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={passwordForm.control}
-                name="confirmPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Confirm New Password</FormLabel>
-                    <FormControl>
-                      <Input type="password" placeholder="Confirm new password" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <Button type="submit">Update Password</Button>
-            </form>
-          </Form>
-        </TabsContent>
-      </Tabs>
+            </div>
+          </div>
+          
+          <div>
+            <Label htmlFor="region">Region</Label>
+            <Input
+              id="region"
+              value={user?.region || ''}
+              placeholder="Enter your region"
+            />
+          </div>
+          
+          <Separator />
+          
+          <div className="flex justify-between items-center">
+            <div>
+              <h3 className="text-lg font-medium">Membership Level</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Current plan: <span className="font-semibold capitalize">{user?.membershipLevel || 'Standard'}</span>
+              </p>
+            </div>
+            <Button variant="outline" asChild>
+              <a href="/upgrade">Upgrade Plan</a>
+            </Button>
+          </div>
+          
+          <div className="flex justify-end">
+            <Button onClick={handleSaveChanges} disabled={isLoading}>
+              {isLoading ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

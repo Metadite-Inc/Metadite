@@ -1,223 +1,190 @@
-import { toast } from "sonner";
-import { BaseApiService } from "./base_api";
-import { apiService } from "../api";
 
-const API_URL = import.meta.env.VITE_API_BASE_URL;
+import axios from 'axios';
 
-export interface VideoUploadRequest {
-  doll_id: number;
-  title: string;
-  description: string;
-  is_featured: boolean;
-  file: File;
-  created_at: Date
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+if (!API_BASE_URL) {
+  throw new Error("API_BASE_URL is not defined. Please set the VITE_API_BASE_URL environment variable.");
 }
 
-export interface Video {
-  id: number;
-  model_id: number;
-  title: string;
-  description: string;
-  url: string;
-  thumbnail_url: string;
-  is_featured: boolean;
-  created_at: string;
-  duration?: number;
-  doll?: {
+interface VideoInDB {
     id: number;
-    name: string;
-  };
+    title: string;
+    description: string;
+    url: string;
+    thumbnail_url: string;
+    category: string;
+    tags: string[];
+    created_at: string;
+    updated_at: string;
+    views: number;
+    likes: number;
+    doll_id?: number;
+    release_date?: string;
 }
 
-class VideoApiService extends BaseApiService {
-  async getAllVideos(): Promise<Video[]> {
-    try {
-      const token = this.validateAuth();
-      return await this.request<Video[]>('/api/videos/', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-    } catch (error) {
-      toast.error('Failed to fetch videos', {
-        description: error instanceof Error ? error.message : 'Unknown error occurred',
-      });
-      console.error('Error fetching all videos:', error);
-      return [];
-    }
-  }
-
-  async getVideoById(videoId: number): Promise<Video | null> {
-    try {
-      const token = this.validateAuth();
-      return await this.request<Video>(`/api/videos/${videoId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-    } catch (error) {
-      toast.error('Failed to fetch video', {
-        description: error instanceof Error ? error.message : 'Unknown error occurred',
-      });
-      console.error(`Error fetching video with ID ${videoId}:`, error);
-      return null;
-    }
-  }
-
-  async uploadVideo(data: VideoUploadRequest): Promise<Video | null> {
-    try {
-      const token = this.validateAuth();
-
-      // Create FormData for file upload
-      const formData = new FormData();
-      formData.append('file', data.file);
-      formData.append('doll_id', data.doll_id.toString());
-      formData.append('title', data.title);
-      formData.append('description', data.description);
-      formData.append('is_featured', data.is_featured.toString());
-      formData.append('created_at', data.created_at);
-      formData.append('upload_date', new Date().toISOString());
-
-      const response = await fetch(`${API_URL}/api/videos/upload`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        const errorMessage = errorData.detail || `Failed to upload video: ${response.statusText}`;
-        throw new Error(errorMessage);
-      }
-
-      // Parse and return the video data including the ID
-      const videoData = await response.json();
-      return videoData;
-    } catch (error) {
-      toast.error('Failed to upload video', {
-        description: error instanceof Error ? error.message : 'Unknown error occurred',
-      });
-      console.error('Error uploading video:', error);
-      throw error;//return null;
-    }
-  }
-
-  async getModelVideos(modelId: number): Promise<Video[]> {
-    try {
-      const token = this.validateAuth();
-      return await this.request<Video[]>(`/api/videos/doll/${modelId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-    } catch (error) {
-      toast.error('Failed to fetch model videos', {
-        description: error instanceof Error ? error.message : 'Unknown error occurred',
-      });
-      console.error(`Error fetching videos for model ${modelId}:`, error);
-      return [];
-    }
-  }
-
-  async updateVideo(videoId: number, data: { title?: string; description?: string; is_featured?: boolean }): Promise<boolean> {
-    try {
-      const token = this.validateAuth();
-      
-      const response = await fetch(`${API_URL}/api/videos/${videoId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to update video: ${response.statusText}`);
-      }
-
-      return true;
-    } catch (error) {
-      toast.error('Failed to update video', {
-        description: error instanceof Error ? error.message : 'Unknown error occurred',
-      });
-      console.error(`Error updating video ${videoId}:`, error);
-      return false;
-    }
-  }
-
-  async uploadThumbnail(videoId: number, file: File): Promise<boolean> {
-    try {
-      const token = this.validateAuth();
-      
-      const formData = new FormData();
-      formData.append('file', file);
-      
-      const response = await fetch(`${API_URL}/api/images/videos/${videoId}/thumbnail`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to upload thumbnail: ${response.statusText}`);
-      }
-
-      return true;
-    } catch (error) {
-      toast.error('Failed to upload thumbnail', {
-        description: error instanceof Error ? error.message : 'Unknown error occurred',
-      });
-      console.error(`Error uploading thumbnail for video ${videoId}:`, error);
-      return false;
-    }
-  }
-
-  async deleteVideo(videoId: number): Promise<boolean> {
-    try {
-      const token = this.validateAuth();
-
-      const response = await fetch(`${API_URL}/api/videos/${videoId}`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to delete video: ${response.statusText}`);
-      }
-
-      return true;
-    } catch (error) {
-      toast.error('Failed to delete video', {
-        description: error instanceof Error ? error.message : 'Unknown error occurred',
-      });
-      console.error(`Error deleting video ${videoId}:`, error);
-      return false;
-    }
-  }
-
-  async getFeaturedVideos(): Promise<Video[]> {
-    try {
-      const token = this.validateAuth();
-      return await this.request<Video[]>('/api/videos/featured', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-    } catch (error) {
-      toast.error('Failed to fetch featured videos', {
-        description: error instanceof Error ? error.message : 'Unknown error occurred',
-      });
-      console.error('Error fetching featured videos:', error);
-      return [];
-    }
-  }
+interface VideoCreate {
+    title: string;
+    description: string;
+    url: string;
+    thumbnail_url: string;
+    category: string;
+    tags: string[];
+    doll_id?: number;
+    release_date?: Date;
 }
 
-export const videoApiService = new VideoApiService();
+interface VideoUpdate {
+    title?: string;
+    description?: string;
+    url?: string;
+    thumbnail_url?: string;
+    category?: string;
+    tags?: string[];
+    doll_id?: number;
+    release_date?: Date;
+}
+
+// Create axios instance with base config
+const api = axios.create({
+    baseURL: API_BASE_URL,
+    headers: {
+        'Content-Type': 'application/json',
+    },
+});
+
+// Add request interceptor to include auth token
+api.interceptors.request.use((config) => {
+    const token = localStorage.getItem('access_token');
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+});
+
+export const videoApi = {
+    // Get all videos
+    async getVideos(skip: number = 0, limit: number = 10): Promise<VideoInDB[]> {
+        const response = await api.get<VideoInDB[]>(`/api/videos/?skip=${skip}&limit=${limit}`);
+        return response.data;
+    },
+
+    // Get video by ID
+    async getVideo(id: number): Promise<VideoInDB> {
+        const response = await api.get<VideoInDB>(`/api/videos/${id}`);
+        return response.data;
+    },
+
+    // Create new video
+    async createVideo(data: VideoCreate): Promise<VideoInDB> {
+        const response = await api.post<VideoInDB>('/api/videos/', data);
+        return response.data;
+    },
+
+    // Update video
+    async updateVideo(id: number, data: VideoUpdate): Promise<VideoInDB> {
+        const response = await api.put<VideoInDB>(`/api/videos/${id}`, data);
+        return response.data;
+    },
+
+    // Delete video
+    async deleteVideo(id: number): Promise<void> {
+        await api.delete(`/api/videos/${id}`);
+    },
+
+    // Get videos by category
+    async getVideosByCategory(category: string, skip: number = 0, limit: number = 10): Promise<VideoInDB[]> {
+        const response = await api.get<VideoInDB[]>(`/api/videos/category/${category}?skip=${skip}&limit=${limit}`);
+        return response.data;
+    },
+
+    // Get videos by tag
+    async getVideosByTag(tag: string, skip: number = 0, limit: number = 10): Promise<VideoInDB[]> {
+        const response = await api.get<VideoInDB[]>(`/api/videos/tag/${tag}?skip=${skip}&limit=${limit}`);
+        return response.data;
+    },
+
+    // Get videos by doll ID
+    async getVideosByDollId(dollId: number, skip: number = 0, limit: number = 10): Promise<VideoInDB[]> {
+        const response = await api.get<VideoInDB[]>(`/api/videos/doll/${dollId}?skip=${skip}&limit=${limit}`);
+        return response.data;
+    },
+
+    // Increment video views
+    async incrementVideoViews(id: number): Promise<void> {
+        await api.post(`/api/videos/${id}/views`);
+    },
+
+    // Increment video likes
+    async incrementVideoLikes(id: number): Promise<void> {
+        await api.post(`/api/videos/${id}/likes`);
+    },
+};
+
+// Create videoApiService with methods expected by useVipVideos
+export const videoApiService = {
+    // Get all videos - alias for compatibility
+    async getAllVideos(): Promise<VideoInDB[]> {
+        return videoApi.getVideos(0, 100); // Get more videos for VIP content
+    },
+
+    // Get video by ID - alias for compatibility
+    async getVideoById(id: number): Promise<VideoInDB> {
+        return videoApi.getVideo(id);
+    },
+
+    // Get featured videos
+    async getFeaturedVideos(): Promise<VideoInDB[]> {
+        // For now, return all videos but could be filtered by a featured flag
+        return videoApi.getVideos(0, 20);
+    },
+
+    // Get videos by model (doll) ID
+    async getModelVideos(modelId: number): Promise<VideoInDB[]> {
+        return videoApi.getVideosByDollId(modelId);
+    },
+
+    // Delete video - alias for compatibility
+    async deleteVideo(id: number): Promise<boolean> {
+        try {
+            await videoApi.deleteVideo(id);
+            return true;
+        } catch (error) {
+            console.error('Error deleting video:', error);
+            return false;
+        }
+    }
+};
+
+export const uploadVideo = async (
+  file: File,
+  title: string,
+  description: string,
+  category: string,
+  tags: string[],
+  dollId?: number,
+  releaseDate?: Date
+): Promise<VideoInDB> => {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('title', title);
+  formData.append('description', description);
+  formData.append('category', category);
+  formData.append('tags', JSON.stringify(tags));
+  
+  if (dollId) {
+    formData.append('doll_id', dollId.toString());
+  }
+  
+  if (releaseDate) {
+    formData.append('release_date', releaseDate.toISOString());
+  }
+
+  const response = await api.post<VideoInDB>('/api/videos/', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+
+  return response.data;
+};
