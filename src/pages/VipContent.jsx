@@ -20,7 +20,7 @@ const VipContent = () => {
   
   useEffect(() => {
     // Redirect non-VIP users
-    if (!user?.membershipLevel || (user.membershipLevel !== 'vip' && user.membershipLevel !== 'vvip')) {
+    if (!user?.membership_level || (user.membership_level !== 'vip' && user.membership_level !== 'vvip')) {
       navigate('/upgrade');
     }
   }, [user, navigate]);

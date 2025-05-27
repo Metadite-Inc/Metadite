@@ -56,14 +56,14 @@ const VideoPlayer = () => {
       }
     };
     
-    if (user?.membershipLevel === 'vip' || user?.membershipLevel === 'vvip') {
+    if (user?.membership_level === 'vip' || user?.membership_level === 'vvip') {
       loadVideo();
     }
   }, [videoId, user, getVideoById, fetchVideoById]);
   
   // Check VIP access
   useEffect(() => {
-    if (!user?.membershipLevel || (user.membershipLevel !== 'vip' && user.membershipLevel !== 'vvip')) {
+    if (!user?.membership_level || (user.membership_level !== 'vip' && user.membership_level !== 'vvip')) {
       navigate('/upgrade');
     }
   }, [user, navigate]);
