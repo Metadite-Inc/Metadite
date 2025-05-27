@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { MessageSquare, Users, Clock, ArrowRight, Search, Send, Paperclip, X, File } from 'lucide-react';
@@ -791,8 +790,6 @@ const ChatPage = () => {
           </div>
         </div>
       </div>
-      
-      <Footer />
     </div>
   );
 };
