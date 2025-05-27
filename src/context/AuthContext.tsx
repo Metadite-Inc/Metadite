@@ -4,12 +4,14 @@ import { authApi } from '../lib/api/auth_api';
 import { toast } from 'sonner';
 
 interface User {
-  id: string;
+  id: number;
   email: string;
   full_name: string;
   role: 'admin' | 'moderator' | 'user';
-  membershipLevel?: string;
+  membership_level: 'free' | 'standard' | 'vip' | 'vvip';
   region?: string;
+  is_active: boolean;
+  video_access_count: number;
 }
 
 interface AuthContextType {
@@ -33,11 +35,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       // Get user info after successful login
       const userResponse = await authApi.getCurrentUser();
-      const userData: User = {
-        ...userResponse,
-        role: userResponse.role as 'admin' | 'moderator' | 'user'
-      };
-      setUser(userData);
+      setUser(userResponse);
       
       return true;
     } catch (error) {
@@ -57,11 +55,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const refreshUser = async () => {
     try {
       const userResponse = await authApi.getCurrentUser();
-      const userData: User = {
-        ...userResponse,
-        role: userResponse.role as 'admin' | 'moderator' | 'user'
-      };
-      setUser(userData);
+      setUser(userResponse);
     } catch (error) {
       console.error('Failed to refresh user:', error);
       logout();
