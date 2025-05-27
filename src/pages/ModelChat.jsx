@@ -505,9 +505,13 @@ const ModelChat = () => {
                     }`}
                   >
                     {isLoadingMore ? (
-                      <span className="inline-block h-3 w-3 rounded-full border-2 border-current border-r-transparent animate-spin mr-1"></span>
-                    ) : null}
-                    {isLoadingMore ? 'Loading...' : 'Load older messages'}
+                      <>
+                        <span className="inline-block h-3 w-3 rounded-full border-2 border-current border-r-transparent animate-spin mr-1"></span>
+                        Loading...
+                      </>
+                    ) : (
+                      'Load older messages'
+                    )}
                   </button>
                 </div>
               )}
