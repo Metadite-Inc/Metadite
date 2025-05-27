@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckIcon, CreditCardIcon, StarIcon, ShieldCheck, Zap } from 'lucide-react';
@@ -71,17 +72,14 @@ const tiers = [
 
 const Upgrade: React.FC = () => {
   const [loading, setLoading] = useState<Record<string, boolean>>({});
-  const { user, updateMembership } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const { theme } = useTheme();
-
-
 
   // Navigate to the dedicated subscription checkout route with plan info
   const handleUpgrade = (tierLevel: 'standard' | 'vip' | 'vvip', priceId: string) => {
     navigate('/subscription-checkout', { state: { tierLevel, priceId } });
   };
-
 
   const getCurrentPlan = () => {
     return user?.membershipLevel || 'standard';
