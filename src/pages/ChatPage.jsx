@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { useTheme } from '../context/ThemeContext';
@@ -8,29 +8,30 @@ import { useAuth } from '../context/AuthContext';
 import { MessageSquare, Users, Clock, ArrowRight, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { getModeratorChatRooms } from '../services/ChatService';
-import { apiService } from '../lib/api';
 
 const ChatPage = () => {
   const { theme } = useTheme();
-  const { user } = useAuth();
-  const navigate = useNavigate();
+  const { user, loading } = useAuth();
   const [chatRooms, setChatRooms] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loadingRooms, setLoadingRooms] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    if (!user) {
-      navigate('/login');
-      return;
+    // Only load chat rooms if user is authenticated
+    if (user && !loading) {
+      loadUserChatRooms();
+    } else if (!loading && !user) {
+      // User is not authenticated and auth has finished loading
+      setLoadingRooms(false);
     }
-    loadUserChatRooms();
-  }, [user, navigate]);
+  }, [user, loading]);
 
   const loadUserChatRooms = async () => {
     try {
-      setLoading(true);
-      // Try to get user's chat rooms - we'll use a similar approach to moderator rooms
-      // but filter for user's own conversations
+      setLoadingRooms(true);
+      console.log('Loading chat rooms for user:', user?.id);
+      
+      // Try to get user's chat rooms
       const rooms = await getModeratorChatRooms();
       
       if (rooms) {
@@ -47,12 +48,13 @@ const ChatPage = () => {
         }));
         
         setChatRooms(userRooms);
+        console.log('Loaded chat rooms:', userRooms);
       }
     } catch (error) {
       console.error('Error loading chat rooms:', error);
       toast.error('Failed to load chat rooms');
     } finally {
-      setLoading(false);
+      setLoadingRooms(false);
     }
   };
 
@@ -74,6 +76,60 @@ const ChatPage = () => {
     room.modelName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     room.lastMessage.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Show loading state while auth is loading
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <div className={`flex-1 pt-20 pb-12 px-4 flex items-center justify-center ${
+          theme === 'dark' 
+            ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' 
+            : 'bg-gradient-to-br from-white via-metadite-light to-white'
+        }`}>
+          <div className="text-center">
+            <div className="inline-block h-8 w-8 rounded-full border-4 border-metadite-primary border-r-transparent animate-spin"></div>
+            <p className={`mt-4 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+              Loading...
+            </p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Show login prompt if user is not authenticated
+  if (!user) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <div className={`flex-1 pt-20 pb-12 px-4 flex items-center justify-center ${
+          theme === 'dark' 
+            ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' 
+            : 'bg-gradient-to-br from-white via-metadite-light to-white'
+        }`}>
+          <div className="text-center">
+            <MessageSquare className="h-16 w-16 mx-auto mb-4 text-metadite-primary opacity-50" />
+            <h2 className={`text-2xl font-bold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+              Please Log In
+            </h2>
+            <p className={`text-lg mb-6 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+              You need to be logged in to access your chats
+            </p>
+            <Link
+              to="/login"
+              className="bg-metadite-primary text-white px-6 py-3 rounded-lg hover:opacity-90 transition-opacity inline-flex items-center space-x-2"
+            >
+              <span>Go to Login</span>
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -131,7 +187,7 @@ const ChatPage = () => {
           <div className={`glass-card rounded-xl overflow-hidden ${
             theme === 'dark' ? 'bg-gray-800/50 border-gray-700' : 'bg-white/50'
           }`}>
-            {loading ? (
+            {loadingRooms ? (
               <div className="p-8 text-center">
                 <div className="inline-block h-8 w-8 rounded-full border-4 border-metadite-primary border-r-transparent animate-spin"></div>
                 <p className={`mt-4 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
