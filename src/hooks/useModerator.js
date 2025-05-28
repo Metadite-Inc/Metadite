@@ -41,9 +41,10 @@ const useModerator = () => {
   const [connectionStatus, setConnectionStatus] = useState('disconnected');
   const wsRef = useRef(null); // Add ref to store WebSocket connection
   
-  // Redirect non-moderator users
+  // Only redirect if user is explicitly not logged in
+  // Role validation will be handled server-side when making API calls
   useEffect(() => {
-    if (user?.role !== 'moderator') {
+    if (!user) {
       navigate('/');
     } else {
       setIsLoaded(true);
@@ -52,12 +53,16 @@ const useModerator = () => {
   
   // Set up connection state listener
   useEffect(() => {
-    const unsubscribe = addConnectionListener((state) => {
+    if (!selectedModel) return;
+    
+    console.log(`Setting up connection listener for room ${selectedModel.id}`);
+    const unsubscribe = addConnectionListener(selectedModel.id, (state) => {
+      console.log(`Connection state changed for room ${selectedModel.id}:`, state.status);
       setConnectionStatus(state.status);
     });
     
     return unsubscribe;
-  }, []);
+  }, [selectedModel?.id]);
   
   // Load assigned models/dolls when component mounts
   useEffect(() => {
@@ -160,59 +165,29 @@ const useModerator = () => {
       setMessages([]);
       setTypingUsers(new Set());
       
-      // Close previous connection if it exists
-      if (wsRef.current) {
-        console.log('Closing previous WebSocket connection');
-        wsRef.current.close();
-        wsRef.current = null;
+      // Clean up previous connection if it exists
+      if (selectedModel) {
+        console.log(`Cleaning up previous moderator connection for room ${selectedModel.id}`);
+        cleanup(selectedModel.id);
       }
       
       // Small delay to ensure previous connection is closed
-      const connectTimer = setTimeout(() => {
+      const connectTimer = setTimeout(async () => {
         console.log(`Moderator connecting to WebSocket for room ${chatRoomId}`);
-        const ws = connectWebSocket(chatRoomId, handleWebSocketMessage);
+        const ws = await connectWebSocket(chatRoomId, handleWebSocketMessage);
         
         if (ws) {
           wsRef.current = ws; // Store in ref for cleanup
           setWebsocket(ws);
-          
-          // Store original handlers
-          const originalOnOpen = ws.onopen;
-          const originalOnClose = ws.onclose;
-          
-          // Override the onopen event
-          ws.onopen = (event) => {
-            console.log('Moderator WebSocket connected');
-            markMessagesAsRead(chatRoomId);
-            
-            setAssignedModels(prev => 
-              prev.map(model => 
-                model.id === selectedModel.id 
-                  ? { ...model, unreadCount: 0 }
-                  : model
-              )
-            );
-            
-            if (originalOnOpen) originalOnOpen.call(ws, event);
-          };
-          
-          // Override onclose to prevent automatic reconnection for moderators
-          ws.onclose = (event) => {
-            console.log('Moderator WebSocket disconnected:', event.code, event.reason);
-            
-            if (event.code !== 1000) {
-              console.warn('WebSocket closed unexpectedly, but not reconnecting for moderator');
-            }
-          };
+          console.log(`Moderator WebSocket connection established for room ${chatRoomId}`);
         }
       }, 100);
       
       return () => {
         clearTimeout(connectTimer);
-        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-          console.log('Cleaning up WebSocket connection');
-          wsRef.current.close(1000, 'Component unmounting'); // Clean close
-        }
+        console.log(`Cleaning up moderator WebSocket connection for room ${chatRoomId}`);
+        cleanup(chatRoomId);
+        wsRef.current = null;
       };
     }
   }, [selectedModel?.id]); // Only depend on selectedModel.id, not the whole object or websocket
@@ -364,10 +339,7 @@ const useModerator = () => {
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
-      if (wsRef.current) {
-        wsRef.current.close();
-        wsRef.current = null;
-      }
+      // Clean up all connections when component unmounts
       cleanup();
     };
   }, []);

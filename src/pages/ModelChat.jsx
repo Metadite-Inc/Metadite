@@ -19,7 +19,8 @@ import {
   deleteMessage,
   sendTypingIndicator,
   markMessagesAsRead,
-  addConnectionListener
+  addConnectionListener,
+  cleanup
 } from '../services/ChatService';
 
 const ModelChat = () => {
@@ -50,12 +51,16 @@ const ModelChat = () => {
   
   // Set up connection state listener
   useEffect(() => {
-    const unsubscribe = addConnectionListener((state) => {
+    if (!chatRoom) return;
+    
+    console.log(`Setting up connection listener for room ${chatRoom.id}`);
+    const unsubscribe = addConnectionListener(chatRoom.id, (state) => {
+      console.log(`Connection state changed for room ${chatRoom.id}:`, state.status);
       setConnectionStatus(state.status);
     });
     
     return unsubscribe;
-  }, []);
+  }, [chatRoom?.id]);
   
   // Fetch model data and set up chat room
   useEffect(() => {
@@ -127,29 +132,21 @@ const ModelChat = () => {
     if (!chatRoom || !user) return;
     
     console.log(`Connecting to WebSocket for chat room ${chatRoom.id}`);
-    const ws = connectWebSocket(chatRoom.id, handleWebSocketMessage);
+    const connectToRoom = async () => {
+      const ws = await connectWebSocket(chatRoom.id, handleWebSocketMessage);
+      if (ws) {
+        wsRef.current = ws;
+        console.log(`WebSocket connection established for room ${chatRoom.id}`);
+      }
+    };
     
-    if (ws) {
-      wsRef.current = ws;
-      
-      // Don't override the ChatService's event handlers, just add our own logic
-      const originalOnOpen = ws.onopen;
-      ws.onopen = (event) => {
-        console.log('User WebSocket connected');
-        markMessagesAsRead(chatRoom.id);
-        
-        // Call original handler if it exists
-        if (originalOnOpen) originalOnOpen.call(ws, event);
-      };
-    }
+    connectToRoom();
     
     // Cleanup function
     return () => {
-      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-        console.log('Cleaning up WebSocket connection');
-        wsRef.current.close(1000, 'Component cleanup');
-        wsRef.current = null;
-      }
+      console.log(`Cleaning up WebSocket connection for room ${chatRoom.id}`);
+      cleanup(chatRoom.id);
+      wsRef.current = null;
       
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
