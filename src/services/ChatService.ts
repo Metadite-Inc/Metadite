@@ -5,22 +5,23 @@ import { authApi } from '../lib/api/auth_api';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-// Connection state management
-let connectionState: ConnectionState = {
+// Connection state management per chat room
+const connectionStates: Map<number, ConnectionState> = new Map();
+const defaultConnectionState: ConnectionState = {
   status: 'disconnected',
   reconnectAttempts: 0,
   maxReconnectAttempts: 5
 };
 
-// WebSocket connection
-let ws: WebSocket | null = null;
-let reconnectTimeout: NodeJS.Timeout | null = null;
+// WebSocket connections per chat room
+const connections: Map<number, WebSocket> = new Map();
+const reconnectTimeouts: Map<number, NodeJS.Timeout> = new Map();
 
-// Message queue for offline messages
-let messageQueue: QueuedMessage[] = [];
+// Message queue per chat room for offline messages
+const messageQueues: Map<number, QueuedMessage[]> = new Map();
 
-// Event listeners for connection state changes
-const connectionListeners: ((state: ConnectionState) => void)[] = [];
+// Event listeners for connection state changes per chat room
+const connectionListeners: Map<number, ((state: ConnectionState) => void)[]> = new Map();
 
 // Get auth token from localStorage and validate
 const getAuthToken = (): string | null => {
@@ -64,32 +65,50 @@ const handleChatError = (error: ChatError) => {
   }
 };
 
-// Update connection state and notify listeners
-const updateConnectionState = (newState: Partial<ConnectionState>) => {
-  connectionState = { ...connectionState, ...newState };
-  connectionListeners.forEach(listener => listener(connectionState));
+// Get connection state for a specific chat room
+const getConnectionState = (chatRoomId: number): ConnectionState => {
+  return connectionStates.get(chatRoomId) || { ...defaultConnectionState };
 };
 
-// Add connection state listener
-export const addConnectionListener = (listener: (state: ConnectionState) => void) => {
-  connectionListeners.push(listener);
+// Update connection state and notify listeners for a specific chat room
+const updateConnectionState = (chatRoomId: number, newState: Partial<ConnectionState>) => {
+  const currentState = getConnectionState(chatRoomId);
+  const updatedState = { ...currentState, ...newState };
+  connectionStates.set(chatRoomId, updatedState);
+  
+  const listeners = connectionListeners.get(chatRoomId) || [];
+  listeners.forEach(listener => listener(updatedState));
+};
+
+// Add connection state listener for a specific chat room
+export const addConnectionListener = (chatRoomId: number, listener: (state: ConnectionState) => void) => {
+  if (!connectionListeners.has(chatRoomId)) {
+    connectionListeners.set(chatRoomId, []);
+  }
+  
+  const listeners = connectionListeners.get(chatRoomId)!;
+  listeners.push(listener);
+  
   // Immediately call with current state
-  listener(connectionState);
+  listener(getConnectionState(chatRoomId));
   
   // Return unsubscribe function
   return () => {
-    const index = connectionListeners.indexOf(listener);
+    const index = listeners.indexOf(listener);
     if (index > -1) {
-      connectionListeners.splice(index, 1);
+      listeners.splice(index, 1);
     }
   };
 };
 
-// Helper function to process message queue
-const processMessageQueue = async () => {
+// Helper function to process message queue for a specific chat room
+const processMessageQueue = async (chatRoomId: number) => {
+  const ws = connections.get(chatRoomId);
+  const messageQueue = messageQueues.get(chatRoomId) || [];
+  
   if (!ws || ws.readyState !== WebSocket.OPEN || messageQueue.length === 0) return;
   
-  console.log(`Processing ${messageQueue.length} queued messages`);
+  console.log(`Processing ${messageQueue.length} queued messages for room ${chatRoomId}`);
   
   const processedMessages: string[] = [];
   
@@ -118,14 +137,15 @@ const processMessageQueue = async () => {
   }
   
   // Remove processed messages from queue
-  messageQueue = messageQueue.filter(msg => !processedMessages.includes(msg.id));
+  const updatedQueue = messageQueue.filter(msg => !processedMessages.includes(msg.id));
+  messageQueues.set(chatRoomId, updatedQueue);
   
   if (processedMessages.length > 0) {
     toast.success(`Sent ${processedMessages.length} queued messages`);
   }
 };
 
-// Queue message for later sending
+// Queue message for later sending for a specific chat room
 const queueMessage = (content: string, chatRoomId: number, type: MessageType = MessageType.TEXT, moderatorId?: number) => {
   const queuedMessage: QueuedMessage = {
     id: Date.now().toString(),
@@ -137,37 +157,48 @@ const queueMessage = (content: string, chatRoomId: number, type: MessageType = M
     retryCount: 0
   };
   
-  messageQueue.push(queuedMessage);
+  if (!messageQueues.has(chatRoomId)) {
+    messageQueues.set(chatRoomId, []);
+  }
+  
+  const queue = messageQueues.get(chatRoomId)!;
+  queue.push(queuedMessage);
+  
   console.log('Message queued for later sending:', queuedMessage);
   toast.info('Message will be sent when connection is restored');
 };
 
-// Reconnection logic with exponential backoff
+// Reconnection logic with exponential backoff for a specific chat room
 const reconnectWebSocket = (chatRoomId: number, onMessage: (data: any) => void) => {
+  const connectionState = getConnectionState(chatRoomId);
+  
   if (connectionState.reconnectAttempts >= connectionState.maxReconnectAttempts) {
-    updateConnectionState({ status: 'error' });
+    updateConnectionState(chatRoomId, { status: 'error' });
     toast.error('Failed to reconnect. Please refresh the page.');
     return;
   }
   
-  if (reconnectTimeout) {
-    clearTimeout(reconnectTimeout);
+  const existingTimeout = reconnectTimeouts.get(chatRoomId);
+  if (existingTimeout) {
+    clearTimeout(existingTimeout);
   }
   
-  updateConnectionState({ 
+  updateConnectionState(chatRoomId, { 
     status: 'reconnecting',
     reconnectAttempts: connectionState.reconnectAttempts + 1
   });
   
   const backoffTime = Math.min(1000 * Math.pow(2, connectionState.reconnectAttempts), 30000);
-  console.log(`Attempting to reconnect in ${backoffTime/1000} seconds (attempt ${connectionState.reconnectAttempts}/${connectionState.maxReconnectAttempts})`);
+  console.log(`Attempting to reconnect room ${chatRoomId} in ${backoffTime/1000} seconds (attempt ${connectionState.reconnectAttempts}/${connectionState.maxReconnectAttempts})`);
   
-  reconnectTimeout = setTimeout(() => {
+  const timeout = setTimeout(() => {
     connectWebSocket(chatRoomId, onMessage);
   }, backoffTime);
+  
+  reconnectTimeouts.set(chatRoomId, timeout);
 };
 
-// Enhanced WebSocket connection
+// Enhanced WebSocket connection for a specific chat room
 export const connectWebSocket = async (chatRoomId: number | string, onMessage: (data: any) => void) => {
   const token = getAuthToken();
   if (!token) return null;
@@ -188,46 +219,46 @@ export const connectWebSocket = async (chatRoomId: number | string, onMessage: (
       return null;
     }
     
-    // Close existing connection if any
-    if (ws) {
-      ws.close();
-      ws = null;
+    // Close existing connection for this chat room if any
+    const existingWs = connections.get(validChatRoomId);
+    if (existingWs) {
+      console.log(`Closing existing connection for room ${validChatRoomId}`);
+      existingWs.close();
+      connections.delete(validChatRoomId);
     }
     
-    updateConnectionState({ status: 'connecting' });
+    updateConnectionState(validChatRoomId, { status: 'connecting' });
     
     // Build the WebSocket URL - match the working example
-    // const protocol = API_BASE_URL.startsWith('https') ? 'wss:' : 'ws:';
-    // const wsUrl = `${protocol}//${API_BASE_URL}/api/chat/ws/${validChatRoomId}/${userId}`;
     const wsUrl = `${API_BASE_URL.replace('http', 'ws')}/api/chat/ws/${validChatRoomId}/${userId}`;
     
     console.log(`Connecting to WebSocket: ${wsUrl}`);
     console.log(`User ID: ${userId}, Chat Room ID: ${validChatRoomId}`);
     
-    ws = new WebSocket(wsUrl);
+    const ws = new WebSocket(wsUrl);
     
     ws.onopen = async () => {
-      console.log('WebSocket connected successfully');
-      updateConnectionState({ 
+      console.log(`WebSocket connected successfully for room ${validChatRoomId}`);
+      updateConnectionState(validChatRoomId, { 
         status: 'connected',
         reconnectAttempts: 0,
         lastConnected: new Date()
       });
       
-      // Send join message like in the working example
+      // Send join message
       try {
         ws.send(JSON.stringify({
           action: "join",
           chat_room_id: validChatRoomId,
           user_id: userId
         }));
-        console.log('Sent join message to WebSocket');
+        console.log(`Sent join message to WebSocket for room ${validChatRoomId}`);
       } catch (error) {
         console.error('Failed to send join message:', error);
       }
       
-      // Process any queued messages
-      await processMessageQueue();
+      // Process any queued messages for this room
+      await processMessageQueue(validChatRoomId);
       
       // Mark messages as read
       markMessagesAsRead(validChatRoomId);
@@ -236,7 +267,7 @@ export const connectWebSocket = async (chatRoomId: number | string, onMessage: (
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        console.log('WebSocket message received:', data);
+        console.log(`WebSocket message received for room ${validChatRoomId}:`, data);
         
         // Handle the message format from your backend (matching the working example)
         if (data.action === "create") {
@@ -304,7 +335,7 @@ export const connectWebSocket = async (chatRoomId: number | string, onMessage: (
     };
     
     ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
+      console.error(`WebSocket error for room ${validChatRoomId}:`, error);
       const chatError: ChatError = {
         type: 'connection',
         message: 'WebSocket connection error',
@@ -314,20 +345,25 @@ export const connectWebSocket = async (chatRoomId: number | string, onMessage: (
     };
     
     ws.onclose = (event) => {
-      console.log('WebSocket connection closed:', event.code, event.reason);
-      updateConnectionState({ status: 'disconnected' });
+      console.log(`WebSocket connection closed for room ${validChatRoomId}:`, event.code, event.reason);
+      connections.delete(validChatRoomId); // Remove from active connections
+      updateConnectionState(validChatRoomId, { status: 'disconnected' });
       
       // Only attempt reconnection if it wasn't a clean close (1000) and we haven't exceeded max attempts
+      const connectionState = getConnectionState(validChatRoomId);
       if (event.code !== 1000 && connectionState.reconnectAttempts < connectionState.maxReconnectAttempts) {
-        console.log('WebSocket closed unexpectedly, attempting to reconnect...');
+        console.log(`WebSocket closed unexpectedly for room ${validChatRoomId}, attempting to reconnect...`);
         reconnectWebSocket(validChatRoomId, onMessage);
       } else if (event.code === 1000) {
-        console.log('WebSocket closed cleanly, no reconnection needed');
+        console.log(`WebSocket closed cleanly for room ${validChatRoomId}, no reconnection needed`);
       } else {
-        console.log('Max reconnection attempts reached or permanent failure');
-        updateConnectionState({ status: 'error' });
+        console.log(`Max reconnection attempts reached for room ${validChatRoomId} or permanent failure`);
+        updateConnectionState(validChatRoomId, { status: 'error' });
       }
     };
+    
+    // Store the connection
+    connections.set(validChatRoomId, ws);
     
     return ws;
   } catch (error) {
@@ -342,7 +378,7 @@ export const connectWebSocket = async (chatRoomId: number | string, onMessage: (
   }
 };
 
-// Send a message via WebSocket with fallback to HTTP
+// Send a message via WebSocket with fallback to HTTP for a specific chat room
 export const sendMessage = async (content: string, chatRoomId: number, moderatorId?: number) => {
   if (!content.trim()) {
     const error: ChatError = {
@@ -354,7 +390,10 @@ export const sendMessage = async (content: string, chatRoomId: number, moderator
   }
   
   console.log(`Sending message to room ${chatRoomId}:`, content);
-  console.log('Current WebSocket state:', ws?.readyState);
+  
+  // Get the WebSocket connection for this specific chat room
+  const ws = connections.get(chatRoomId);
+  console.log(`Current WebSocket state for room ${chatRoomId}:`, ws?.readyState);
   
   // Try WebSocket first (matching your working example format)
   if (ws && ws.readyState === WebSocket.OPEN) {
@@ -372,7 +411,7 @@ export const sendMessage = async (content: string, chatRoomId: number, moderator
         message.moderator_id = moderatorId;
       }
       
-      console.log('Sending WebSocket message:', message);
+      console.log(`Sending WebSocket message to room ${chatRoomId}:`, message);
       ws.send(JSON.stringify(message));
       console.log('Message sent via WebSocket successfully');
       return { success: true, method: 'websocket' };
@@ -380,7 +419,7 @@ export const sendMessage = async (content: string, chatRoomId: number, moderator
       console.error('Error sending message via WebSocket:', error);
     }
   } else {
-    console.log('WebSocket not available, state:', ws?.readyState);
+    console.log(`WebSocket not available for room ${chatRoomId}, state:`, ws?.readyState);
   }
   
   // Fallback to HTTP
@@ -726,6 +765,7 @@ export const getFileUrl = (filename: string) => {
 };
 
 export const markMessagesAsRead = (chatRoomId: number) => {
+  const ws = connections.get(chatRoomId);
   if (ws && ws.readyState === WebSocket.OPEN) {
     try {
       ws.send(JSON.stringify({
@@ -739,6 +779,7 @@ export const markMessagesAsRead = (chatRoomId: number) => {
 };
 
 export const sendTypingIndicator = (chatRoomId: number, isTyping: boolean) => {
+  const ws = connections.get(chatRoomId);
   if (ws && ws.readyState === WebSocket.OPEN) {
     try {
       ws.send(JSON.stringify({
@@ -782,26 +823,58 @@ export const flagMessage = async (messageId: number | string, isFlagged: boolean
   }
 };
 
-// Cleanup function to close connections and clear timeouts
-export const cleanup = () => {
-  if (ws) {
-    ws.close();
-    ws = null;
+// Cleanup function to close connections and clear timeouts for a specific room or all rooms
+export const cleanup = (chatRoomId?: number) => {
+  if (chatRoomId !== undefined) {
+    // Clean up specific room
+    const ws = connections.get(chatRoomId);
+    if (ws) {
+      ws.close(1000, 'Cleanup requested');
+      connections.delete(chatRoomId);
+    }
+    
+    const timeout = reconnectTimeouts.get(chatRoomId);
+    if (timeout) {
+      clearTimeout(timeout);
+      reconnectTimeouts.delete(chatRoomId);
+    }
+    
+    messageQueues.delete(chatRoomId);
+    connectionListeners.delete(chatRoomId);
+    connectionStates.delete(chatRoomId);
+    
+    console.log(`Cleaned up WebSocket connection for room ${chatRoomId}`);
+  } else {
+    // Clean up all rooms
+    connections.forEach((ws, roomId) => {
+      ws.close(1000, 'Global cleanup');
+      console.log(`Closed WebSocket connection for room ${roomId}`);
+    });
+    connections.clear();
+    
+    reconnectTimeouts.forEach((timeout) => {
+      clearTimeout(timeout);
+    });
+    reconnectTimeouts.clear();
+    
+    messageQueues.clear();
+    connectionListeners.clear();
+    connectionStates.clear();
+    
+    console.log('Cleaned up all WebSocket connections');
   }
-  
-  if (reconnectTimeout) {
-    clearTimeout(reconnectTimeout);
-    reconnectTimeout = null;
+};
+
+// Disconnect a specific chat room connection
+export const disconnectChatRoom = (chatRoomId: number) => {
+  const ws = connections.get(chatRoomId);
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    console.log(`Manually disconnecting from room ${chatRoomId}`);
+    ws.close(1000, 'Manual disconnect');
   }
-  
-  messageQueue = [];
-  connectionListeners.length = 0;
-  
-  updateConnectionState({
-    status: 'disconnected',
-    reconnectAttempts: 0
-  });
 };
 
 // Export connection state for components to use
-export const getConnectionState = () => connectionState;
+export const getCurrentConnectionState = (chatRoomId: number) => {
+  return connectionStates.get(chatRoomId) || { ...defaultConnectionState };
+};
