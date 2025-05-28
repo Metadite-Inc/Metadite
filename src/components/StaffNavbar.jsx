@@ -33,15 +33,12 @@ const StaffNavbar = () => {
     if (user?.role === 'moderator') {
       return [
         { to: '/moderator', label: 'Moderator' },
-        { to: '/dashboard', label: 'Dashboard' },
-        { to: '/chat', label: 'Messages' }
+        { to: '/dashboard', label: 'Assigned Dolls' }
       ];
     }
     if (user?.role === 'admin') {
       return [
-        { to: '/admin', label: 'Admin' },
-        { to: '/dashboard', label: 'Dashboard' },
-        { to: '/chat', label: 'Messages' }
+        { to: '/admin', label: 'Admin' }
       ];
     }
     return [];

@@ -42,6 +42,4 @@ export const usePerformanceOptimization = () => {
       // Cleanup if needed
     };
   }, []);
-
-  return null;
 };

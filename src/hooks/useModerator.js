@@ -41,9 +41,10 @@ const useModerator = () => {
   const [connectionStatus, setConnectionStatus] = useState('disconnected');
   const wsRef = useRef(null); // Add ref to store WebSocket connection
   
-  // Redirect non-moderator users
+  // Only redirect if user is explicitly not logged in
+  // Role validation will be handled server-side when making API calls
   useEffect(() => {
-    if (user?.role !== 'moderator') {
+    if (!user) {
       navigate('/');
     } else {
       setIsLoaded(true);

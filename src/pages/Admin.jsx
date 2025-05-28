@@ -24,20 +24,21 @@ import SlideshowTab from '../components/admin/SlideshowTab';
 const flaggedMessagesCount = 2;
 
 const Admin = () => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const { theme } = useTheme();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(() => localStorage.getItem('adminActiveTab') || 'dashboard');
   const [isLoaded, setIsLoaded] = useState(false);
   
   useEffect(() => {
-    // Redirect non-admin users or logged-out users
-    if (!user || user.role !== 'admin') {
+    // Only redirect if user is explicitly not logged in
+    // Role validation will be handled server-side when making API calls
+    if (!loading && !user) {
       navigate('/#heroSection'); // Redirect to Home's heroSection
+    } else if (user) {
+      setIsLoaded(true);
     }
-    
-    setIsLoaded(true);
-  }, [user, navigate]);
+  }, [user, loading, navigate]);
   
   // Persist activeTab to localStorage
   useEffect(() => {

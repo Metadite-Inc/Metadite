@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { toast } from 'sonner';
 import { MessageType, MessageStatus, ChatError, ConnectionState, QueuedMessage } from '../types/chat';
+import { authApi } from '../lib/api/auth_api';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -20,27 +21,6 @@ let messageQueue: QueuedMessage[] = [];
 
 // Event listeners for connection state changes
 const connectionListeners: ((state: ConnectionState) => void)[] = [];
-
-// Helper method to extract user ID from JWT token
-const getUserIdFromToken = (token: string): number => {
-  try {
-    const parts = token.split('.');
-    if (parts.length !== 3) {
-      throw new Error('Invalid token format');
-    }
-    
-    const payload = JSON.parse(atob(parts[1]));
-    
-    if (payload && payload.sub) {
-      return Number(payload.sub);
-    } else {
-      throw new Error('User ID not found in token');
-    }
-  } catch (error) {
-    console.error('Failed to extract user ID from token:', error);
-    throw new Error('Failed to extract user ID from token');
-  }
-};
 
 // Get auth token from localStorage and validate
 const getAuthToken = (): string | null => {
@@ -188,12 +168,13 @@ const reconnectWebSocket = (chatRoomId: number, onMessage: (data: any) => void) 
 };
 
 // Enhanced WebSocket connection
-export const connectWebSocket = (chatRoomId: number | string, onMessage: (data: any) => void) => {
+export const connectWebSocket = async (chatRoomId: number | string, onMessage: (data: any) => void) => {
   const token = getAuthToken();
   if (!token) return null;
   
   try {
-    const userId = getUserIdFromToken(token);
+    const user = await authApi.getCurrentUser();
+    const userId = user.id;
     
     // Validate chat room ID to prevent NaN issues
     const validChatRoomId = Number(chatRoomId);
@@ -378,12 +359,13 @@ export const sendMessage = async (content: string, chatRoomId: number, moderator
   // Try WebSocket first (matching your working example format)
   if (ws && ws.readyState === WebSocket.OPEN) {
     try {
+      const user = await authApi.getCurrentUser();
       const message = {
         action: "create",
         message: content,
         chat_room_id: chatRoomId,
         type: "text",
-        sender_id: getUserIdFromToken(getAuthToken()!)
+        sender_id: user.id
       } as any;
       
       if (moderatorId) {

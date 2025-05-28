@@ -76,7 +76,7 @@ class userApiService {
         ...options.headers,
       };
 
-      console.log(`Making request to ${API_URL}${endpoint} with auth: ${token ? 'Yes' : 'No'}`);
+      console.log(`Making request to ${API_URL}${endpoint}`);
       
       const response = await fetch(`${API_URL}${endpoint}`, {
         ...options,

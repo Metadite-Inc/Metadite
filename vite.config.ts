@@ -10,9 +10,14 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  define: {
-    __WS_TOKEN__: JSON.stringify(process.env.VITE_WS_TOKEN || 'default-token'),
-  },
+  /**
+  __WS_TOKEN__: (() => {
+    if (!process.env.VITE_WS_TOKEN) {
+      throw new Error("Environment variable VITE_WS_TOKEN is not set. Please set it before building the project.");
+    }
+    return JSON.stringify(process.env.VITE_WS_TOKEN);
+  })(),
+  */
   server: {
     port: 8080,
     hmr: {
