@@ -11,20 +11,16 @@ export default defineConfig({
     },
   },
   define: {
-    // Define the WebSocket token that Vite expects
-    __WS_TOKEN__: JSON.stringify(process.env.VITE_WS_TOKEN || ''),
+    __WS_TOKEN__: JSON.stringify(process.env.VITE_WS_TOKEN || 'default-token'),
   },
   server: {
+    port: 8080,
     hmr: {
-      // Configure HMR WebSocket properly
-      clientPort: undefined,
-      port: undefined,
+      clientPort: 8080,
     },
-    // Ensure WebSocket connections work properly
     host: true,
   },
   build: {
-    // Ensure build works correctly
     rollupOptions: {
       output: {
         manualChunks: undefined,
