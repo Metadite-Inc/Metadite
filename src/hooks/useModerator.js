@@ -41,14 +41,37 @@ const useModerator = () => {
   const [connectionStatus, setConnectionStatus] = useState('disconnected');
   const wsRef = useRef(null); // Add ref to store WebSocket connection
   
-  // Only redirect if user is explicitly not logged in
-  // Role validation will be handled server-side when making API calls
+  
+  // Server-side role validation for moderator access
   useEffect(() => {
-    if (!user) {
-      navigate('/');
-    } else {
-      setIsLoaded(true);
-    }
+    const validateModeratorAccess = async () => {
+      if (!user) {
+        navigate('/');
+        return;
+      }
+
+      try {
+        // Use authApi.getCurrentUser() for server-side role validation
+        const { authApi } = await import('../lib/api/auth_api');
+        const currentUser = await authApi.getCurrentUser();
+        
+        if (currentUser.role !== 'moderator') {
+          const { toast } = await import('sonner');
+          toast.error('Access denied. Moderator privileges required.');
+          navigate('/');
+          return;
+        }
+        
+        setIsLoaded(true);
+      } catch (error) {
+        console.error('Moderator access validation failed:', error);
+        const { toast } = await import('sonner');
+        toast.error('Authentication failed. Please log in again.');
+        navigate('/');
+      }
+    };
+
+    validateModeratorAccess();
   }, [user, navigate]);
   
   // Set up connection state listener

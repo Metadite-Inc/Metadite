@@ -30,6 +30,8 @@ class AdminUsersApiService extends BaseApiService {
   // Get all admins
   async getAdmins(): Promise<Admin[]> {
     try {
+      // Validate admin role server-side before making request
+      await this.validateRole('admin');
       const token = this.validateAuth();
       
       return await this.request<Admin[]>('/api/admin/admins', {
@@ -49,6 +51,8 @@ class AdminUsersApiService extends BaseApiService {
   // Create a new admin
   async createAdmin(data: CreateAdminRequest): Promise<void> {
     try {
+      // Validate admin role server-side before making request
+      await this.validateRole('admin');
       const token = this.validateAuth();
       
       await this.request('/api/admin/admins', {
@@ -71,6 +75,8 @@ class AdminUsersApiService extends BaseApiService {
   // Delete an admin
   async deleteAdmin(adminId: number): Promise<void> {
     try {
+      // Validate admin role server-side before making request
+      await this.validateRole('admin');
       const token = this.validateAuth();
 
       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/admin/admins/${adminId}`, {
