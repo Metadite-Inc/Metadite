@@ -41,6 +41,7 @@ const useModerator = () => {
   const [connectionStatus, setConnectionStatus] = useState('disconnected');
   const wsRef = useRef(null); // Add ref to store WebSocket connection
   
+  
   // Server-side role validation for moderator access
   useEffect(() => {
     const validateModeratorAccess = async () => {

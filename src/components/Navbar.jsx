@@ -30,6 +30,7 @@ const Navbar = () => {
       navigate('/moderator', { replace: true });
     }
   }, [user, navigate, location.pathname]);
+
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 10);
@@ -82,7 +83,6 @@ const Navbar = () => {
           )}
           {hasPaidMembership && (
             <Link to="/chat" className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors flex items-center">
-              <MessageSquare className="h-5 w-5 mr-1" />
               Messages
             </Link>
           )}
@@ -130,7 +130,6 @@ const Navbar = () => {
           )}
           {hasPaidMembership && (
             <Link to="/chat" className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors py-2 flex items-center" onClick={toggleMobileMenu}>
-              <MessageSquare className="h-5 w-5 mr-2" />
               Messages
             </Link>
           )}
