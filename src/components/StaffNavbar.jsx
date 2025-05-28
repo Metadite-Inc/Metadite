@@ -38,7 +38,9 @@ const StaffNavbar = () => {
     }
     if (user?.role === 'admin') {
       return [
-        { to: '/admin', label: 'Admin' }
+        { to: '/admin', label: 'Admin' },
+        { to: '/dashboard', label: 'Dashboard' },
+        { to: '/chat', label: 'Messages' }
       ];
     }
     return [];
