@@ -30,7 +30,6 @@ const Navbar = () => {
       navigate('/moderator', { replace: true });
     }
   }, [user, navigate, location.pathname]);
-
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 10);
