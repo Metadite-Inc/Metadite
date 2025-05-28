@@ -39,4 +39,20 @@ export class BaseApiService {
     }
     return token;
   }
+
+  // Server-side role validation using getCurrentUser()
+  protected async validateRole(requiredRole: 'admin' | 'moderator'): Promise<void> {
+    try {
+      // Import authApi dynamically to avoid circular dependencies
+      const { authApi } = await import('./auth_api');
+      const currentUser = await authApi.getCurrentUser();
+      
+      if (currentUser.role !== requiredRole) {
+        throw new Error(`Access denied. ${requiredRole} privileges required.`);
+      }
+    } catch (error) {
+      console.error('Role validation failed:', error);
+      throw new Error(`Access denied. Unable to verify ${requiredRole} privileges.`);
+    }
+  }
 }

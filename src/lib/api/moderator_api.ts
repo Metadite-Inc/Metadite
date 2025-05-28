@@ -31,6 +31,8 @@ class ModeratorApiService extends BaseApiService {
   // Get all moderators
   async getModerators(): Promise<Moderator[]> {
     try {
+      // Validate admin role server-side before making request
+      await this.validateRole('admin');
       const token = this.validateAuth();
       
       return await this.request<Moderator[]>('/api/moderators/moderators?skip=0&limit=5', {
@@ -50,6 +52,8 @@ class ModeratorApiService extends BaseApiService {
   // Create a new moderator
   async createModerator(data: CreateModeratorRequest): Promise<void> {
     try {
+      // Validate admin role server-side before making request
+      await this.validateRole('admin');
       const token = this.validateAuth();
       
       await this.request('/api/admin/moderators', {
@@ -72,6 +76,8 @@ class ModeratorApiService extends BaseApiService {
   // Delete a moderator
   async deleteModerator(moderatorId: number): Promise<void> {
     try {
+      // Validate admin role server-side before making request
+      await this.validateRole('admin');
       const token = this.validateAuth();
 
       await this.request(`/api/moderators/${moderatorId}`, {
@@ -115,6 +121,8 @@ class ModeratorApiService extends BaseApiService {
   // Assign a doll to moderator
   async assignDollToModerator(moderatorId: number, dollId: number): Promise<void> {
     try {
+      // Validate admin role server-side before making request
+      await this.validateRole('admin');
       const token = this.validateAuth();
       
       await this.request(`/api/moderators/${moderatorId}/dolls/${dollId}`, {

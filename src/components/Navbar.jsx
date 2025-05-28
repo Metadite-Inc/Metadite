@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { ShoppingCart, User, LogIn, Menu, X, Bell } from 'lucide-react';
+import { ShoppingCart, User, LogIn, Menu, X, Bell, MessageSquare } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 import UserMenu from './UserMenu';
 
@@ -17,6 +17,19 @@ const Navbar = () => {
 
   const hasVipAccess = user?.membership_level === 'vip' || user?.membership_level === 'vvip';
   const hasPaidMembership = user?.membership_level !== 'free' && user?.membership_level;
+
+  // Redirect admins and moderators away from regular navbar pages
+  useEffect(() => {
+    if (user?.role === 'admin' && location.pathname === '/') {
+      navigate('/admin', { replace: true });
+    }
+  }, [user, navigate, location.pathname]);
+
+  useEffect(() => {
+    if (user?.role === 'moderator' && location.pathname === '/') {
+      navigate('/moderator', { replace: true });
+    }
+  }, [user, navigate, location.pathname]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -70,6 +83,7 @@ const Navbar = () => {
           )}
           {hasPaidMembership && (
             <Link to="/chat" className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors flex items-center">
+              <MessageSquare className="h-5 w-5 mr-1" />
               Messages
             </Link>
           )}
@@ -117,6 +131,7 @@ const Navbar = () => {
           )}
           {hasPaidMembership && (
             <Link to="/chat" className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors py-2 flex items-center" onClick={toggleMobileMenu}>
+              <MessageSquare className="h-5 w-5 mr-2" />
               Messages
             </Link>
           )}

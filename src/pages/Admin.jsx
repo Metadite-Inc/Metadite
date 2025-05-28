@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import StaffNavbar from '../components/StaffNavbar';
 import StaffFooter from '../components/StaffFooter';
 import { useAuth } from '../context/AuthContext';
+import { authApi } from '../lib/api/auth_api';
+import { toast } from 'sonner';
 import { Settings } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 
@@ -31,13 +33,31 @@ const Admin = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   
   useEffect(() => {
-    // Only redirect if user is explicitly not logged in
-    // Role validation will be handled server-side when making API calls
-    if (!loading && !user) {
-      navigate('/#heroSection'); // Redirect to Home's heroSection
-    } else if (user) {
-      setIsLoaded(true);
-    }
+    const validateAdminAccess = async () => {
+      if (loading) return;
+      
+      if (!user) {
+        navigate('/#heroSection');
+        return;
+      }
+
+      try {
+        // Server-side role validation using getCurrentUser()
+        const currentUser = await authApi.getCurrentUser();
+        if (currentUser.role !== 'admin') {
+          toast.error('Access denied. Admin privileges required.');
+          navigate('/#heroSection');
+          return;
+        }
+        setIsLoaded(true);
+      } catch (error) {
+        console.error('Admin access validation failed:', error);
+        toast.error('Authentication failed. Please log in again.');
+        navigate('/#heroSection');
+      }
+    };
+
+    validateAdminAccess();
   }, [user, loading, navigate]);
   
   // Persist activeTab to localStorage
