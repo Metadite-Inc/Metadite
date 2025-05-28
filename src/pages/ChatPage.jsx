@@ -407,7 +407,6 @@ const ChatPage = () => {
             </p>
           </div>
         </div>
-        <Footer />
       </div>
     );
   }
@@ -432,7 +431,6 @@ const ChatPage = () => {
             </p>
           </div>
         </div>
-        <Footer />
       </div>
     );
   }

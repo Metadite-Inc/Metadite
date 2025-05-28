@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { ChevronLeft, MessageSquare, Send, Paperclip, FileImage, X, File } from 'lucide-react';
@@ -19,7 +18,8 @@ import {
   createChatRoom,
   deleteMessage,
   sendTypingIndicator,
-  markMessagesAsRead
+  markMessagesAsRead,
+  addConnectionListener
 } from '../services/ChatService';
 
 const ModelChat = () => {
@@ -48,9 +48,20 @@ const ModelChat = () => {
   // Get room ID from URL or null if not present
   const roomIdFromUrl = searchParams.get('roomId');
   
+  // Set up connection state listener
+  useEffect(() => {
+    const unsubscribe = addConnectionListener((state) => {
+      setConnectionStatus(state.status);
+    });
+    
+    return unsubscribe;
+  }, []);
+  
   // Fetch model data and set up chat room
   useEffect(() => {
     const initializeChat = async () => {
+      if (!user) return;
+      
       try {
         setIsLoaded(false);
         setFetchError(false);
@@ -88,7 +99,7 @@ const ModelChat = () => {
         console.log('Chat room data:', chatRoomData);
         setChatRoom(chatRoomData);
         
-        // Load messages for this chat room using the same method as the working example
+        // Load messages for this chat room
         console.log(`Loading messages for chat room ${chatRoomData.id}`);
         const chatMessages = await getMessages(chatRoomData.id);
         if (chatMessages && chatMessages.length) {
@@ -100,44 +111,6 @@ const ModelChat = () => {
           setMessages([]);
         }
         
-        // Connect to WebSocket for this chat room
-        setConnectionStatus('connecting');
-        console.log(`Connecting to WebSocket for chat room ${chatRoomData.id}`);
-        const ws = connectWebSocket(chatRoomData.id, handleWebSocketMessage);
-        
-        if (ws) {
-          wsRef.current = ws;
-          
-          // Store original handlers
-          const originalOnOpen = ws.onopen;
-          const originalOnClose = ws.onclose;
-          const originalOnError = ws.onerror;
-          
-          // Add custom event handlers
-          ws.onopen = (event) => {
-            console.log('User WebSocket connected');
-            setConnectionStatus('connected');
-            markMessagesAsRead(chatRoomData.id);
-            
-            if (originalOnOpen) originalOnOpen.call(ws, event);
-          };
-          
-          ws.onclose = (event) => {
-            console.log('User WebSocket disconnected:', event.code, event.reason);
-            setConnectionStatus('disconnected');
-            
-            // Let the original handler manage reconnection logic
-            if (originalOnClose) originalOnClose.call(ws, event);
-          };
-          
-          ws.onerror = (event) => {
-            console.error('User WebSocket error:', event);
-            setConnectionStatus('error');
-            
-            if (originalOnError) originalOnError.call(ws, event);
-          };
-        }
-        
         setIsLoaded(true);
       } catch (error) {
         console.error("Failed to initialize chat:", error);
@@ -146,22 +119,43 @@ const ModelChat = () => {
       }
     };
 
-    if (user) {
-      initializeChat();
+    initializeChat();
+  }, [id, roomIdFromUrl]); // Removed user?.id from dependencies
+  
+  // Separate effect for WebSocket connection that only runs when chatRoom is set
+  useEffect(() => {
+    if (!chatRoom || !user) return;
+    
+    console.log(`Connecting to WebSocket for chat room ${chatRoom.id}`);
+    const ws = connectWebSocket(chatRoom.id, handleWebSocketMessage);
+    
+    if (ws) {
+      wsRef.current = ws;
+      
+      // Don't override the ChatService's event handlers, just add our own logic
+      const originalOnOpen = ws.onopen;
+      ws.onopen = (event) => {
+        console.log('User WebSocket connected');
+        markMessagesAsRead(chatRoom.id);
+        
+        // Call original handler if it exists
+        if (originalOnOpen) originalOnOpen.call(ws, event);
+      };
     }
     
-    // Cleanup WebSocket connection when component unmounts
+    // Cleanup function
     return () => {
-      if (wsRef.current) {
-        console.log('Cleaning up WebSocket connection on unmount');
-        wsRef.current.close(1000, 'Component unmounting');
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        console.log('Cleaning up WebSocket connection');
+        wsRef.current.close(1000, 'Component cleanup');
+        wsRef.current = null;
       }
       
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
     };
-  }, [id, roomIdFromUrl, user?.id]); // Add user.id to dependencies
+  }, [chatRoom?.id]); // Only depend on chatRoom.id, not the user
   
   // Handle incoming WebSocket messages
   const handleWebSocketMessage = (data) => {
