@@ -7,6 +7,7 @@ import { MessageSquare, Users, Clock, ArrowRight, Search, Send, Paperclip, X, Fi
 import { toast } from 'sonner';
 import { Textarea } from "@/components/ui/textarea";
 import MessageItem from '../components/MessageItem';
+import { apiService } from '../lib/api';
 import { 
   getUserChatRooms,
   getMessages,
@@ -77,20 +78,28 @@ const ChatPage = () => {
       console.log('Loading chat rooms for user:', user?.id);
       
       const rooms = await getUserChatRooms();
-      
+
       if (rooms && Array.isArray(rooms)) {
-        const userRooms = rooms.map(room => ({
-          id: room.id,
-          modelId: room.doll_id,
-          modelName: room.doll_name || `Model ${room.doll_id}`,
-          modelImage: room.doll_image || 'https://images.unsplash.com/photo-1611042553365-9b101d749e31?q=80&w=1000&auto=format&fit=crop',
-          lastMessage: room.last_message?.content || 'No messages yet',
-          lastMessageTime: room.last_message?.created_at,
-          unreadCount: room.unread_count || 0,
-          createdAt: room.created_at,
-          moderatorId: room.moderator_id
-        }));
-        
+        // Fetch model details for all rooms in parallel
+        const modelDetails = await Promise.all(
+          rooms.map(room => apiService.getModelDetails(room.doll_id))
+        );
+
+        const userRooms = rooms.map((room, index) => {
+          const model = modelDetails[index];
+          return {
+            id: room.id,
+            modelId: room.doll_id,
+            modelName: model?.name || "Unknown",
+            modelImage: model?.image_url || null,
+            lastMessage: room.last_message?.content || 'No messages yet',
+            lastMessageTime: room.last_message?.created_at,
+            unreadCount: room.unread_count || 0,
+            createdAt: room.created_at,
+            moderatorId: room.moderator_id
+          };
+        });
+
         setChatRooms(userRooms);
         console.log('Loaded chat rooms:', userRooms);
       } else {
@@ -302,7 +311,7 @@ const ChatPage = () => {
               id: Date.now(),
               chat_room_id: selectedRoom.id,
               sender_id: user.id,
-              sender_name: user.name || user.email || 'User',
+              sender_name: user.name || 'You',
               content: selectedFile.name,
               file_name: selectedFile.name,
               created_at: new Date().toISOString(),
@@ -330,7 +339,7 @@ const ChatPage = () => {
             id: Date.now() + 1,
             chat_room_id: selectedRoom.id,
             sender_id: user.id,
-            sender_name: user.name || user.email || 'User',
+            sender_name: user.name || 'You',
             content: newMessage,
             created_at: new Date().toISOString(),
             flagged: false,
@@ -580,9 +589,6 @@ const ChatPage = () => {
                         <h2 className={`font-medium ${theme === 'dark' ? 'text-white' : ''}`}>
                           {selectedRoom.modelName}
                         </h2>
-                        <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                          Chat ID: {selectedRoom.id}
-                        </p>
                       </div>
                     </div>
                     
