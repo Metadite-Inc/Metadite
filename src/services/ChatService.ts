@@ -76,8 +76,6 @@ const updateConnectionState = (chatRoomId: number, newState: Partial<ConnectionS
   const updatedState = { ...currentState, ...newState };
   connectionStates.set(chatRoomId, updatedState);
   
-  console.log(`Connection state updated for room ${chatRoomId}:`, updatedState.status);
-  
   const listeners = connectionListeners.get(chatRoomId) || [];
   listeners.forEach(listener => listener(updatedState));
 };
@@ -271,12 +269,6 @@ export const connectWebSocket = async (chatRoomId: number | string, onMessage: (
         const data = JSON.parse(event.data);
         console.log(`WebSocket message received for room ${validChatRoomId}:`, data);
         
-        // Ensure connection status stays connected when receiving messages
-        const currentState = getConnectionState(validChatRoomId);
-        if (currentState.status !== 'connected') {
-          updateConnectionState(validChatRoomId, { status: 'connected' });
-        }
-        
         // Handle the message format from your backend (matching the working example)
         if (data.action === "create") {
           // Transform backend message format to frontend format
@@ -313,9 +305,6 @@ export const connectWebSocket = async (chatRoomId: number | string, onMessage: (
         } else if (data.action === "notification") {
           // Handle system notifications
           console.log('System notification:', data.message);
-        } else if (data.action === "read_status") {
-          // Handle read status updates - don't pass to message handler
-          console.log('Read status update:', data);
         } else if (data.type === "history") {
           // Handle message history from WebSocket
           if (data.messages && data.messages.length > 0) {
@@ -347,7 +336,6 @@ export const connectWebSocket = async (chatRoomId: number | string, onMessage: (
     
     ws.onerror = (error) => {
       console.error(`WebSocket error for room ${validChatRoomId}:`, error);
-      updateConnectionState(validChatRoomId, { status: 'error' });
       const chatError: ChatError = {
         type: 'connection',
         message: 'WebSocket connection error',
@@ -386,7 +374,6 @@ export const connectWebSocket = async (chatRoomId: number | string, onMessage: (
       details: error instanceof Error ? error.message : 'Unknown error'
     };
     handleChatError(chatError);
-    updateConnectionState(Number(chatRoomId), { status: 'error' });
     return null;
   }
 };
