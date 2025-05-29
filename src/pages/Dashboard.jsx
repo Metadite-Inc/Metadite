@@ -28,6 +28,11 @@ const Dashboard = () => {
         navigate('/staff-dashboard', { replace: true });
       }
     }
+    
+    // Redirect staff users to staff dashboard
+    if (!loading && user && (user.role === 'admin' || user.role === 'moderator')) {
+      navigate('/staff-dashboard');
+    }
   }, [user, loading, navigate]);
 
   useEffect(() => {
@@ -96,6 +101,11 @@ const Dashboard = () => {
     };
     return levelMap[level] || 'Free';
   };
+
+  // Don't render for staff users
+  if (user && (user.role === 'admin' || user.role === 'moderator')) {
+    return null;
+  }
 
   // Check if user has VIP access
   const hasVipAccess = user?.membership_level === 'vip' || user?.membership_level === 'vvip';
