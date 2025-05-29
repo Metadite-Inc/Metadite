@@ -35,6 +35,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       // Get user info after successful login
       const userResponse = await authApi.getCurrentUser();
+      // console.log('Login successful, user data:', userResponse);
       setUser(userResponse);
       
       return true;
@@ -48,6 +49,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = () => {
+    console.log('Logging out user');
     authApi.logout();
     setUser(null);
   };
@@ -55,6 +57,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const refreshUser = async () => {
     try {
       const userResponse = await authApi.getCurrentUser();
+      console.log('User refreshed:', userResponse);
       setUser(userResponse);
     } catch (error) {
       console.error('Failed to refresh user:', error);
@@ -66,17 +69,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const initializeAuth = async () => {
       const token = localStorage.getItem('access_token');
       if (token) {
+        console.log('Found existing token, refreshing user...');
         try {
           await refreshUser();
         } catch (error) {
           console.error('Failed to initialize auth:', error);
         }
+      } else {
+        console.log('No token found');
       }
       setLoading(false);
     };
 
     initializeAuth();
   }, []);
+
+  // Add effect to log user role changes
+  useEffect(() => {
+    if (user) {
+      console.log('User state updated - Role:', user.role, 'Email:', user.email);
+    }
+  }, [user]);
 
   return (
     <AuthContext.Provider value={{ user, loading, login, logout, refreshUser }}>

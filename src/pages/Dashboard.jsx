@@ -19,8 +19,14 @@ const Dashboard = () => {
 
   useEffect(() => {
     // Wait for auth check to finish before redirecting
-    if (!loading && !user) {
-      navigate('/'); // Redirect to Home's heroSection
+    if (!loading) {
+      if (!user) {
+        navigate('/'); // Redirect to Home's heroSection
+      } else if (user.role === 'admin' || user.role === 'moderator') {
+        // Only redirect staff users if we're sure about their role
+        console.log('Redirecting staff user to staff dashboard:', user.role);
+        navigate('/staff-dashboard', { replace: true });
+      }
     }
     
     // Redirect staff users to staff dashboard
@@ -73,6 +79,16 @@ const Dashboard = () => {
         <Footer />
       </div>
     );
+  }
+
+  // Don't render for staff users - they should be redirected
+  if (user && (user.role === 'admin' || user.role === 'moderator')) {
+    return null;
+  }
+
+  // Don't render if no user
+  if (!user) {
+    return null;
   }
 
   // Helper function to get membership display name

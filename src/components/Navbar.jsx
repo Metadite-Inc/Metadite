@@ -18,19 +18,6 @@ const Navbar = () => {
   const hasVipAccess = user?.membership_level === 'vip' || user?.membership_level === 'vvip';
   const hasPaidMembership = user?.membership_level !== 'free' && user?.membership_level;
 
-  // Redirect admins and moderators away from regular navbar pages
-  useEffect(() => {
-    if (user?.role === 'admin' && location.pathname === '/') {
-      navigate('/admin', { replace: true });
-    }
-  }, [user, navigate, location.pathname]);
-
-  useEffect(() => {
-    if (user?.role === 'moderator' && location.pathname === '/') {
-      navigate('/moderator', { replace: true });
-    }
-  }, [user, navigate, location.pathname]);
-
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 10);
@@ -45,7 +32,7 @@ const Navbar = () => {
     toggleMobileMenu();
   };
 
-  // Don't render for admin/moderator roles as they use StaffNavbar
+  // Only render for regular users, not for admin/moderator roles
   if (user?.role === 'admin' || user?.role === 'moderator') {
     return null;
   }
