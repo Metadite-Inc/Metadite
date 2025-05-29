@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import StaffNavbar from '../components/StaffNavbar';
@@ -18,13 +19,14 @@ const StaffDashboard = () => {
 
   useEffect(() => {
     // Wait for auth check to finish before redirecting
-    if (!loading && !user) {
-      navigate('/'); // Redirect to Home's heroSection
-    }
-    
-    // Redirect regular users to regular dashboard
-    if (!loading && user && user.role === 'user') {
-      navigate('/dashboard');
+    if (!loading) {
+      if (!user) {
+        navigate('/'); // Redirect to Home's heroSection
+      } else if (user.role === 'user') {
+        // Only redirect regular users to regular dashboard
+        console.log('Redirecting regular user to user dashboard');
+        navigate('/dashboard', { replace: true });
+      }
     }
   }, [user, loading, navigate]);
 
@@ -74,8 +76,18 @@ const StaffDashboard = () => {
     );
   }
 
-  // Don't render for regular users
-  if (user?.role === 'user') {
+  // Don't render for regular users - they should be redirected
+  if (user && user.role === 'user') {
+    return null;
+  }
+
+  // Don't render if no user
+  if (!user) {
+    return null;
+  }
+
+  // Only render for admin and moderator roles
+  if (user.role !== 'admin' && user.role !== 'moderator') {
     return null;
   }
 

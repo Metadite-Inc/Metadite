@@ -19,13 +19,14 @@ const Dashboard = () => {
 
   useEffect(() => {
     // Wait for auth check to finish before redirecting
-    if (!loading && !user) {
-      navigate('/'); // Redirect to Home's heroSection
-    }
-    
-    // Redirect staff users to staff dashboard
-    if (!loading && user && (user.role === 'admin' || user.role === 'moderator')) {
-      navigate('/staff-dashboard');
+    if (!loading) {
+      if (!user) {
+        navigate('/'); // Redirect to Home's heroSection
+      } else if (user.role === 'admin' || user.role === 'moderator') {
+        // Only redirect staff users if we're sure about their role
+        console.log('Redirecting staff user to staff dashboard:', user.role);
+        navigate('/staff-dashboard', { replace: true });
+      }
     }
   }, [user, loading, navigate]);
 
@@ -75,6 +76,16 @@ const Dashboard = () => {
     );
   }
 
+  // Don't render for staff users - they should be redirected
+  if (user && (user.role === 'admin' || user.role === 'moderator')) {
+    return null;
+  }
+
+  // Don't render if no user
+  if (!user) {
+    return null;
+  }
+
   // Helper function to get membership display name
   const getMembershipDisplayName = (level) => {
     const levelMap = {
@@ -85,11 +96,6 @@ const Dashboard = () => {
     };
     return levelMap[level] || 'Free';
   };
-
-  // Don't render for staff users
-  if (user && (user.role === 'admin' || user.role === 'moderator')) {
-    return null;
-  }
 
   // Check if user has VIP access
   const hasVipAccess = user?.membership_level === 'vip' || user?.membership_level === 'vvip';
