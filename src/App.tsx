@@ -13,6 +13,7 @@ import AgeVerificationGate from "./components/AgeVerificationGate";
 import UnderAge from "./pages/UnderAge";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import StaffDashboard from "./pages/StaffDashboard";
 import VipContent from "./pages/VipContent";
 import VideoPlayer from "./pages/VideoPlayer";
 import Cart from "./pages/Cart";
@@ -53,6 +54,7 @@ const App = () => {
                     <Route path="/underage" element={<UnderAge />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/staff-dashboard" element={<StaffDashboard />} />
                     <Route path="/vip-content" element={<VipContent />} />
                     <Route path="/video/:videoId" element={<VideoPlayer />} />
                     <Route path="/cart" element={<Cart />} />

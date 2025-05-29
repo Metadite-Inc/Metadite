@@ -76,17 +76,11 @@ const LoginForm = () => {
         return;
       }
       if (isLogin) {
-        await login(email, password, role);
-        toast.success(`${role.charAt(0).toUpperCase() + role.slice(1)} login successful!`);
+        await login(email, password);
+        toast.success("Login successful!");
         
-        // Navigate based on role
-        if (role === 'admin') {
-          navigate('/admin');
-        } else if (role === 'moderator') {
-          navigate('/moderator');
-        } else {
-          navigate('/dashboard');
-        }
+        // Navigate to dashboard by default - server-side will handle role-based access
+        navigate('/dashboard');
       } else {
         // Validate password before registration
         const validationError = validatePassword(password);

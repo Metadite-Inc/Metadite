@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { ChevronLeft, MessageSquare, Send, Paperclip, FileImage, X, File } from 'lucide-react';
@@ -19,7 +18,9 @@ import {
   createChatRoom,
   deleteMessage,
   sendTypingIndicator,
-  markMessagesAsRead
+  markMessagesAsRead,
+  addConnectionListener,
+  cleanup
 } from '../services/ChatService';
 
 const ModelChat = () => {
@@ -48,9 +49,24 @@ const ModelChat = () => {
   // Get room ID from URL or null if not present
   const roomIdFromUrl = searchParams.get('roomId');
   
+  // Set up connection state listener
+  useEffect(() => {
+    if (!chatRoom) return;
+    
+    console.log(`Setting up connection listener for room ${chatRoom.id}`);
+    const unsubscribe = addConnectionListener(chatRoom.id, (state) => {
+      console.log(`Connection state changed for room ${chatRoom.id}:`, state.status);
+      setConnectionStatus(state.status);
+    });
+    
+    return unsubscribe;
+  }, [chatRoom?.id]);
+  
   // Fetch model data and set up chat room
   useEffect(() => {
     const initializeChat = async () => {
+      if (!user) return;
+      
       try {
         setIsLoaded(false);
         setFetchError(false);
@@ -88,7 +104,7 @@ const ModelChat = () => {
         console.log('Chat room data:', chatRoomData);
         setChatRoom(chatRoomData);
         
-        // Load messages for this chat room using the same method as the working example
+        // Load messages for this chat room
         console.log(`Loading messages for chat room ${chatRoomData.id}`);
         const chatMessages = await getMessages(chatRoomData.id);
         if (chatMessages && chatMessages.length) {
@@ -100,44 +116,6 @@ const ModelChat = () => {
           setMessages([]);
         }
         
-        // Connect to WebSocket for this chat room
-        setConnectionStatus('connecting');
-        console.log(`Connecting to WebSocket for chat room ${chatRoomData.id}`);
-        const ws = connectWebSocket(chatRoomData.id, handleWebSocketMessage);
-        
-        if (ws) {
-          wsRef.current = ws;
-          
-          // Store original handlers
-          const originalOnOpen = ws.onopen;
-          const originalOnClose = ws.onclose;
-          const originalOnError = ws.onerror;
-          
-          // Add custom event handlers
-          ws.onopen = (event) => {
-            console.log('User WebSocket connected');
-            setConnectionStatus('connected');
-            markMessagesAsRead(chatRoomData.id);
-            
-            if (originalOnOpen) originalOnOpen.call(ws, event);
-          };
-          
-          ws.onclose = (event) => {
-            console.log('User WebSocket disconnected:', event.code, event.reason);
-            setConnectionStatus('disconnected');
-            
-            // Let the original handler manage reconnection logic
-            if (originalOnClose) originalOnClose.call(ws, event);
-          };
-          
-          ws.onerror = (event) => {
-            console.error('User WebSocket error:', event);
-            setConnectionStatus('error');
-            
-            if (originalOnError) originalOnError.call(ws, event);
-          };
-        }
-        
         setIsLoaded(true);
       } catch (error) {
         console.error("Failed to initialize chat:", error);
@@ -146,22 +124,35 @@ const ModelChat = () => {
       }
     };
 
-    if (user) {
-      initializeChat();
-    }
+    initializeChat();
+  }, [id, roomIdFromUrl]); // Removed user?.id from dependencies
+  
+  // Separate effect for WebSocket connection that only runs when chatRoom is set
+  useEffect(() => {
+    if (!chatRoom || !user) return;
     
-    // Cleanup WebSocket connection when component unmounts
-    return () => {
-      if (wsRef.current) {
-        console.log('Cleaning up WebSocket connection on unmount');
-        wsRef.current.close(1000, 'Component unmounting');
+    console.log(`Connecting to WebSocket for chat room ${chatRoom.id}`);
+    const connectToRoom = async () => {
+      const ws = await connectWebSocket(chatRoom.id, handleWebSocketMessage);
+      if (ws) {
+        wsRef.current = ws;
+        console.log(`WebSocket connection established for room ${chatRoom.id}`);
       }
+    };
+    
+    connectToRoom();
+    
+    // Cleanup function
+    return () => {
+      console.log(`Cleaning up WebSocket connection for room ${chatRoom.id}`);
+      cleanup(chatRoom.id);
+      wsRef.current = null;
       
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
     };
-  }, [id, roomIdFromUrl, user?.id]); // Add user.id to dependencies
+  }, [chatRoom?.id]); // Only depend on chatRoom.id, not the user
   
   // Handle incoming WebSocket messages
   const handleWebSocketMessage = (data) => {
@@ -465,10 +456,7 @@ const ModelChat = () => {
                   />
                 </div>
                 <div>
-                  <h2 className={`font-medium ${theme === 'dark' ? 'text-white' : ''}`}>Chat about {model.name}</h2>
-                  <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                    {chatRoom && `Chat ID: ${chatRoom.id}`}
-                  </p>
+                  <h2 className={`font-medium ${theme === 'dark' ? 'text-white' : ''}`}>{model.name}</h2>
                 </div>
               </div>
               
@@ -584,7 +572,7 @@ const ModelChat = () => {
                 <div className="relative flex-1">
                   <Textarea
                     placeholder={connectionStatus === 'connected' 
-                      ? `Send a message about ${model.name}...` 
+                      ? `Send a message to ${model.name}...` 
                       : 'Reconnecting to chat...'}
                     value={newMessage}
                     onChange={(e) => {

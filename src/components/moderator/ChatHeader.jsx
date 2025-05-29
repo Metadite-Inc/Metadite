@@ -55,7 +55,7 @@ const ChatHeader = ({ selectedModel, connectionStatus }) => {
             {selectedModel.name}
           </h2>
           <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-            Room ID: {selectedModel.id} • User ID: {selectedModel.receiverId}
+            Room ID: {selectedModel.id} • User Name: {selectedModel.receiverId}
           </p>
         </div>
       </div>

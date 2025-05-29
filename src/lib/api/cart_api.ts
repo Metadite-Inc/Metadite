@@ -2,6 +2,7 @@
 import { toast } from "sonner";
 import { BaseApiService } from "./base_api";
 import { apiService } from "../api";
+import { authApi } from "./auth_api";
 
 const API_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -23,9 +24,9 @@ class CartApiService extends BaseApiService {
   // Add item to cart
   async addToCart(dollId: number, quantity = 1): Promise<void> {
     try {
-      // Get user ID from JWT token
+      // Get current user from server instead of decoding token client-side
+      const user = await authApi.getCurrentUser();
       const token = this.validateAuth();
-      const userId = this.getUserIdFromToken(token);
       
       await this.request('/api/cart/', {
         method: 'POST',
@@ -33,7 +34,7 @@ class CartApiService extends BaseApiService {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          user_id: userId,
+          user_id: user.id,
           doll_id: dollId,
           quantity: quantity
         }),
@@ -166,30 +167,6 @@ class CartApiService extends BaseApiService {
       });
       console.error('Failed to clear cart:', error);
       throw error;
-    }
-  }
-
-  // Helper method to extract user ID from JWT token
-  private getUserIdFromToken(token: string): number {
-    try {
-      // JWT tokens consist of three parts separated by dots
-      const parts = token.split('.');
-      if (parts.length !== 3) {
-        throw new Error('Invalid token format');
-      }
-      
-      // Decode the payload (middle part)
-      const payload = JSON.parse(atob(parts[1]));
-      
-      // Extract the 'sub' claim which contains the user ID
-      if (payload && payload.sub) {
-        return Number(payload.sub);
-      } else {
-        throw new Error('User ID not found in token');
-      }
-    } catch (error) {
-      console.error('Failed to extract user ID from token:', error);
-      throw new Error('Failed to extract user ID from token');
     }
   }
 }

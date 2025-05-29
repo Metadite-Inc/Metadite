@@ -34,7 +34,7 @@ const ModelList = ({ models, searchTerm, setSearchTerm, selectedModel, onSelectM
   return (
     <div className={`glass-card rounded-xl overflow-hidden ${theme === 'dark' ? 'bg-gray-800/70 border-gray-700' : ''}`}>
       <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-        <h2 className={`font-medium mb-4 ${theme === 'dark' ? 'text-white' : ''}`}>Assigned Models</h2>
+        <h2 className={`font-medium mb-4 ${theme === 'dark' ? 'text-white' : ''}`}>Model Chats</h2>
         
         <div className={`flex items-center rounded-md border px-3 py-2 ${
           theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'
