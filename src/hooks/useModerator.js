@@ -14,7 +14,8 @@ import {
   markMessagesAsRead,
   deleteMessage,
   addConnectionListener,
-  cleanup
+  cleanup,
+  getCurrentConnectionState
 } from '../services/ChatService';
 
 const useModerator = () => {
@@ -39,25 +40,40 @@ const useModerator = () => {
   const [hasMoreMessages, setHasMoreMessages] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState('disconnected');
-  const wsRef = useRef(null); // Add ref to store WebSocket connection
+  const wsRef = useRef(null);
+  const connectionListenerRef = useRef(null);
   
-  // Redirect non-moderator users
+  // Server-side role validation for moderator access
   useEffect(() => {
-    if (user?.role !== 'moderator') {
-      navigate('/');
-    } else {
-      setIsLoaded(true);
-    }
+    const validateModeratorAccess = async () => {
+      if (!user) {
+        navigate('/');
+        return;
+      }
+
+      try {
+        // Use authApi.getCurrentUser() for server-side role validation
+        const { authApi } = await import('../lib/api/auth_api');
+        const currentUser = await authApi.getCurrentUser();
+        
+        if (currentUser.role !== 'moderator') {
+          const { toast } = await import('sonner');
+          toast.error('Access denied. Moderator privileges required.');
+          navigate('/');
+          return;
+        }
+        
+        setIsLoaded(true);
+      } catch (error) {
+        console.error('Moderator access validation failed:', error);
+        const { toast } = await import('sonner');
+        toast.error('Authentication failed. Please log in again.');
+        navigate('/');
+      }
+    };
+
+    validateModeratorAccess();
   }, [user, navigate]);
-  
-  // Set up connection state listener
-  useEffect(() => {
-    const unsubscribe = addConnectionListener((state) => {
-      setConnectionStatus(state.status);
-    });
-    
-    return unsubscribe;
-  }, []);
   
   // Load assigned models/dolls when component mounts
   useEffect(() => {
@@ -117,19 +133,51 @@ const useModerator = () => {
     }, 300);
   }, []);
   
-  // Load messages when a model is selected
+  // Set up connection state listener and WebSocket connection
   useEffect(() => {
+    if (!selectedModel?.id) return;
+    
+    const chatRoomId = Number(selectedModel.id);
+    if (isNaN(chatRoomId)) {
+      console.error('Invalid chat room ID:', selectedModel.id);
+      toast.error('Invalid chat room ID');
+      return;
+    }
+    
+    console.log(`Setting up connection for room ${chatRoomId}`);
+    
+    // Clean up previous connection listener
+    if (connectionListenerRef.current) {
+      connectionListenerRef.current();
+      connectionListenerRef.current = null;
+    }
+    
+    // Get current connection state immediately
+    const currentState = getCurrentConnectionState(chatRoomId);
+    console.log(`Current connection state for room ${chatRoomId}:`, currentState.status);
+    setConnectionStatus(currentState.status);
+    
+    // Set up connection state listener BEFORE connecting
+    console.log(`Setting up connection listener for room ${chatRoomId}`);
+    connectionListenerRef.current = addConnectionListener(chatRoomId, (state) => {
+      console.log(`Connection state changed for room ${chatRoomId}:`, state.status);
+      setConnectionStatus(state.status);
+    });
+    
+    // Clear messages and reset state when switching rooms
+    setMessages([]);
+    setTypingUsers(new Set());
+    setReceiverId(selectedModel.receiverId);
+    
+    // Load messages first
     const loadMessages = async () => {
-      if (!selectedModel) return;
-      
       setLoading(true);
       try {
-        console.log(`Loading messages for chat room ${selectedModel.id}`);
-        const chatMessages = await getMessages(selectedModel.id);
+        console.log(`Loading messages for chat room ${chatRoomId}`);
+        const chatMessages = await getMessages(chatRoomId);
         if (chatMessages) {
           console.log(`Loaded ${chatMessages.length} messages`);
           setMessages(chatMessages);
-          setReceiverId(selectedModel.receiverId);
           setHasMoreMessages(chatMessages.length === 50);
         }
       } catch (error) {
@@ -137,85 +185,55 @@ const useModerator = () => {
         toast.error('Failed to load messages');
       } finally {
         setLoading(false);
-        
         setTimeout(() => {
           messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
         }, 100);
       }
     };
     
-    // Load messages first
     loadMessages();
     
-    // Set up WebSocket connection for real-time updates
-    if (selectedModel && selectedModel.id) {
-      const chatRoomId = Number(selectedModel.id);
-      if (isNaN(chatRoomId)) {
-        console.error('Invalid chat room ID:', selectedModel.id);
-        toast.error('Invalid chat room ID');
-        return;
-      }
-      
-      // Clear messages and reset state when switching rooms
-      setMessages([]);
-      setTypingUsers(new Set());
-      
-      // Close previous connection if it exists
-      if (wsRef.current) {
-        console.log('Closing previous WebSocket connection');
-        wsRef.current.close();
-        wsRef.current = null;
-      }
-      
-      // Small delay to ensure previous connection is closed
-      const connectTimer = setTimeout(() => {
-        console.log(`Moderator connecting to WebSocket for room ${chatRoomId}`);
-        const ws = connectWebSocket(chatRoomId, handleWebSocketMessage);
-        
-        if (ws) {
-          wsRef.current = ws; // Store in ref for cleanup
-          setWebsocket(ws);
-          
-          // Store original handlers
-          const originalOnOpen = ws.onopen;
-          const originalOnClose = ws.onclose;
-          
-          // Override the onopen event
-          ws.onopen = (event) => {
-            console.log('Moderator WebSocket connected');
-            markMessagesAsRead(chatRoomId);
-            
-            setAssignedModels(prev => 
-              prev.map(model => 
-                model.id === selectedModel.id 
-                  ? { ...model, unreadCount: 0 }
-                  : model
-              )
-            );
-            
-            if (originalOnOpen) originalOnOpen.call(ws, event);
-          };
-          
-          // Override onclose to prevent automatic reconnection for moderators
-          ws.onclose = (event) => {
-            console.log('Moderator WebSocket disconnected:', event.code, event.reason);
-            
-            if (event.code !== 1000) {
-              console.warn('WebSocket closed unexpectedly, but not reconnecting for moderator');
-            }
-          };
-        }
-      }, 100);
-      
-      return () => {
-        clearTimeout(connectTimer);
-        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-          console.log('Cleaning up WebSocket connection');
-          wsRef.current.close(1000, 'Component unmounting'); // Clean close
-        }
-      };
+    // Clean up previous WebSocket connection
+    if (wsRef.current) {
+      console.log(`Cleaning up previous moderator connection for room ${chatRoomId}`);
+      cleanup(chatRoomId);
+      wsRef.current = null;
     }
-  }, [selectedModel?.id]); // Only depend on selectedModel.id, not the whole object or websocket
+    
+    // Set up WebSocket connection with a small delay to ensure listener is ready
+    const connectTimer = setTimeout(async () => {
+      console.log(`Moderator connecting to WebSocket for room ${chatRoomId}`);
+      const ws = await connectWebSocket(chatRoomId, handleWebSocketMessage);
+      
+      if (ws) {
+        wsRef.current = ws;
+        setWebsocket(ws);
+        console.log(`Moderator WebSocket connection established for room ${chatRoomId}`);
+        
+        // Force update connection status after successful connection
+        setTimeout(() => {
+          const updatedState = getCurrentConnectionState(chatRoomId);
+          console.log(`Force updating connection status to:`, updatedState.status);
+          setConnectionStatus(updatedState.status);
+        }, 500);
+      }
+    }, 200);
+    
+    return () => {
+      clearTimeout(connectTimer);
+      console.log(`Cleaning up moderator connection for room ${chatRoomId}`);
+      
+      // Clean up connection listener
+      if (connectionListenerRef.current) {
+        connectionListenerRef.current();
+        connectionListenerRef.current = null;
+      }
+      
+      // Clean up WebSocket
+      cleanup(chatRoomId);
+      wsRef.current = null;
+    };
+  }, [selectedModel?.id]);
   
   // Scroll to bottom when new messages arrive
   useEffect(() => {
@@ -298,8 +316,8 @@ const useModerator = () => {
         )
       );
     }
-  }, []); // No dependencies to prevent recreation
-
+  }, [selectedModel?.id]);
+  
   // Handle file selection
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
@@ -364,10 +382,13 @@ const useModerator = () => {
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
-      if (wsRef.current) {
-        wsRef.current.close();
-        wsRef.current = null;
+      
+      // Clean up connection listener
+      if (connectionListenerRef.current) {
+        connectionListenerRef.current();
       }
+      
+      // Clean up all connections when component unmounts
       cleanup();
     };
   }, []);

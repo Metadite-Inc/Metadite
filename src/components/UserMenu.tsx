@@ -53,7 +53,10 @@ const UserMenu = () => {
         <DropdownMenuSeparator className={theme === 'dark' ? 'bg-gray-700' : ''} />
         
         <DropdownMenuItem className={theme === 'dark' ? 'hover:bg-gray-700 focus:bg-gray-700' : ''}>
-          <Link to="/dashboard" className="flex items-center w-full">
+          <Link 
+            to={user?.role === 'admin' || user?.role === 'moderator' ? '/staff-dashboard' : '/dashboard'} 
+            className="flex items-center w-full"
+          >
             <LayoutDashboard className="mr-2 h-4 w-4" />
             Dashboard
           </Link>

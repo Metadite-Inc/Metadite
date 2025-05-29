@@ -15,7 +15,9 @@ import {
   connectWebSocket,
   deleteMessage,
   sendTypingIndicator,
-  markMessagesAsRead
+  markMessagesAsRead,
+  addConnectionListener,
+  cleanup
 } from '../services/ChatService';
 
 const ChatPage = () => {
@@ -47,6 +49,26 @@ const ChatPage = () => {
       setLoadingRooms(false);
     }
   }, [user, loading]);
+
+  // Set up connection state listener for the selected room
+  useEffect(() => {
+    if (!selectedRoom) return;
+    
+    console.log(`Setting up connection listener for room ${selectedRoom.id}`);
+    const unsubscribe = addConnectionListener(selectedRoom.id, (state) => {
+      console.log(`Connection state changed for room ${selectedRoom.id}:`, state.status);
+      setConnectionStatus(state.status);
+      
+      // Update unread count when connected
+      if (state.status === 'connected') {
+        setChatRooms(prev => 
+          prev.map(r => r.id === selectedRoom.id ? { ...r, unreadCount: 0 } : r)
+        );
+      }
+    });
+    
+    return unsubscribe;
+  }, [selectedRoom?.id]);
 
   // Load chat rooms
   const loadUserChatRooms = async () => {
@@ -86,10 +108,10 @@ const ChatPage = () => {
 
   // Handle room selection
   const handleRoomSelect = async (room) => {
-    // Clean up previous connection
-    if (wsRef.current) {
-      wsRef.current.close(1000, 'Switching rooms');
-      wsRef.current = null;
+    // Clean up previous connection using the new cleanup function
+    if (selectedRoom) {
+      console.log(`Cleaning up previous room ${selectedRoom.id}`);
+      cleanup(selectedRoom.id);
     }
 
     setSelectedRoom(room);
@@ -114,39 +136,11 @@ const ChatPage = () => {
       // Connect to WebSocket for this chat room
       setConnectionStatus('connecting');
       console.log(`Connecting to WebSocket for chat room ${room.id}`);
-      const ws = connectWebSocket(room.id, handleWebSocketMessage);
+      const ws = await connectWebSocket(room.id, handleWebSocketMessage);
       
       if (ws) {
         wsRef.current = ws;
-        
-        const originalOnOpen = ws.onopen;
-        const originalOnClose = ws.onclose;
-        const originalOnError = ws.onerror;
-        
-        ws.onopen = (event) => {
-          console.log('WebSocket connected');
-          setConnectionStatus('connected');
-          markMessagesAsRead(room.id);
-          
-          // Update unread count in room list
-          setChatRooms(prev => 
-            prev.map(r => r.id === room.id ? { ...r, unreadCount: 0 } : r)
-          );
-          
-          if (originalOnOpen) originalOnOpen.call(ws, event);
-        };
-        
-        ws.onclose = (event) => {
-          console.log('WebSocket disconnected:', event.code, event.reason);
-          setConnectionStatus('disconnected');
-          if (originalOnClose) originalOnClose.call(ws, event);
-        };
-        
-        ws.onerror = (event) => {
-          console.error('WebSocket error:', event);
-          setConnectionStatus('error');
-          if (originalOnError) originalOnError.call(ws, event);
-        };
+        console.log(`WebSocket connection established for room ${room.id}`);
       }
     } catch (error) {
       console.error('Error loading room:', error);
@@ -407,7 +401,6 @@ const ChatPage = () => {
             </p>
           </div>
         </div>
-        <Footer />
       </div>
     );
   }
@@ -432,7 +425,6 @@ const ChatPage = () => {
             </p>
           </div>
         </div>
-        <Footer />
       </div>
     );
   }

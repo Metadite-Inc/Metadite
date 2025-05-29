@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import StaffNavbar from '../components/StaffNavbar';
 import StaffFooter from '../components/StaffFooter';
 import { useAuth } from '../context/AuthContext';
+import { authApi } from '../lib/api/auth_api';
+import { toast } from 'sonner';
 import { Settings } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 
@@ -24,20 +26,39 @@ import SlideshowTab from '../components/admin/SlideshowTab';
 const flaggedMessagesCount = 2;
 
 const Admin = () => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const { theme } = useTheme();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(() => localStorage.getItem('adminActiveTab') || 'dashboard');
   const [isLoaded, setIsLoaded] = useState(false);
   
   useEffect(() => {
-    // Redirect non-admin users or logged-out users
-    if (!user || user.role !== 'admin') {
-      navigate('/#heroSection'); // Redirect to Home's heroSection
-    }
-    
-    setIsLoaded(true);
-  }, [user, navigate]);
+    const validateAdminAccess = async () => {
+      if (loading) return;
+      
+      if (!user) {
+        navigate('/#heroSection');
+        return;
+      }
+
+      try {
+        // Server-side role validation using getCurrentUser()
+        const currentUser = await authApi.getCurrentUser();
+        if (currentUser.role !== 'admin') {
+          toast.error('Access denied. Admin privileges required.');
+          navigate('/#heroSection');
+          return;
+        }
+        setIsLoaded(true);
+      } catch (error) {
+        console.error('Admin access validation failed:', error);
+        toast.error('Authentication failed. Please log in again.');
+        navigate('/#heroSection');
+      }
+    };
+
+    validateAdminAccess();
+  }, [user, loading, navigate]);
   
   // Persist activeTab to localStorage
   useEffect(() => {
