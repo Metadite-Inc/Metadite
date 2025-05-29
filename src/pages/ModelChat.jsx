@@ -456,10 +456,7 @@ const ModelChat = () => {
                   />
                 </div>
                 <div>
-                  <h2 className={`font-medium ${theme === 'dark' ? 'text-white' : ''}`}>Chat about {model.name}</h2>
-                  <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                    {chatRoom && `Chat ID: ${chatRoom.id}`}
-                  </p>
+                  <h2 className={`font-medium ${theme === 'dark' ? 'text-white' : ''}`}>{model.name}</h2>
                 </div>
               </div>
               
@@ -575,7 +572,7 @@ const ModelChat = () => {
                 <div className="relative flex-1">
                   <Textarea
                     placeholder={connectionStatus === 'connected' 
-                      ? `Send a message about ${model.name}...` 
+                      ? `Send a message to ${model.name}...` 
                       : 'Reconnecting to chat...'}
                     value={newMessage}
                     onChange={(e) => {
