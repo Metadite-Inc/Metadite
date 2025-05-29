@@ -35,7 +35,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       // Get user info after successful login
       const userResponse = await authApi.getCurrentUser();
-      console.log('Login successful, user data:', userResponse);
+      // console.log('Login successful, user data:', userResponse);
       setUser(userResponse);
       
       return true;
