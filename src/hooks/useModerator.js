@@ -316,7 +316,7 @@ const useModerator = () => {
         )
       );
     }
-  }, [selectedModel?.id]);
+  }, [selectedModel?.id, messages]);
   
   // Handle file selection
   const handleFileSelect = (e) => {
