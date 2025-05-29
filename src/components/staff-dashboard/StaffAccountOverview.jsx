@@ -1,7 +1,8 @@
+
 import React from 'react';
 import { 
   User, Mail, Calendar, Shield, MessageSquare, 
-  Clock, BarChart3, Users, AlertTriangle
+  Clock, BarChart3, Users, AlertTriangle, Settings
 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 
