@@ -25,6 +25,21 @@ const Models = () => {
   // Categories derived from fetched models
   const [categories, setCategories] = useState(['all']);
 
+  // Fetch all categories on component mount
+  useEffect(() => {
+    const fetchAllCategories = async () => {
+      try {
+        // Fetch a larger sample to get all categories (without category filter)
+        const response = await apiService.getModels(0, 100);
+        const uniqueCategories = ['all', ...new Set(response.data.map((model) => model.category))];
+        setCategories(uniqueCategories);
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+      }
+    };
+    fetchAllCategories();
+  }, []); // Only run once on mount
+
   useEffect(() => {
     const fetchModels = async () => {
       try {
@@ -37,12 +52,6 @@ const Models = () => {
         
         setModels(response.data);
         setTotalModels(response.total);
-        
-        // Extract unique categories from models (only when no category filter is applied)
-        if (!apiCategory) {
-          const uniqueCategories = ['all', ...new Set(response.data.map((model) => model.category))];
-          setCategories(uniqueCategories);
-        }
         
         setIsLoaded(true);
       } catch (error) {
