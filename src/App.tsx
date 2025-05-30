@@ -27,6 +27,7 @@ import Admin from "./pages/Admin";
 import Moderator from "./pages/Moderator";
 import Models from "./pages/Models";
 import ModelDetail from "./pages/ModelDetail";
+import ModelEdit from "./pages/ModelEdit";
 import ModelChat from "./pages/ModelChat";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
@@ -65,6 +66,7 @@ const App = () => {
                     <Route path="/success" element={<Success />} />
                     <Route path="/cancel" element={<Cancel />} />
                     <Route path="/admin" element={<Admin />} />
+                    <Route path="/admin/model/edit/:id" element={<ModelEdit />} />
                     <Route path="/moderator" element={<Moderator />} />
                     <Route path="/models" element={<Models />} />
                     <Route path="/model/:id" element={<ModelDetail />} />

@@ -25,18 +25,49 @@ const Models = () => {
   // Categories derived from fetched models
   const [categories, setCategories] = useState(['all']);
 
+  // Fetch all categories on component mount
+  useEffect(() => {
+    const fetchAllCategories = async () => {
+      try {
+        // Fetch all models in batches to retrieve all categories
+        const batchSize = 50; // Define a constant for batch size
+        let allModels = [];
+        let skip = 0;
+        let hasMore = true;
+        
+        while (hasMore) {
+          const response = await apiService.getModels(skip, batchSize);
+          allModels = [...allModels, ...response.data];
+          hasMore = response.data.length === batchSize; // Continue if batch is full
+          skip += batchSize;
+        }
+        
+        const uniqueCategories = ['all', ...new Set(allModels.map((model) => model.category))];
+        setCategories(uniqueCategories);
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+      }
+    };
+    fetchAllCategories();
+  }, []); // Only run once on mount
+
   useEffect(() => {
     const fetchModels = async () => {
       try {
         setIsLoaded(false);
         const skip = (currentPage - 1) * modelsPerPage;
-        const response = await apiService.getModels(skip, modelsPerPage);
+        
+        let response;
+        if (categoryFilter === 'all') {
+          // Fetch all models with pagination
+          response = await apiService.getModels(skip, modelsPerPage);
+        } else {
+          // Fetch filtered models by category
+          response = await apiService.getModelsByCategory(categoryFilter, skip, modelsPerPage);
+        }
+        
         setModels(response.data);
         setTotalModels(response.total);
-        
-        // Extract unique categories from models
-        const uniqueCategories = ['all', ...new Set(response.data.map((model) => model.category))];
-        setCategories(uniqueCategories);
         
         setIsLoaded(true);
       } catch (error) {
@@ -45,15 +76,13 @@ const Models = () => {
       }
     };
     fetchModels();
-  }, [currentPage]); // Fetch new data when page changes
+  }, [currentPage, categoryFilter]); // Add categoryFilter to dependencies
 
-  // Filter models based on search and filters
+  // Filter models based on search and price filters (category filtering now handled by API)
   const filteredModels = models.filter((model) => {
     const matchesSearch =
       model.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       model.description.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesCategory = categoryFilter === 'all' || model.category === categoryFilter;
 
     let matchesPrice = true;
     if (priceFilter === 'under200' && model.price < 200) matchesPrice = true;
@@ -61,7 +90,7 @@ const Models = () => {
     else if (priceFilter === 'over550' && model.price > 550) matchesPrice = true;
     else if (priceFilter !== 'all') matchesPrice = false;
 
-    return matchesSearch && matchesCategory && matchesPrice;
+    return matchesSearch && matchesPrice;
   });
 
   // Calculate pagination values

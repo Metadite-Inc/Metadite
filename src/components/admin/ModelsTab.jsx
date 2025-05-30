@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { PackagePlus, Search, Edit, Trash2, Image, Plus, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import ModelImageUploader from '../ModelImageUploader';
@@ -9,6 +10,7 @@ import { apiService } from '../../lib/api';
 
 const ModelsTab = ({ isLoaded }) => {
   const { theme } = useTheme();
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [models, setModels] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -256,6 +258,11 @@ const ModelsTab = ({ isLoaded }) => {
 
     fetchModelsAndModerators();
   }, [currentPage, searchTerm]);
+
+  // Handle edit button click
+  const handleEditModel = (modelId) => {
+    navigate(`/admin/model/edit/${modelId}`);
+  };
 
   return (
     <div className={`space-y-6 transition-opacity duration-300 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>
@@ -664,12 +671,17 @@ const ModelsTab = ({ isLoaded }) => {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex space-x-2">
-                        <button className="text-blue-500 hover:text-blue-700 transition-colors">
+                        <button 
+                          className="text-blue-500 hover:text-blue-700 transition-colors"
+                          onClick={() => handleEditModel(model.id)}
+                          title="Edit Model"
+                        >
                           <Edit className="h-4 w-4" />
                         </button>
                         <button 
                           className="text-red-500 hover:text-red-700 transition-colors"
                           onClick={() => handleDeleteModel(model.id)}
+                          title="Delete Model"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
