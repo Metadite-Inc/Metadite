@@ -102,6 +102,11 @@ const Dashboard = () => {
     return levelMap[level] || 'Free';
   };
 
+  // Don't render for staff users
+  if (user && (user.role === 'admin' || user.role === 'moderator')) {
+    return null;
+  }
+
   // Check if user has VIP access
   const hasVipAccess = user?.membership_level === 'vip' || user?.membership_level === 'vvip';
 
