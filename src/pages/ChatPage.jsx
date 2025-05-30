@@ -1,11 +1,11 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import Navbar from '../components/Navbar';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
-import { MessageSquare, Users, Clock, ArrowRight, Search, Send, Paperclip, X, File } from 'lucide-react';
+import { MessageSquare, Users, Clock, ArrowRight, Search, Send, Paperclip, X, File, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { Textarea } from "@/components/ui/textarea";
+import { useIsMobile } from '../hooks/use-mobile';
 import MessageItem from '../components/MessageItem';
 import { 
   getUserChatRooms,
@@ -23,6 +23,9 @@ import {
 const ChatPage = () => {
   const { theme } = useTheme();
   const { user, loading } = useAuth();
+  const isMobile = useIsMobile();
+  const [showChatList, setShowChatList] = useState(true); // For mobile navigation
+  
   const [chatRooms, setChatRooms] = useState([]);
   const [loadingRooms, setLoadingRooms] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -50,7 +53,6 @@ const ChatPage = () => {
     }
   }, [user, loading]);
 
-  // Set up connection state listener for the selected room
   useEffect(() => {
     if (!selectedRoom) return;
     
@@ -59,7 +61,6 @@ const ChatPage = () => {
       console.log(`Connection state changed for room ${selectedRoom.id}:`, state.status);
       setConnectionStatus(state.status);
       
-      // Update unread count when connected
       if (state.status === 'connected') {
         setChatRooms(prev => 
           prev.map(r => r.id === selectedRoom.id ? { ...r, unreadCount: 0 } : r)
@@ -70,7 +71,6 @@ const ChatPage = () => {
     return unsubscribe;
   }, [selectedRoom?.id]);
 
-  // Load chat rooms
   const loadUserChatRooms = async () => {
     try {
       setLoadingRooms(true);
@@ -106,9 +106,8 @@ const ChatPage = () => {
     }
   };
 
-  // Handle room selection
+  // Handle room selection - updated for mobile navigation
   const handleRoomSelect = async (room) => {
-    // Clean up previous connection using the new cleanup function
     if (selectedRoom) {
       console.log(`Cleaning up previous room ${selectedRoom.id}`);
       cleanup(selectedRoom.id);
@@ -120,8 +119,12 @@ const ChatPage = () => {
     clearSelectedFile();
     setTypingUsers(new Set());
     
+    // On mobile, switch to chat view
+    if (isMobile) {
+      setShowChatList(false);
+    }
+    
     try {
-      // Load messages for selected room
       console.log(`Loading messages for chat room ${room.id}`);
       const chatMessages = await getMessages(room.id);
       if (chatMessages && chatMessages.length) {
@@ -133,7 +136,6 @@ const ChatPage = () => {
         setMessages([]);
       }
 
-      // Connect to WebSocket for this chat room
       setConnectionStatus('connecting');
       console.log(`Connecting to WebSocket for chat room ${room.id}`);
       const ws = await connectWebSocket(room.id, handleWebSocketMessage);
@@ -148,7 +150,17 @@ const ChatPage = () => {
     }
   };
 
-  // Handle WebSocket messages
+  // Handle back to chat list on mobile
+  const handleBackToChatList = () => {
+    if (isMobile) {
+      setShowChatList(true);
+      setSelectedRoom(null);
+      if (selectedRoom) {
+        cleanup(selectedRoom.id);
+      }
+    }
+  };
+
   const handleWebSocketMessage = (data) => {
     console.log("WebSocket message received:", data);
     
@@ -167,7 +179,6 @@ const ChatPage = () => {
         return [...prev, data.message];
       });
       
-      // Update last message in room list
       setChatRooms(prev => 
         prev.map(room => 
           room.id === data.message.chat_room_id 
@@ -194,12 +205,10 @@ const ChatPage = () => {
     }
   };
 
-  // Scroll to bottom when messages change
   useEffect(() => {
     messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Load more messages
   const loadMoreMessages = async () => {
     if (!selectedRoom || isLoadingMore || !hasMoreMessages) return;
     
@@ -224,7 +233,6 @@ const ChatPage = () => {
     }
   };
 
-  // Handle file selection
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -261,7 +269,6 @@ const ChatPage = () => {
     fileInputRef.current?.click();
   };
   
-  // Handle typing
   const handleTyping = () => {
     if (selectedRoom) {
       sendTypingIndicator(selectedRoom.id, true);
@@ -276,7 +283,6 @@ const ChatPage = () => {
     }
   };
   
-  // Send message
   const handleSendMessage = async (e) => {
     e.preventDefault();
     
@@ -292,7 +298,6 @@ const ChatPage = () => {
       
       const moderatorId = selectedRoom.moderatorId || null;
       
-      // Handle file upload
       if (selectedFile) {
         try {
           const fileMessageResponse = await sendFileMessage(selectedFile, selectedRoom.id);
@@ -321,7 +326,6 @@ const ChatPage = () => {
         }
       }
       
-      // Handle text message
       if (newMessage.trim()) {
         try {
           await sendMessage(newMessage.trim(), selectedRoom.id, moderatorId);
@@ -384,7 +388,6 @@ const ChatPage = () => {
     room.lastMessage.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Show loading state while auth is loading
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -405,7 +408,6 @@ const ChatPage = () => {
     );
   }
 
-  // Show login prompt if user is not authenticated
   if (!user) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -443,342 +445,660 @@ const ChatPage = () => {
             theme === 'dark' ? 'bg-gray-800/50 border-gray-700' : 'bg-white/50'
           }`}>
             
-            {/* Left Sidebar - Chat Rooms */}
-            <div className={`w-1/3 border-r flex flex-col ${
-              theme === 'dark' ? 'border-gray-700' : 'border-gray-200'
-            }`}>
-              {/* Header */}
-              <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-                <div className="flex items-center justify-between mb-4">
-                  <h1 className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                    Chats
-                  </h1>
-                  <div className="flex items-center space-x-2">
-                    <Users className="h-4 w-4 text-metadite-primary" />
-                    <span className="bg-metadite-primary/20 text-metadite-primary px-2 py-1 rounded-full text-xs font-medium">
-                      {chatRooms.length}
-                    </span>
-                  </div>
-                </div>
-                
-                {/* Search */}
-                <div className="relative">
-                  <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 ${
-                    theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
-                  }`} />
-                  <input
-                    type="text"
-                    placeholder="Search conversations..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className={`w-full pl-9 pr-4 py-2 rounded-lg border ${
-                      theme === 'dark' 
-                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                        : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                    } focus:outline-none focus:ring-2 focus:ring-metadite-primary`}
-                  />
-                </div>
-              </div>
+            {/* Mobile: Conditional rendering based on showChatList */}
+            {isMobile ? (
+              <>
+                {showChatList ? (
+                  /* Chat Rooms List - Mobile */
+                  <div className="w-full flex flex-col">
+                    <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                      <div className="flex items-center justify-between mb-4">
+                        <h1 className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                          Chats
+                        </h1>
+                        <div className="flex items-center space-x-2">
+                          <Users className="h-4 w-4 text-metadite-primary" />
+                          <span className="bg-metadite-primary/20 text-metadite-primary px-2 py-1 rounded-full text-xs font-medium">
+                            {chatRooms.length}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div className="relative">
+                        <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 ${
+                          theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                        }`} />
+                        <input
+                          type="text"
+                          placeholder="Search conversations..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className={`w-full pl-9 pr-4 py-2 rounded-lg border ${
+                            theme === 'dark' 
+                              ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                              : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                          } focus:outline-none focus:ring-2 focus:ring-metadite-primary`}
+                        />
+                      </div>
+                    </div>
 
-              {/* Chat Rooms List */}
-              <div className="flex-1 overflow-y-auto">
-                {loadingRooms ? (
-                  <div className="p-8 text-center">
-                    <div className="inline-block h-6 w-6 rounded-full border-4 border-metadite-primary border-r-transparent animate-spin"></div>
-                    <p className={`mt-4 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
-                      Loading conversations...
-                    </p>
-                  </div>
-                ) : filteredChatRooms.length > 0 ? (
-                  <div className="divide-y divide-gray-200 dark:divide-gray-700">
-                    {filteredChatRooms.map((room) => (
-                      <div
-                        key={room.id}
-                        onClick={() => handleRoomSelect(room)}
-                        className={`p-4 cursor-pointer transition-colors ${
-                          selectedRoom?.id === room.id
-                            ? 'bg-metadite-primary/10 border-r-2 border-metadite-primary'
-                            : `hover:bg-gray-50 dark:hover:bg-gray-700/50 ${
+                    <div className="flex-1 overflow-y-auto">
+                      {loadingRooms ? (
+                        <div className="p-8 text-center">
+                          <div className="inline-block h-6 w-6 rounded-full border-4 border-metadite-primary border-r-transparent animate-spin"></div>
+                          <p className={`mt-4 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                            Loading conversations...
+                          </p>
+                        </div>
+                      ) : filteredChatRooms.length > 0 ? (
+                        <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                          {filteredChatRooms.map((room) => (
+                            <div
+                              key={room.id}
+                              onClick={() => handleRoomSelect(room)}
+                              className={`p-4 cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/50 ${
                                 room.unreadCount > 0 ? 'bg-blue-50 dark:bg-blue-900/20' : ''
-                              }`
-                        }`}
-                      >
-                        <div className="flex items-center space-x-3">
-                          <div className="relative">
+                              }`}
+                            >
+                              <div className="flex items-center space-x-3">
+                                <div className="relative">
+                                  <img
+                                    src={room.modelImage}
+                                    alt={room.modelName}
+                                    className="w-12 h-12 rounded-full object-cover"
+                                    onError={(e) => {
+                                      e.target.onerror = null;
+                                      e.target.src = 'https://placehold.co/200?text=Model';
+                                    }}
+                                  />
+                                  {room.unreadCount > 0 && (
+                                    <div className="absolute -top-1 -right-1 bg-metadite-primary text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                                      {room.unreadCount > 9 ? '9+' : room.unreadCount}
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center justify-between">
+                                    <h3 className={`font-medium truncate ${
+                                      theme === 'dark' ? 'text-white' : 'text-gray-900'
+                                    }`}>
+                                      {room.modelName}
+                                    </h3>
+                                    <span className={`text-xs ${
+                                      theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                                    }`}>
+                                      {formatTime(room.lastMessageTime)}
+                                    </span>
+                                  </div>
+                                  <p className={`text-sm truncate mt-1 ${
+                                    theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+                                  }`}>
+                                    {room.lastMessage}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="p-8 text-center">
+                          <MessageSquare className="h-12 w-12 mx-auto mb-4 text-metadite-primary opacity-50" />
+                          <h3 className="text-lg font-medium mb-2">No conversations yet</h3>
+                          <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                            Start chatting with models to see your conversations here
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  /* Chat Interface - Mobile */
+                  <div className="flex-1 flex flex-col">
+                    {selectedRoom && (
+                      <>
+                        <div className={`p-4 border-b flex items-center justify-between ${
+                          theme === 'dark' ? 'border-gray-700' : 'border-gray-100'
+                        }`}>
+                          <div className="flex items-center">
+                            <button
+                              onClick={handleBackToChatList}
+                              className={`mr-3 p-1 rounded-full ${
+                                theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+                              }`}
+                            >
+                              <ArrowLeft className="h-5 w-5" />
+                            </button>
+                            <div className="w-10 h-10 rounded-full overflow-hidden mr-3">
+                              <img
+                                src={selectedRoom.modelImage}
+                                alt={selectedRoom.modelName}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.target.onerror = null;
+                                  e.target.src = 'https://placehold.co/200?text=Model';
+                                }}
+                              />
+                            </div>
+                            <div>
+                              <h2 className={`font-medium ${theme === 'dark' ? 'text-white' : ''}`}>
+                                {selectedRoom.modelName}
+                              </h2>
+                              <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                                Chat ID: {selectedRoom.id}
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center">
+                            <div className={`relative w-3 h-3 rounded-full mr-2 ${
+                              connectionStatus === 'connected' ? 'bg-green-500' :
+                              connectionStatus === 'connecting' ? 'bg-yellow-500' :
+                              'bg-red-500'
+                            }`}>
+                              {connectionStatus === 'connecting' && (
+                                <span className="absolute inset-0 rounded-full bg-yellow-500 animate-ping opacity-75"></span>
+                              )}
+                            </div>
+                            <span className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                              {connectionStatus === 'connected' ? 'Online' : 
+                               connectionStatus === 'connecting' ? 'Connecting...' :
+                               connectionStatus === 'error' ? 'Error' : 'Offline'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Messages - Mobile */}
+                        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                          {hasMoreMessages && (
+                            <div className="text-center my-2">
+                              <button
+                                onClick={loadMoreMessages}
+                                disabled={isLoadingMore}
+                                className={`px-4 py-1 text-xs rounded-full ${
+                                  theme === 'dark' 
+                                    ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' 
+                                    : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                                }`}
+                              >
+                                {isLoadingMore ? (
+                                  <>
+                                    <span className="inline-block h-3 w-3 rounded-full border-2 border-current border-r-transparent animate-spin mr-1"></span>
+                                    Loading...
+                                  </>
+                                ) : (
+                                  'Load older messages'
+                                )}
+                              </button>
+                            </div>
+                          )}
+                          
+                          {messages.length > 0 ? (
+                            <div className="space-y-4">
+                              {messages.map((message) => (
+                                <MessageItem
+                                  key={message.id}
+                                  message={message}
+                                  onDelete={message.sender_id === user?.id ? () => handleDeleteMessage(message.id) : null}
+                                />
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="flex items-center justify-center h-full text-gray-500">
+                              No messages yet. Start the conversation!
+                            </div>
+                          )}
+                          
+                          {typingUsers && typingUsers.size > 0 && (
+                            <div className={`px-4 py-2 rounded-lg w-auto inline-block ${
+                              theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-700'
+                            }`}>
+                              <div className="flex items-center space-x-2">
+                                <div className="flex space-x-1">
+                                  <span className="w-2 h-2 rounded-full bg-current animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                                  <span className="w-2 h-2 rounded-full bg-current animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                                  <span className="w-2 h-2 rounded-full bg-current animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                                </div>
+                                <span className="text-xs">Someone is typing...</span>
+                              </div>
+                            </div>
+                          )}
+                          
+                          <div ref={messageEndRef} />
+                        </div>
+
+                        {/* File preview area - Mobile */}
+                        {selectedFile && (
+                          <div className={`p-2 border-t ${theme === 'dark' ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-100'}`}>
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-2">
+                                {previewUrl ? (
+                                  <div className="h-16 w-16 overflow-hidden rounded-md">
+                                    <img src={previewUrl} alt="Preview" className="h-full w-full object-cover" />
+                                  </div>
+                                ) : (
+                                  <div className={`h-12 w-12 flex items-center justify-center rounded-md ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                                    <File className={`h-6 w-6 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`} />
+                                  </div>
+                                )}
+                                <span className={`text-sm truncate max-w-[150px] ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                                  {selectedFile.name}
+                                </span>
+                              </div>
+                              <button 
+                                onClick={clearSelectedFile}
+                                className={`p-1 rounded-full ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'}`}
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Message Input - Mobile */}
+                        <div className={`p-4 border-t ${theme === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
+                          <form onSubmit={handleSendMessage} className="flex space-x-2">
+                            <div className="relative flex-1">
+                              <Textarea
+                                placeholder={connectionStatus === 'connected' 
+                                  ? `Send a message about ${selectedRoom.modelName}...` 
+                                  : 'Reconnecting to chat...'}
+                                value={newMessage}
+                                onChange={(e) => {
+                                  setNewMessage(e.target.value);
+                                  handleTyping();
+                                }}
+                                disabled={connectionStatus !== 'connected'}
+                                className={`min-h-[48px] max-h-[120px] resize-none ${
+                                  theme === 'dark' 
+                                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                                    : 'border-gray-300 text-gray-900'
+                                } ${connectionStatus !== 'connected' ? 'opacity-70' : ''}`}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter' && !e.shiftKey) {
+                                    e.preventDefault();
+                                    const syntheticEvent = { preventDefault: () => {} };
+                                    handleSendMessage(syntheticEvent);
+                                  }
+                                }}
+                              />
+                            </div>
+                            
+                            <button 
+                              type="button"
+                              onClick={promptFileSelection}
+                              disabled={connectionStatus !== 'connected'}
+                              className={`flex-shrink-0 p-3 rounded-md ${
+                                theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'
+                              } ${connectionStatus !== 'connected' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            >
+                              <Paperclip className={`h-5 w-5 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`} />
+                            </button>
+                            
+                            <input 
+                              ref={fileInputRef}
+                              type="file" 
+                              onChange={handleFileSelect}
+                              className="hidden"
+                              accept="image/*,.pdf,.doc,.docx"
+                            />
+                            
+                            <button 
+                              type="submit"
+                              disabled={(!newMessage.trim() && !selectedFile) || isUploading || connectionStatus !== 'connected'}
+                              className="flex-shrink-0 bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white p-3 rounded-md hover:opacity-90 transition-opacity disabled:opacity-50"
+                            >
+                              {isUploading ? (
+                                <span className="inline-block h-5 w-5 rounded-full border-2 border-white border-r-transparent animate-spin"></span>
+                              ) : (
+                                <Send className="h-5 w-5" />
+                              )}
+                            </button>
+                          </form>
+                          
+                          {connectionStatus !== 'connected' && (
+                            <div className="mt-2 text-xs text-center text-red-500">
+                              {connectionStatus === 'connecting' 
+                                ? 'Connecting to chat server...' 
+                                : 'Connection lost. Trying to reconnect...'}
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+              </>
+            ) : (
+              /* Desktop: Side-by-side layout */
+              <>
+                {/* Left Sidebar - Chat Rooms */}
+                <div className={`w-1/3 border-r flex flex-col ${
+                  theme === 'dark' ? 'border-gray-700' : 'border-gray-200'
+                }`}>
+                  <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center justify-between mb-4">
+                      <h1 className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                        Chats
+                      </h1>
+                      <div className="flex items-center space-x-2">
+                        <Users className="h-4 w-4 text-metadite-primary" />
+                        <span className="bg-metadite-primary/20 text-metadite-primary px-2 py-1 rounded-full text-xs font-medium">
+                          {chatRooms.length}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="relative">
+                      <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 ${
+                        theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                      }`} />
+                      <input
+                        type="text"
+                        placeholder="Search conversations..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className={`w-full pl-9 pr-4 py-2 rounded-lg border ${
+                          theme === 'dark' 
+                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                        } focus:outline-none focus:ring-2 focus:ring-metadite-primary`}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex-1 overflow-y-auto">
+                    {loadingRooms ? (
+                      <div className="p-8 text-center">
+                        <div className="inline-block h-6 w-6 rounded-full border-4 border-metadite-primary border-r-transparent animate-spin"></div>
+                        <p className={`mt-4 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                          Loading conversations...
+                        </p>
+                      </div>
+                    ) : filteredChatRooms.length > 0 ? (
+                      <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                        {filteredChatRooms.map((room) => (
+                          <div
+                            key={room.id}
+                            onClick={() => handleRoomSelect(room)}
+                            className={`p-4 cursor-pointer transition-colors ${
+                              selectedRoom?.id === room.id
+                                ? 'bg-metadite-primary/10 border-r-2 border-metadite-primary'
+                                : `hover:bg-gray-50 dark:hover:bg-gray-700/50 ${
+                                    room.unreadCount > 0 ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+                                  }`
+                            }`}
+                          >
+                            <div className="flex items-center space-x-3">
+                              <div className="relative">
+                                <img
+                                  src={room.modelImage}
+                                  alt={room.modelName}
+                                  className="w-12 h-12 rounded-full object-cover"
+                                  onError={(e) => {
+                                    e.target.onerror = null;
+                                    e.target.src = 'https://placehold.co/200?text=Model';
+                                  }}
+                                />
+                                {room.unreadCount > 0 && (
+                                  <div className="absolute -top-1 -right-1 bg-metadite-primary text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                                    {room.unreadCount > 9 ? '9+' : room.unreadCount}
+                                  </div>
+                                )}
+                              </div>
+                              
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between">
+                                  <h3 className={`font-medium truncate ${
+                                    theme === 'dark' ? 'text-white' : 'text-gray-900'
+                                  }`}>
+                                    {room.modelName}
+                                  </h3>
+                                  <span className={`text-xs ${
+                                    theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                                  }`}>
+                                    {formatTime(room.lastMessageTime)}
+                                  </span>
+                                </div>
+                                <p className={`text-sm truncate mt-1 ${
+                                  theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+                                }`}>
+                                  {room.lastMessage}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-8 text-center">
+                        <MessageSquare className="h-12 w-12 mx-auto mb-4 text-metadite-primary opacity-50" />
+                        <h3 className="text-lg font-medium mb-2">No conversations yet</h3>
+                        <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                          Start chatting with models to see your conversations here
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Right Side - Chat Interface (Desktop) */}
+                <div className="flex-1 flex flex-col">
+                  {selectedRoom ? (
+                    <>
+                      <div className={`p-4 border-b flex items-center justify-between ${
+                        theme === 'dark' ? 'border-gray-700' : 'border-gray-100'
+                      }`}>
+                        <div className="flex items-center">
+                          <div className="w-10 h-10 rounded-full overflow-hidden mr-3">
                             <img
-                              src={room.modelImage}
-                              alt={room.modelName}
-                              className="w-12 h-12 rounded-full object-cover"
+                              src={selectedRoom.modelImage}
+                              alt={selectedRoom.modelName}
+                              className="w-full h-full object-cover"
                               onError={(e) => {
                                 e.target.onerror = null;
                                 e.target.src = 'https://placehold.co/200?text=Model';
                               }}
                             />
-                            {room.unreadCount > 0 && (
-                              <div className="absolute -top-1 -right-1 bg-metadite-primary text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                                {room.unreadCount > 9 ? '9+' : room.unreadCount}
-                              </div>
-                            )}
                           </div>
-                          
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between">
-                              <h3 className={`font-medium truncate ${
-                                theme === 'dark' ? 'text-white' : 'text-gray-900'
-                              }`}>
-                                {room.modelName}
-                              </h3>
-                              <span className={`text-xs ${
-                                theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
-                              }`}>
-                                {formatTime(room.lastMessageTime)}
-                              </span>
-                            </div>
-                            <p className={`text-sm truncate mt-1 ${
-                              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
-                            }`}>
-                              {room.lastMessage}
+                          <div>
+                            <h2 className={`font-medium ${theme === 'dark' ? 'text-white' : ''}`}>
+                              {selectedRoom.modelName}
+                            </h2>
+                            <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                              Chat ID: {selectedRoom.id}
                             </p>
                           </div>
                         </div>
+                        
+                        <div className="flex items-center">
+                          <div className={`relative w-3 h-3 rounded-full mr-2 ${
+                            connectionStatus === 'connected' ? 'bg-green-500' :
+                            connectionStatus === 'connecting' ? 'bg-yellow-500' :
+                            'bg-red-500'
+                          }`}>
+                            {connectionStatus === 'connecting' && (
+                              <span className="absolute inset-0 rounded-full bg-yellow-500 animate-ping opacity-75"></span>
+                            )}
+                          </div>
+                          <span className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                            {connectionStatus === 'connected' ? 'Online' : 
+                             connectionStatus === 'connecting' ? 'Connecting...' :
+                             connectionStatus === 'error' ? 'Error' : 'Offline'}
+                          </span>
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="p-8 text-center">
-                    <MessageSquare className="h-12 w-12 mx-auto mb-4 text-metadite-primary opacity-50" />
-                    <h3 className="text-lg font-medium mb-2">No conversations yet</h3>
-                    <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
-                      Start chatting with models to see your conversations here
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
 
-            {/* Right Side - Chat Interface */}
-            <div className="flex-1 flex flex-col">
-              {selectedRoom ? (
-                <>
-                  {/* Chat Header */}
-                  <div className={`p-4 border-b flex items-center justify-between ${
-                    theme === 'dark' ? 'border-gray-700' : 'border-gray-100'
-                  }`}>
-                    <div className="flex items-center">
-                      <div className="w-10 h-10 rounded-full overflow-hidden mr-3">
-                        <img
-                          src={selectedRoom.modelImage}
-                          alt={selectedRoom.modelName}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.src = 'https://placehold.co/200?text=Model';
-                          }}
-                        />
+                      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                        {hasMoreMessages && (
+                          <div className="text-center my-2">
+                            <button
+                              onClick={loadMoreMessages}
+                              disabled={isLoadingMore}
+                              className={`px-4 py-1 text-xs rounded-full ${
+                                theme === 'dark' 
+                                  ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' 
+                                  : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                              }`}
+                            >
+                              {isLoadingMore ? (
+                                <>
+                                  <span className="inline-block h-3 w-3 rounded-full border-2 border-current border-r-transparent animate-spin mr-1"></span>
+                                  Loading...
+                                </>
+                              ) : (
+                                'Load older messages'
+                              )}
+                            </button>
+                          </div>
+                        )}
+                        
+                        {messages.length > 0 ? (
+                          <div className="space-y-4">
+                            {messages.map((message) => (
+                              <MessageItem
+                                key={message.id}
+                                message={message}
+                                onDelete={message.sender_id === user?.id ? () => handleDeleteMessage(message.id) : null}
+                              />
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-center h-full text-gray-500">
+                            No messages yet. Start the conversation!
+                          </div>
+                        )}
+                        
+                        {typingUsers && typingUsers.size > 0 && (
+                          <div className={`px-4 py-2 rounded-lg w-auto inline-block ${
+                            theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-700'
+                          }`}>
+                            <div className="flex items-center space-x-2">
+                              <div className="flex space-x-1">
+                                <span className="w-2 h-2 rounded-full bg-current animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                                <span className="w-2 h-2 rounded-full bg-current animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                                <span className="w-2 h-2 rounded-full bg-current animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                              </div>
+                              <span className="text-xs">Someone is typing...</span>
+                            </div>
+                          </div>
+                        )}
+                        
+                        <div ref={messageEndRef} />
                       </div>
-                      <div>
-                        <h2 className={`font-medium ${theme === 'dark' ? 'text-white' : ''}`}>
-                          {selectedRoom.modelName}
+
+                      {selectedFile && (
+                        <div className={`p-2 border-t ${theme === 'dark' ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-100'}`}>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-2">
+                              {previewUrl ? (
+                                <div className="h-16 w-16 overflow-hidden rounded-md">
+                                  <img src={previewUrl} alt="Preview" className="h-full w-full object-cover" />
+                                </div>
+                              ) : (
+                                <div className={`h-12 w-12 flex items-center justify-center rounded-md ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                                  <File className={`h-6 w-6 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`} />
+                                </div>
+                              )}
+                              <span className={`text-sm truncate max-w-[150px] ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                                {selectedFile.name}
+                              </span>
+                            </div>
+                            <button 
+                              onClick={clearSelectedFile}
+                              className={`p-1 rounded-full ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'}`}
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className={`p-4 border-t ${theme === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
+                        <form onSubmit={handleSendMessage} className="flex space-x-2">
+                          <div className="relative flex-1">
+                            <Textarea
+                              placeholder={connectionStatus === 'connected' 
+                                ? `Send a message about ${selectedRoom.modelName}...` 
+                                : 'Reconnecting to chat...'}
+                              value={newMessage}
+                              onChange={(e) => {
+                                setNewMessage(e.target.value);
+                                handleTyping();
+                              }}
+                              disabled={connectionStatus !== 'connected'}
+                              className={`min-h-[48px] max-h-[120px] resize-none ${
+                                theme === 'dark' 
+                                  ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                                  : 'border-gray-300 text-gray-900'
+                              } ${connectionStatus !== 'connected' ? 'opacity-70' : ''}`}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                  e.preventDefault();
+                                  const syntheticEvent = { preventDefault: () => {} };
+                                  handleSendMessage(syntheticEvent);
+                                }
+                              }}
+                            />
+                          </div>
+                          
+                          <button 
+                            type="button"
+                            onClick={promptFileSelection}
+                            disabled={connectionStatus !== 'connected'}
+                            className={`flex-shrink-0 p-3 rounded-md ${
+                              theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'
+                            } ${connectionStatus !== 'connected' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          >
+                            <Paperclip className={`h-5 w-5 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`} />
+                          </button>
+                          
+                          <input 
+                            ref={fileInputRef}
+                            type="file" 
+                            onChange={handleFileSelect}
+                            className="hidden"
+                            accept="image/*,.pdf,.doc,.docx"
+                          />
+                          
+                          <button 
+                            type="submit"
+                            disabled={(!newMessage.trim() && !selectedFile) || isUploading || connectionStatus !== 'connected'}
+                            className="flex-shrink-0 bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white p-3 rounded-md hover:opacity-90 transition-opacity disabled:opacity-50"
+                          >
+                            {isUploading ? (
+                              <span className="inline-block h-5 w-5 rounded-full border-2 border-white border-r-transparent animate-spin"></span>
+                            ) : (
+                              <Send className="h-5 w-5" />
+                            )}
+                          </button>
+                        </form>
+                        
+                        {connectionStatus !== 'connected' && (
+                          <div className="mt-2 text-xs text-center text-red-500">
+                            {connectionStatus === 'connecting' 
+                              ? 'Connecting to chat server...' 
+                              : 'Connection lost. Trying to reconnect...'}
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex-1 flex items-center justify-center">
+                      <div className="text-center">
+                        <MessageSquare className={`h-16 w-16 mx-auto mb-4 ${theme === 'dark' ? 'text-gray-600' : 'text-gray-300'}`} />
+                        <h2 className={`text-2xl font-medium mb-2 ${theme === 'dark' ? 'text-white' : ''}`}>
+                          Select a conversation
                         </h2>
-                        <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                          Chat ID: {selectedRoom.id}
+                        <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                          Choose a conversation from the sidebar to start chatting
                         </p>
                       </div>
                     </div>
-                    
-                    <div className="flex items-center">
-                      <div className={`relative w-3 h-3 rounded-full mr-2 ${
-                        connectionStatus === 'connected' ? 'bg-green-500' :
-                        connectionStatus === 'connecting' ? 'bg-yellow-500' :
-                        'bg-red-500'
-                      }`}>
-                        {connectionStatus === 'connecting' && (
-                          <span className="absolute inset-0 rounded-full bg-yellow-500 animate-ping opacity-75"></span>
-                        )}
-                      </div>
-                      <span className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                        {connectionStatus === 'connected' ? 'Online' : 
-                         connectionStatus === 'connecting' ? 'Connecting...' :
-                         connectionStatus === 'error' ? 'Error' : 'Offline'}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Messages */}
-                  <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                    {hasMoreMessages && (
-                      <div className="text-center my-2">
-                        <button
-                          onClick={loadMoreMessages}
-                          disabled={isLoadingMore}
-                          className={`px-4 py-1 text-xs rounded-full ${
-                            theme === 'dark' 
-                              ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' 
-                              : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
-                          }`}
-                        >
-                          {isLoadingMore ? (
-                            <>
-                              <span className="inline-block h-3 w-3 rounded-full border-2 border-current border-r-transparent animate-spin mr-1"></span>
-                              Loading...
-                            </>
-                          ) : (
-                            'Load older messages'
-                          )}
-                        </button>
-                      </div>
-                    )}
-                    
-                    {messages.length > 0 ? (
-                      <div className="space-y-4">
-                        {messages.map((message) => (
-                          <MessageItem
-                            key={message.id}
-                            message={message}
-                            onDelete={message.sender_id === user?.id ? () => handleDeleteMessage(message.id) : null}
-                          />
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-center h-full text-gray-500">
-                        No messages yet. Start the conversation!
-                      </div>
-                    )}
-                    
-                    {/* Typing indicator */}
-                    {typingUsers && typingUsers.size > 0 && (
-                      <div className={`px-4 py-2 rounded-lg w-auto inline-block ${
-                        theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-700'
-                      }`}>
-                        <div className="flex items-center space-x-2">
-                          <div className="flex space-x-1">
-                            <span className="w-2 h-2 rounded-full bg-current animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                            <span className="w-2 h-2 rounded-full bg-current animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                            <span className="w-2 h-2 rounded-full bg-current animate-bounce" style={{ animationDelay: '300ms' }}></span>
-                          </div>
-                          <span className="text-xs">Someone is typing...</span>
-                        </div>
-                      </div>
-                    )}
-                    
-                    <div ref={messageEndRef} />
-                  </div>
-
-                  {/* File preview area */}
-                  {selectedFile && (
-                    <div className={`p-2 border-t ${theme === 'dark' ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-100'}`}>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          {previewUrl ? (
-                            <div className="h-16 w-16 overflow-hidden rounded-md">
-                              <img src={previewUrl} alt="Preview" className="h-full w-full object-cover" />
-                            </div>
-                          ) : (
-                            <div className={`h-12 w-12 flex items-center justify-center rounded-md ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'}`}>
-                              <File className={`h-6 w-6 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`} />
-                            </div>
-                          )}
-                          <span className={`text-sm truncate max-w-[150px] ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                            {selectedFile.name}
-                          </span>
-                        </div>
-                        <button 
-                          onClick={clearSelectedFile}
-                          className={`p-1 rounded-full ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'}`}
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
                   )}
-
-                  {/* Message Input */}
-                  <div className={`p-4 border-t ${theme === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
-                    <form onSubmit={handleSendMessage} className="flex space-x-2">
-                      <div className="relative flex-1">
-                        <Textarea
-                          placeholder={connectionStatus === 'connected' 
-                            ? `Send a message about ${selectedRoom.modelName}...` 
-                            : 'Reconnecting to chat...'}
-                          value={newMessage}
-                          onChange={(e) => {
-                            setNewMessage(e.target.value);
-                            handleTyping();
-                          }}
-                          disabled={connectionStatus !== 'connected'}
-                          className={`min-h-[48px] max-h-[120px] resize-none ${
-                            theme === 'dark' 
-                              ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                              : 'border-gray-300 text-gray-900'
-                          } ${connectionStatus !== 'connected' ? 'opacity-70' : ''}`}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' && !e.shiftKey) {
-                              e.preventDefault();
-                              const syntheticEvent = { preventDefault: () => {} };
-                              handleSendMessage(syntheticEvent);
-                            }
-                          }}
-                        />
-                      </div>
-                      
-                      {/* File upload button */}
-                      <button 
-                        type="button"
-                        onClick={promptFileSelection}
-                        disabled={connectionStatus !== 'connected'}
-                        className={`flex-shrink-0 p-3 rounded-md ${
-                          theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'
-                        } ${connectionStatus !== 'connected' ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      >
-                        <Paperclip className={`h-5 w-5 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`} />
-                      </button>
-                      
-                      {/* Hidden file input */}
-                      <input 
-                        ref={fileInputRef}
-                        type="file" 
-                        onChange={handleFileSelect}
-                        className="hidden"
-                        accept="image/*,.pdf,.doc,.docx"
-                      />
-                      
-                      <button 
-                        type="submit"
-                        disabled={(!newMessage.trim() && !selectedFile) || isUploading || connectionStatus !== 'connected'}
-                        className="flex-shrink-0 bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white p-3 rounded-md hover:opacity-90 transition-opacity disabled:opacity-50"
-                      >
-                        {isUploading ? (
-                          <span className="inline-block h-5 w-5 rounded-full border-2 border-white border-r-transparent animate-spin"></span>
-                        ) : (
-                          <Send className="h-5 w-5" />
-                        )}
-                      </button>
-                    </form>
-                    
-                    {connectionStatus !== 'connected' && (
-                      <div className="mt-2 text-xs text-center text-red-500">
-                        {connectionStatus === 'connecting' 
-                          ? 'Connecting to chat server...' 
-                          : 'Connection lost. Trying to reconnect...'}
-                      </div>
-                    )}
-                  </div>
-                </>
-              ) : (
-                // No room selected
-                <div className="flex-1 flex items-center justify-center">
-                  <div className="text-center">
-                    <MessageSquare className={`h-16 w-16 mx-auto mb-4 ${theme === 'dark' ? 'text-gray-600' : 'text-gray-300'}`} />
-                    <h2 className={`text-2xl font-medium mb-2 ${theme === 'dark' ? 'text-white' : ''}`}>
-                      Select a conversation
-                    </h2>
-                    <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                      Choose a conversation from the sidebar to start chatting
-                    </p>
-                  </div>
                 </div>
-              )}
-            </div>
+              </>
+            )}
           </div>
         </div>
       </div>
