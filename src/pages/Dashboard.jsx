@@ -28,6 +28,11 @@ const Dashboard = () => {
         navigate('/staff-dashboard', { replace: true });
       }
     }
+    
+    // Redirect staff users to staff dashboard
+    if (!loading && user && (user.role === 'admin' || user.role === 'moderator')) {
+      navigate('/staff-dashboard');
+    }
   }, [user, loading, navigate]);
 
   useEffect(() => {
