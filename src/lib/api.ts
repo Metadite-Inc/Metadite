@@ -81,11 +81,14 @@ class ApiService {
     }
   }
 
-  // Get all models (dolls) with pagination
+  // Get all models (dolls) with pagination - removed category parameter
   async getModels(skip = 0, limit = 50): Promise<PaginationResponse<ModelBasic>> {
     try {
+      // Build query parameters without category
+      let queryParams = `skip=${skip}&limit=${limit}`;
+      
       // Add pagination parameters to the API request
-      const dolls = await this.request<any[]>(`/api/dolls?skip=${skip}&limit=${limit}`);
+      const dolls = await this.request<any[]>(`/api/dolls?${queryParams}`);
       const backendUrl = import.meta.env.VITE_API_BASE_URL;
 
       // Transform the API response to match our ModelBasic interface
@@ -112,6 +115,48 @@ class ApiService {
       return {
         data: transformedData,
         total: total,
+        skip: skip,
+        limit: limit
+      };
+    } catch (error) {
+      return {
+        data: [],
+        total: 0,
+        skip: skip,
+        limit: limit
+      };
+    }
+  }
+
+  // Get models filtered by category with pagination
+  async getModelsByCategory(category: string, skip = 0, limit = 50): Promise<PaginationResponse<ModelBasic>> {
+    try {
+      const dolls = await this.request<any[]>(`/api/dolls/category/${category}`);
+      const backendUrl = import.meta.env.VITE_API_BASE_URL;
+
+      // Transform the API response to match our ModelBasic interface
+      const transformedData = dolls.map(doll => {
+        let mainImage = '';
+        if (Array.isArray(doll.images)) {
+          const primary = doll.images.find((img: any) => img.is_primary);
+          mainImage = primary ? `${backendUrl}${primary.image_url}` : '';
+        }
+        return {
+          id: doll.id,
+          name: doll.name,
+          price: doll.price,
+          description: doll.description.substring(0, 100) + "...",
+          image: mainImage,
+          category: doll.doll_category,
+        };
+      });
+
+      // Apply pagination to the filtered results
+      const paginatedData = transformedData.slice(skip, skip + limit);
+
+      return {
+        data: paginatedData,
+        total: transformedData.length,
         skip: skip,
         limit: limit
       };
