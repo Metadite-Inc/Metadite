@@ -29,9 +29,20 @@ const Models = () => {
   useEffect(() => {
     const fetchAllCategories = async () => {
       try {
-        // Fetch a larger sample to get all categories (without category filter)
-        const response = await apiService.getModels(0, 100);
-        const uniqueCategories = ['all', ...new Set(response.data.map((model) => model.category))];
+        // Fetch all models in batches to retrieve all categories
+        const batchSize = 50; // Define a constant for batch size
+        let allModels = [];
+        let skip = 0;
+        let hasMore = true;
+        
+        while (hasMore) {
+          const response = await apiService.getModels(skip, batchSize);
+          allModels = [...allModels, ...response.data];
+          hasMore = response.data.length === batchSize; // Continue if batch is full
+          skip += batchSize;
+        }
+        
+        const uniqueCategories = ['all', ...new Set(allModels.map((model) => model.category))];
         setCategories(uniqueCategories);
       } catch (error) {
         console.error('Failed to fetch categories:', error);
