@@ -46,9 +46,14 @@ const Models = () => {
         setIsLoaded(false);
         const skip = (currentPage - 1) * modelsPerPage;
         
-        // Pass category filter to API if it's not 'all'
-        const apiCategory = categoryFilter === 'all' ? undefined : categoryFilter;
-        const response = await apiService.getModels(skip, modelsPerPage, apiCategory);
+        let response;
+        if (categoryFilter === 'all') {
+          // Fetch all models with pagination
+          response = await apiService.getModels(skip, modelsPerPage);
+        } else {
+          // Fetch filtered models by category
+          response = await apiService.getModelsByCategory(categoryFilter, skip, modelsPerPage);
+        }
         
         setModels(response.data);
         setTotalModels(response.total);
