@@ -30,13 +30,19 @@ const Models = () => {
       try {
         setIsLoaded(false);
         const skip = (currentPage - 1) * modelsPerPage;
-        const response = await apiService.getModels(skip, modelsPerPage);
+        
+        // Pass category filter to API if it's not 'all'
+        const apiCategory = categoryFilter === 'all' ? undefined : categoryFilter;
+        const response = await apiService.getModels(skip, modelsPerPage, apiCategory);
+        
         setModels(response.data);
         setTotalModels(response.total);
         
-        // Extract unique categories from models
-        const uniqueCategories = ['all', ...new Set(response.data.map((model) => model.category))];
-        setCategories(uniqueCategories);
+        // Extract unique categories from models (only when no category filter is applied)
+        if (!apiCategory) {
+          const uniqueCategories = ['all', ...new Set(response.data.map((model) => model.category))];
+          setCategories(uniqueCategories);
+        }
         
         setIsLoaded(true);
       } catch (error) {
@@ -45,15 +51,13 @@ const Models = () => {
       }
     };
     fetchModels();
-  }, [currentPage]); // Fetch new data when page changes
+  }, [currentPage, categoryFilter]); // Add categoryFilter to dependencies
 
-  // Filter models based on search and filters
+  // Filter models based on search and price filters (category filtering now handled by API)
   const filteredModels = models.filter((model) => {
     const matchesSearch =
       model.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       model.description.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesCategory = categoryFilter === 'all' || model.category === categoryFilter;
 
     let matchesPrice = true;
     if (priceFilter === 'under200' && model.price < 200) matchesPrice = true;
@@ -61,7 +65,7 @@ const Models = () => {
     else if (priceFilter === 'over550' && model.price > 550) matchesPrice = true;
     else if (priceFilter !== 'all') matchesPrice = false;
 
-    return matchesSearch && matchesCategory && matchesPrice;
+    return matchesSearch && matchesPrice;
   });
 
   // Calculate pagination values
