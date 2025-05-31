@@ -9,16 +9,13 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { createStripeSubscriptionSession } from '../lib/api/payment_api';
-import { loadStripe } from '@stripe/stripe-js';
-
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+import { createNowpaymentsSubscriptionInvoice } from '../lib/api/payment_api';
 
 const tiers = [
   {
     name: 'Standard',
     price: 10,
-    priceId: 'price_1RQYya00H2IuN3FqYfKZc81Q',
+    //priceId: 'price_1RQYya00H2IuN3FqYfKZc81Q',
     description: 'Perfect for casual users',
     features: [
       '10 messages',// per day',
@@ -28,13 +25,13 @@ const tiers = [
     ],
     recommended: false,
     level: 'standard',
+    currency: 'USD',
     icon: <ShieldCheck className="h-10 w-10 text-blue-500" />,
     color: 'blue'
   },
   {
     name: 'VIP',
     price: 20,
-    priceId: 'price_1RQcqz00H2IuN3FqSosRPfli',
     description: 'Enhanced experience for enthusiasts',
     features: [
       '30 messages',// per day',
@@ -45,13 +42,13 @@ const tiers = [
     ],
     recommended: true,
     level: 'vip',
+    currency: 'USD',
     icon: <StarIcon className="h-10 w-10 text-amber-500" />,
     color: 'amber'
   },
   {
     name: 'VVIP',
     price: 50,
-    priceId: 'price_1RQcsN00H2IuN3Fq6fvhsx6g',
     description: 'Ultimate experience for collectors',
     features: [
       'Unlimited messages',
@@ -64,6 +61,7 @@ const tiers = [
     ],
     recommended: false,
     level: 'vvip',
+    currency: 'USD',
     icon: <Zap className="h-10 w-10 text-purple-500" />,
     color: 'purple'
   },
@@ -78,8 +76,8 @@ const Upgrade: React.FC = () => {
 
 
   // Navigate to the dedicated subscription checkout route with plan info
-  const handleUpgrade = (tierLevel: 'standard' | 'vip' | 'vvip', priceId: string) => {
-    navigate('/subscription-checkout', { state: { tierLevel, priceId } });
+  const handleUpgrade = (tierLevel: 'standard' | 'vip' | 'vvip', price: number, currency: string) => {
+    navigate('/subscription-checkout', { state: { tierLevel, price, currency } });
   };
 
 
@@ -170,7 +168,7 @@ const Upgrade: React.FC = () => {
                       : `border-2 border-${tier.color}-500 ${currentPlan === tier.level ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50' : ''}`
                   }`}
                   variant={tier.recommended ? "default" : currentPlan === tier.level ? "outline" : "outline"}
-                  onClick={() => handleUpgrade(tier.level as 'standard' | 'vip' | 'vvip', tier.priceId)}
+                  onClick={() => handleUpgrade(tier.level as 'standard' | 'vip' | 'vvip', tier.price, tier.currency)}
                   disabled={loading[tier.level] || currentPlan === tier.level}
                 >
                   {loading[tier.level] ? (

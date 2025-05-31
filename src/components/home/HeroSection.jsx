@@ -72,7 +72,7 @@ const HeroSection = ({ isLoaded, user, hasVipAccess, theme }) => {
             </div>
           </div>
           
-          <div className={`pt-5 pb-10 md:pl-10 md:w-1/2 transition-all duration-700 delay-300 ${isLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'} flex justify-center md:block`}>
+          <div className={`pt-8 pb-20 md:pl-10 md:w-1/2 transition-all duration-700 delay-300 ${isLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'} flex justify-center md:block`}>
             <div className="relative">
               {/* Slideshow Start */}
               <div className="relative w-full max-w-[97vw] px-1 sm:w-96 sm:max-w-full sm:px-0 mx-auto aspect-[3/4.3] rounded-xl z-10 min-h-[420px] max-h-[480px] overflow-hidden">
@@ -117,7 +117,14 @@ const HeroSection = ({ isLoaded, user, hasVipAccess, theme }) => {
                             muted
                             playsInline
                             ref={currentSlide === idx ? videoRef : null}
-                            onEnded={() => setCurrentSlide((prev) => (prev + 1) % slideshowItems.length)}
+                            onEnded={() => {
+                              if (slideshowItems.length > 1) {
+                                setCurrentSlide((prev) => (prev + 1) % slideshowItems.length);
+                              } else {
+                                // If only one video, loop it
+                                if (videoRef.current) videoRef.current.play();
+                              }
+                            }}
                           />
                         ) : (
                           <img

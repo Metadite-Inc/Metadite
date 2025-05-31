@@ -4,37 +4,48 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { toast } from 'sonner';
 import { useTheme } from '../context/ThemeContext';
-import { createStripeSubscriptionSession } from '../lib/api/payment_api';
-import { loadStripe } from '@stripe/stripe-js';
+import { createNowpaymentsSubscriptionInvoice } from '../lib/api/payment_api';
+import { tiers } from '@/lib/constants/tiers';
 
 const SubscriptionCheckout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { theme } = useTheme();
   const tierLevel = location.state?.tierLevel;
-  const priceId = location.state?.priceId;
+  const price = location.state?.price;
+  // Default to USD or fiat currency for NOWPayments asset selection
+  const currency = location.state?.currency || 'usd';
 
   useEffect(() => {
     const startSubscription = async () => {
-      if (!tierLevel || !priceId) {
+      if (!tierLevel || !price || !currency) {
         toast.error('Missing subscription plan info.');
         navigate('/upgrade');
         return;
       }
+
+      const tierObj = tiers.find(t => t.level === tierLevel);
+      if (!tierObj) {
+        toast.error('Invalid subscription plan.');
+        navigate('/upgrade');
+        return;
+      }
+
+      // Pass fiat currency so NOWPayments widget lets user pick asset
+      const data = {
+        level: tierLevel,
+        price: price,
+        currency: currency, // e.g., 'usd'
+        features: tierObj.features,
+        description: tierObj.description,
+        recommended: tierObj.recommended,
+        success_url: window.location.origin + '/success-subscription',
+        cancel_url: window.location.origin + '/cancel-subscription',
+      };
+
       try {
-        const data = {
-          tier: tierLevel,
-          priceId,
-          success_url: window.location.origin + '/success-subscription',
-          cancel_url: window.location.origin + '/cancel-subscription',
-        };
-        const result = await createStripeSubscriptionSession(data);
-        const stripe = await loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
-        if (!stripe) throw new Error('Stripe.js failed to load');
-        const { error } = await stripe.redirectToCheckout({ sessionId: result.id });
-        if (error) {
-          toast.error('Stripe redirect failed', { description: error.message });
-        }
+        const result = await createNowpaymentsSubscriptionInvoice(data);
+        window.location.href = result.invoice_url;
       } catch (err) {
         toast.error('Subscription failed', { description: err.message });
         navigate('/upgrade');

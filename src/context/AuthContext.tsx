@@ -3,10 +3,9 @@ import { toast } from 'sonner';
 import { authApi } from '../lib/api/auth_api';
 
 interface User {
-  //name: string;
   id: string;
   email: string;
-  full_name: string;
+  name: string;
   role: 'admin' | 'moderator' | 'user';
   membershipLevel?: 'standard' | 'vip' | 'vvip';
   region?: string;
@@ -41,7 +40,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const token = localStorage.getItem('access_token');
         if (token) {
           const userData = await authApi.getCurrentUser();
-          setUser(userData);
+          setUser({
+            ...userData,
+            role: userData.role as 'admin' | 'moderator' | 'user',
+            membershipLevel: userData.membershipLevel as 'standard' | 'vip' | 'vvip' | undefined,
+          });
         }
       } catch (error) {
         console.error('Failed to initialize auth:', error);
@@ -58,7 +61,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       await authApi.login({ email, password });
       const userData = await authApi.getCurrentUser();
-      setUser(userData);
+      setUser({
+        ...userData,
+        role: userData.role as 'admin' | 'moderator' | 'user',
+        membershipLevel: userData.membershipLevel as 'standard' | 'vip' | 'vvip' | undefined,
+      });
       toast.success('Login successful');
     } catch (error) {
       toast.error('Login failed. Please check your credentials.');
