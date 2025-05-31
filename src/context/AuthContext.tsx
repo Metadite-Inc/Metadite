@@ -1,7 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { authApi } from '../lib/api/auth_api';
-import { toast } from 'sonner';
 
 interface User {
   id: number;
@@ -17,136 +16,105 @@ interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, name: string, region?: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
-  isAuthenticated: boolean;
-  updateMembership: (level: 'standard' | 'vip' | 'vvip') => void;
+  refreshUser: () => Promise<void>;
+  register: (email: string, password: string, name: string, region: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-interface AuthProviderProps {
-  children: ReactNode;
-}
-
-export function AuthProvider({ children }: AuthProviderProps) {
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const initializeAuth = async () => {
-      try {
-        const token = localStorage.getItem('access_token');
-        if (token) {
-          const userData = await authApi.getCurrentUser();
-          setUser({
-            ...userData,
-            role: userData.role as 'admin' | 'moderator' | 'user',
-            membership_level: userData.membership_level as 'standard' | 'vip' | 'vvip',
-          });
-        }
-      } catch (error) {
-        console.error('Failed to initialize auth:', error);
-        authApi.logout();
-      } finally {
-        setLoading(false);
-      }
-    };
-    initializeAuth();
-  }, []);
-
-  const login = async (email: string, password: string): Promise<void> => {
+  const login = async (email: string, password: string): Promise<boolean> => {
     try {
+      setLoading(true);
       await authApi.login({ email, password });
-      const userData = await authApi.getCurrentUser();
-      setUser({
-        ...userData,
-        role: userData.role as 'admin' | 'moderator' | 'user',
-        membership_level: userData.membership_level as 'standard' | 'vip' | 'vvip',
-      });
-      toast.success('Login successful');
+      
+      // Get user info after successful login
+      const userResponse = await authApi.getCurrentUser();
+      console.log('Login successful, user data:', userResponse);
+      setUser(userResponse);
+      
+      return true;
     } catch (error) {
-      toast.error('Login failed. Please check your credentials.');
-      throw error;
-    }
-  };
-
-  const validatePassword = (password: string): string => {
-    if (password.length < 8) {
-      return "Password must be at least 8 characters long";
-    }
-    if (!/[A-Z]/.test(password)) {
-      return "Password must contain at least one uppercase letter";
-    }
-    if (!/[a-z]/.test(password)) {
-      return "Password must contain at least one lowercase letter";
-    }
-    if (!/[0-9]/.test(password)) {
-      return "Password must contain at least one digit";
-    }
-    return "";
-  };
-
-  const register = async (email: string, password: string, name: string, region?: string): Promise<void> => {
-    try {
-      // Validate password complexity
-      const validationError = validatePassword(password);
-      if (validationError) {
-        toast.error(validationError);
-        throw new Error(validationError);
-      }
-      await authApi.register({
-        email,
-        password,
-        full_name: name,
-        role: 'user',
-        membership_level: 'standard',
-        is_active: true,
-        assigned_dolls: [],
-        video_access_count: 0,
-        region
-      });
-      toast.success('Registration successful. Please login.');
-    } catch (error) {
-      toast.error('Registration failed. Please try again.');
-      throw error;
-    }
-  };
-
-  const updateMembership = async (level: 'standard' | 'vip' | 'vvip') => {
-    if (!user) return;
-    try {
-      // TODO: Implement membership update API call
-      const updatedUser = { ...user, membership_level: level };
-      setUser(updatedUser);
-      toast.success('Membership updated successfully');
-    } catch (error) {
-      toast.error('Failed to update membership');
-      throw error;
+      console.error('Login failed:', error);
+      // Remove the toast from here - let the component handle notifications
+      return false;
+    } finally {
+      setLoading(false);
     }
   };
 
   const logout = () => {
+    console.log('Logging out user');
     authApi.logout();
     setUser(null);
-    toast.success("You've been logged out");
   };
 
-  const value: AuthContextType = {
-    user,
-    loading,
-    login,
-    register,
-    logout,
-    isAuthenticated: !!user,
-    updateMembership
+  const register = async (email: string, password: string, name: string, region: string) => {
+    try {
+      await authApi.register({
+        email,
+        password,
+        full_name: name,
+        region,
+        role: 'user',
+        membership_level: 'free'
+      });
+    } catch (error) {
+      console.error('Registration failed:', error);
+      throw error;
+    }
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
+  const refreshUser = async () => {
+    try {
+      const userResponse = await authApi.getCurrentUser();
+      console.log('User refreshed:', userResponse);
+      setUser(userResponse);
+    } catch (error) {
+      console.error('Failed to refresh user:', error);
+      logout();
+    }
+  };
 
-export const useAuth = (): AuthContextType => {
+  useEffect(() => {
+    const initializeAuth = async () => {
+      const token = localStorage.getItem('access_token');
+      if (token) {
+        console.log('Found existing token, refreshing user...');
+        try {
+          await refreshUser();
+        } catch (error) {
+          console.error('Failed to initialize auth:', error);
+        }
+      } else {
+        console.log('No token found');
+      }
+      setLoading(false);
+    };
+
+    initializeAuth();
+  }, []);
+
+  // Add effect to log user role changes
+  useEffect(() => {
+    if (user) {
+      console.log('User state updated - Role:', user.role, 'Email:', user.email);
+    }
+  }, [user]);
+
+  return (
+    <AuthContext.Provider value={{ user, loading, login, logout, refreshUser, register }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');

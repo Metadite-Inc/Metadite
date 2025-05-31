@@ -25,6 +25,12 @@ const UserMenu = () => {
   // Check if user is regular (not admin or moderator)
   const isRegularUser = user?.role === 'user';
 
+  const handleLogout = () => {
+    logout();
+    // Always navigate to home page after logout, regardless of user role
+    navigate('/', { replace: true });
+  };
+
   if (!user) {
     return (
       <Link
@@ -81,12 +87,7 @@ const UserMenu = () => {
         <DropdownMenuSeparator className={theme === 'dark' ? 'bg-gray-700' : ''} />
         
         <DropdownMenuItem 
-          onClick={() => {
-            logout();
-            if (user?.role === 'moderator') {
-              navigate('/');
-            }
-          }} 
+          onClick={handleLogout}
           className={`cursor-pointer ${theme === 'dark' ? 'hover:bg-gray-700 focus:bg-gray-700 text-red-400' : 'text-red-600'}`}
         >
           <LogOut className="mr-2 h-4 w-4" />

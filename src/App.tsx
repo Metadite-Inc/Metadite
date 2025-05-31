@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { CartProvider } from "./context/CartContext";
@@ -35,6 +35,7 @@ import Upgrade from "./pages/Upgrade";
 import ChatPage from "./pages/ChatPage";
 import Terms from "./pages/Terms";
 import OrderDetail from "./pages/OrderDetail";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 // Create a client
 const queryClient = new QueryClient();
@@ -54,28 +55,140 @@ const App = () => {
                     <Route path="/" element={<Index />} />
                     <Route path="/underage" element={<UnderAge />} />
                     <Route path="/login" element={<Login />} />
-                    <Route path="/dashboard" element={<Dashboard />} />
-                    <Route path="/staff-dashboard" element={<StaffDashboard />} />
-                    <Route path="/vip-content" element={<VipContent />} />
+                    <Route 
+                      path="/dashboard" 
+                      element={
+                        <ProtectedRoute allowedRoles={['user']}>
+                          <Dashboard />
+                        </ProtectedRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/staff-dashboard" 
+                      element={
+                        <ProtectedRoute allowedRoles={['admin', 'moderator']}>
+                          <StaffDashboard />
+                        </ProtectedRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/vip-content" 
+                      element={
+                        <ProtectedRoute allowedRoles={['user']}>
+                          <VipContent />
+                        </ProtectedRoute>
+                      } 
+                    />
                     <Route path="/video/:videoId" element={<VideoPlayer />} />
-                    <Route path="/cart" element={<Cart />} />
-                    <Route path="/checkout" element={<Checkout />} />
-                    <Route path="/subscription-checkout" element={<SubscriptionCheckout />} />
-                    <Route path="/success-subscription" element={<SuccessSubscription />} />
-                    <Route path="/cancel-subscription" element={<CancelSubscription />} />
-                    <Route path="/success" element={<Success />} />
-                    <Route path="/cancel" element={<Cancel />} />
-                    <Route path="/admin" element={<Admin />} />
-                    <Route path="/admin/model/edit/:id" element={<ModelEdit />} />
-                    <Route path="/moderator" element={<Moderator />} />
+                    <Route 
+                      path="/cart" 
+                      element={
+                        <ProtectedRoute allowedRoles={['user']}>
+                          <Cart />
+                        </ProtectedRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/checkout" 
+                      element={
+                        <ProtectedRoute allowedRoles={['user']}>
+                          <Checkout />
+                        </ProtectedRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/subscription-checkout" 
+                      element={
+                        <ProtectedRoute allowedRoles={['user']}>
+                          <SubscriptionCheckout />
+                        </ProtectedRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/success-subscription" 
+                      element={
+                        <ProtectedRoute allowedRoles={['user']}>
+                          <SuccessSubscription />
+                        </ProtectedRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/cancel-subscription" 
+                      element={
+                        <ProtectedRoute allowedRoles={['user']}>
+                          <CancelSubscription />
+                        </ProtectedRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/success" 
+                      element={
+                        <ProtectedRoute allowedRoles={['user']}>
+                          <Success />
+                        </ProtectedRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/cancel" 
+                      element={
+                        <ProtectedRoute allowedRoles={['user']}>
+                          <Cancel />
+                        </ProtectedRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/admin" 
+                      element={
+                        <ProtectedRoute allowedRoles={['admin']}>
+                          <Admin />
+                        </ProtectedRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/admin/model/edit/:id" 
+                      element={
+                        <ProtectedRoute allowedRoles={['admin']}>
+                          <ModelEdit />
+                        </ProtectedRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/moderator" 
+                      element={
+                        <ProtectedRoute allowedRoles={['moderator']}>
+                          <Moderator />
+                        </ProtectedRoute>
+                      } 
+                    />
                     <Route path="/models" element={<Models />} />
                     <Route path="/model/:id" element={<ModelDetail />} />
-                    <Route path="/model-chat/:id" element={<ModelChat />} />
+                    <Route 
+                      path="/model-chat/:id" 
+                      element={
+                        <ProtectedRoute allowedRoles={['user']}>
+                          <ModelChat />
+                        </ProtectedRoute>
+                      } 
+                    />
                     <Route path="/contact" element={<Contact />} />
                     <Route path="/upgrade" element={<Upgrade />} />
                     <Route path="/terms" element={<Terms />} />
-                    <Route path="/order/:orderId" element={<OrderDetail />} />
-                    <Route path="/chat" element={<ChatPage />} />
+                    <Route 
+                      path="/order/:orderId" 
+                      element={
+                        <ProtectedRoute allowedRoles={['user']}>
+                          <OrderDetail />
+                        </ProtectedRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/chat" 
+                      element={
+                        <ProtectedRoute allowedRoles={['user']}>
+                          <ChatPage />
+                        </ProtectedRoute>
+                      } 
+                    />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </CartProvider>
