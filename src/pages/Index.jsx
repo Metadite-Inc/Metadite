@@ -29,7 +29,16 @@ const Index = () => {
     }
   }, [user, loading, navigate]);
 
-  // Don't render the landing page for staff users
+  // Show loading while auth is loading
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-metadite-primary"></div>
+      </div>
+    );
+  }
+
+  // Don't render the landing page content if we're about to redirect staff users
   if (user && (user.role === 'admin' || user.role === 'moderator')) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -38,13 +47,10 @@ const Index = () => {
     );
   }
 
+  // Render landing page for non-staff users or when logged out
   return (
     <div className="min-h-screen">
-      {user && (user.role === 'admin' || user.role === 'moderator') ? (
-        <StaffNavbar />
-      ) : (
-        <Navbar />
-      )}
+      <Navbar />
       
       <main>
         <HeroSection />
@@ -54,11 +60,7 @@ const Index = () => {
         <CtaSection />
       </main>
       
-      {user && (user.role === 'admin' || user.role === 'moderator') ? (
-        <StaffFooter />
-      ) : (
-        <Footer />
-      )}
+      <Footer />
     </div>
   );
 };
