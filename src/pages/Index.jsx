@@ -28,7 +28,7 @@ const Index = () => {
     const loadFeaturedModels = async () => {
       try {
         const models = await fetchFeaturedModels();
-        setFeaturedModels(models);
+        setFeaturedModels(models || []);
       } catch (error) {
         console.error('Error fetching featured models:', error);
         setFeaturedModels([]);
