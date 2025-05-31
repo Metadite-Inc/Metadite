@@ -72,6 +72,8 @@ const ModelCard = ({ model, user, isFavorite, onRemoveFavorite }: ModelProps) =>
           user?.id ? Number(user.id) : undefined
         );
         
+        // Add to favorites
+        const result = await favoriteApiService.addToFavorites(Number(model.id), user.id);
         if (result) {
           setFavoriteId(result.id);
           setIsLiked(true);

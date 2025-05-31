@@ -5,8 +5,9 @@ import { toast } from 'sonner';
 
 interface User {
   id: number;
+  id: string;
   email: string;
-  full_name: string;
+  name: string;
   role: 'admin' | 'moderator' | 'user';
   membership_level: 'free' | 'standard' | 'vip' | 'vvip';
   region?: string;
@@ -29,6 +30,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   const login = async (email: string, password: string): Promise<boolean> => {
+  useEffect(() => {
+    const initializeAuth = async () => {
+      try {
+        const token = localStorage.getItem('access_token');
+        if (token) {
+          const userData = await authApi.getCurrentUser();
+          setUser({
+            ...userData,
+            role: userData.role as 'admin' | 'moderator' | 'user',
+            membershipLevel: userData.membershipLevel as 'standard' | 'vip' | 'vvip' | undefined,
+          });
+        }
+      } catch (error) {
+        console.error('Failed to initialize auth:', error);
+        authApi.logout();
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeAuth();
+  }, []);
+
+  const login = async (email: string, password: string): Promise<void> => {
     try {
       setLoading(true);
       await authApi.login({ email, password });
@@ -39,6 +64,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(userResponse);
       
       return true;
+      const userData = await authApi.getCurrentUser();
+      setUser({
+        ...userData,
+        role: userData.role as 'admin' | 'moderator' | 'user',
+        membershipLevel: userData.membershipLevel as 'standard' | 'vip' | 'vvip' | undefined,
+      });
+      toast.success('Login successful');
     } catch (error) {
       console.error('Login failed:', error);
       toast.error('Login failed. Please check your credentials.');
