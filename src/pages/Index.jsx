@@ -1,52 +1,64 @@
 
-import { useState, useEffect } from 'react';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { useTheme } from '../context/ThemeContext';
+import Navbar from '../components/Navbar';
+import StaffNavbar from '../components/StaffNavbar';
+import Footer from '../components/Footer';
+import StaffFooter from '../components/StaffFooter';
 import HeroSection from '../components/home/HeroSection';
 import FeaturesSection from '../components/home/FeaturesSection';
 import FeaturedModelsSection from '../components/home/FeaturedModelsSection';
 import TestimonialsSection from '../components/home/TestimonialsSection';
 import CtaSection from '../components/home/CtaSection';
 
-import { fetchFeaturedModels, testimonials } from '../data/homePageData';
-
 const Index = () => {
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [featuredModels, setFeaturedModels] = useState([]);
-  const { user } = useAuth();
-  const { theme } = useTheme();
-  const hasVipAccess = user?.membershipLevel === 'vip' || user?.membershipLevel === 'vvip';
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
 
-  // Load featured models
   useEffect(() => {
-    const loadModels = async () => {
-      try {
-        const models = await fetchFeaturedModels();
-        setFeaturedModels(models || []);
-      } catch (error) {
-        console.error("Error fetching featured models:", error);
-        setFeaturedModels([]);
-      } finally {
-        setIsLoaded(true);
+    // Wait for auth to load, then redirect staff users
+    if (!loading && user) {
+      if (user.role === 'admin') {
+        navigate('/admin', { replace: true });
+        return;
+      } else if (user.role === 'moderator') {
+        navigate('/moderator', { replace: true });
+        return;
       }
-    };
-    
-    loadModels();
-  }, []);
+    }
+  }, [user, loading, navigate]);
+
+  // Don't render the landing page for staff users
+  if (user && (user.role === 'admin' || user.role === 'moderator')) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-metadite-primary"></div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <div className="pt-[74px]"> {/* Add padding to account for fixed navbar height */}
-        <HeroSection isLoaded={isLoaded} user={user} hasVipAccess={hasVipAccess} theme={theme} />
-        <FeaturesSection theme={theme} />
-        <FeaturedModelsSection models={featuredModels} theme={theme} />
-        <TestimonialsSection testimonials={testimonials} theme={theme} />
-        <CtaSection user={user} hasVipAccess={hasVipAccess} />
-      </div>
-      <Footer />
+    <div className="min-h-screen">
+      {user && (user.role === 'admin' || user.role === 'moderator') ? (
+        <StaffNavbar />
+      ) : (
+        <Navbar />
+      )}
+      
+      <main>
+        <HeroSection />
+        <FeaturesSection />
+        <FeaturedModelsSection />
+        <TestimonialsSection />
+        <CtaSection />
+      </main>
+      
+      {user && (user.role === 'admin' || user.role === 'moderator') ? (
+        <StaffFooter />
+      ) : (
+        <Footer />
+      )}
     </div>
   );
 };
