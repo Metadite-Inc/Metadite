@@ -1,24 +1,23 @@
-export async function createStripeCheckoutSession(data: any): Promise<{ id: string }> {
-  // Adjust the endpoint as needed (e.g., '/api/stripe/create-checkout-session')
-  const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/stripe/create-checkout-session`, {
+export async function createNowpaymentsInvoice(data: any): Promise<{ invoice_url: string }> {
+  const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/nowpayments/create-invoice`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
   if (!response.ok) {
-    throw new Error('Failed to create Stripe Checkout session');
+    throw new Error('Failed to create NowPayments invoice');
   }
   return await response.json();
 }
 
-export async function createStripeSubscriptionSession(data: any): Promise<{ id: string }> {
-  const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/stripe/create-subscription-session`, {
+export async function createNowpaymentsSubscriptionInvoice(data: any): Promise<{ invoice_url: string }> {
+  const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/nowpayments/create-subscription-invoice`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
   if (!response.ok) {
-    throw new Error('Failed to create Stripe Subscription session');
+    throw new Error('Failed to create NowPayments subscription invoice');
   }
   return await response.json();
 }

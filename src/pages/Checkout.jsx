@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createNowpaymentsInvoice } from '../lib/api/payment_api';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -7,12 +8,15 @@ import { CreditCard, ShoppingBag, Lock, Check, ChevronsUp, Phone, Mail } from 'l
 import { toast } from 'sonner';
 import countries from '../components/countries';
 import { useTheme } from '../context/ThemeContext';
-import stripePromise from './stripePromise';
-import { createStripeCheckoutSession } from '../lib/api/payment_api';
+
+
+import { useAuth } from '../context/AuthContext';
 
 const Checkout = () => {
-  const { items, totalAmount, totalItems, clearCart } = useCart();
   const [paymentMethod, setPaymentMethod] = useState('card');
+  const [walletAddress, setWalletAddress] = useState('');
+  const { items, totalAmount, totalItems, clearCart } = useCart();
+
   const [shippingDetails, setShippingDetails] = useState({
     firstName: '',
     lastName: '',
@@ -36,33 +40,39 @@ const Checkout = () => {
     });
   };
 
-  // Stripe Checkout integration
-  const handleStripeCheckout = async (e) => {
+  // NowPayments integration
+  const { user } = useAuth();
+  const handleNowpaymentsCheckout = async (e) => {
     e.preventDefault();
     setIsProcessing(true);
     try {
-      // Prepare data for backend (cart items + shipping details)
+      const order_id = 'order_' + Date.now();
       const data = {
-        items,
-        shippingDetails,
+        price_amount: totalAmount,
+        price_currency: 'usd', // or allow user to select
+        wallet_address: walletAddress, // Include wallet address for crypto payments
+        order_id,
+        user_id: user?.id,
+        doll_id: items[0]?.id, // MVP: use first item only, or adapt for multi-item
         success_url: window.location.origin + '/success',
         cancel_url: window.location.origin + '/cancel',
+        description: `Order for ${shippingDetails.firstName} ${shippingDetails.lastName}`,
       };
-      // Call backend to create Stripe session
-      const result = await createStripeCheckoutSession(data);
-      const stripe = await stripePromise;
-      localStorage.setItem('cartShouldClear', 'true');
-      const { error } = await stripe.redirectToCheckout({ sessionId: result.id });
-      if (error) {
-        toast.error('Stripe redirect failed', { description: error.message });
-        setIsProcessing(false);
+      const result = await createNowpaymentsInvoice(data);
+      if (result && result.invoice_url) {
+        localStorage.setItem('cartShouldClear', 'true');
+        window.location.href = result.invoice_url;
+      } else {
+        throw new Error('Failed to get invoice URL from NowPayments. Please try again.');
       }
-      // On success, Stripe will redirect. No need to set isComplete here.
     } catch (err) {
       setIsProcessing(false);
       toast.error('Checkout failed', { description: err.message });
     }
   };
+
+
+
 
   if (items.length === 0 && !isComplete) {
     return (
@@ -110,7 +120,10 @@ const Checkout = () => {
         <div className="container mx-auto max-w-6xl">
           <div className="flex justify-between items-center mb-6">
             <h1 className={`text-3xl font-bold ${theme === 'dark' ? 'text-white' : ''}`}>Checkout</h1>
-            <Link to="/cart" className="text-metadite-primary hover:underline">
+            <Link
+              to="/cart"
+              className="inline-block px-5 py-2 rounded-md font-medium bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white shadow-sm hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-metadite-primary"
+            >
               Back to Cart
             </Link>
           </div>
@@ -123,7 +136,7 @@ const Checkout = () => {
                 </div>
                 
                 <div className="p-6">
-                  <form onSubmit={handleStripeCheckout}>
+                  <form onSubmit={handleNowpaymentsCheckout}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                       <div>
                         <label htmlFor="firstName" className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
@@ -322,64 +335,8 @@ const Checkout = () => {
                 
                 <div className="p-6">
                   <div className="space-y-4">
-                    <div 
-                      onClick={() => setPaymentMethod('card')}
-                      className={`border rounded-lg p-4 cursor-pointer transition-colors ${
-                        paymentMethod === 'card' 
-                          ? 'border-metadite-primary bg-metadite-primary/5' 
-                          : theme === 'dark'
-                            ? 'border-gray-600 hover:border-gray-500'
-                            : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                    >
-                      <div className="flex items-center">
-                        <div className={`w-5 h-5 rounded-full border mr-3 flex items-center justify-center ${
-                          paymentMethod === 'card' 
-                            ? 'border-metadite-primary' 
-                            : theme === 'dark' 
-                              ? 'border-gray-500' 
-                              : 'border-gray-300'
-                        }`}>
-                          {paymentMethod === 'card' && (
-                            <div className="w-3 h-3 rounded-full bg-metadite-primary"></div>
-                          )}
-                        </div>
-                        <div className="flex items-center">
-                          <CreditCard className={`h-5 w-5 mr-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`} />
-                          <span className={`font-medium ${theme === 'dark' ? 'text-white' : ''}`}>Credit / Debit Card</span>
-                        </div>
-                      </div>
-                      
-                      
-                    </div>
                     
-                    {/*<div 
-                      onClick={() => setPaymentMethod('stripe')}
-                      className={`border rounded-lg p-4 cursor-pointer transition-colors ${
-                        paymentMethod === 'stripe' 
-                          ? 'border-metadite-primary bg-metadite-primary/5' 
-                          : theme === 'dark'
-                            ? 'border-gray-600 hover:border-gray-500'
-                            : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                    >
-                      {/*<div className="flex items-center">
-                        <div className={`w-5 h-5 rounded-full border mr-3 flex items-center justify-center ${
-                          paymentMethod === 'stripe' 
-                            ? 'border-metadite-primary' 
-                            : theme === 'dark' 
-                              ? 'border-gray-500' 
-                              : 'border-gray-300'
-                        }`}>
-                          {paymentMethod === 'stripe' && (
-                            <div className="w-3 h-3 rounded-full bg-metadite-primary"></div>
-                          )}
-                       </div>
-                       <span className={`font-medium ${theme === 'dark' ? 'text-white' : ''}`}>Stripe</span>
-                       <span className={`ml-2 text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>(International payments)</span>
-                      </div>
-                    </div>*/}
-
+                    
                     <div 
                       onClick={() => setPaymentMethod('crypto')}
                       className={`border rounded-lg p-4 cursor-pointer transition-colors ${
@@ -404,8 +361,7 @@ const Checkout = () => {
                         <span className={`font-medium ${theme === 'dark' ? 'text-white' : ''}`}>Crypto Wallet</span>
                         <span className={`ml-2 text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>(World wide payments)</span>
                       </div>
-                      
-                      {paymentMethod === 'crypto' && (
+                      {/*{paymentMethod === 'crypto' && (
                         <div className="mt-4 pl-8">
                           <div>
                             <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
@@ -413,6 +369,8 @@ const Checkout = () => {
                             </label>
                             <input
                               type="text"
+                              value={walletAddress}
+                              onChange={e => setWalletAddress(e.target.value)}
                               placeholder="Enter your wallet address"
                               className={`block w-full px-3 py-2 rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary ${
                                 theme === 'dark'
@@ -422,7 +380,7 @@ const Checkout = () => {
                             />
                           </div>
                         </div>
-                      )}
+                      )}*/}
                     </div>
                   </div>
                   
@@ -485,7 +443,8 @@ const Checkout = () => {
                   
                   <div className="mt-6">
                     <button
-                      onClick={handleStripeCheckout}
+                      type="submit"
+                      onClick={handleNowpaymentsCheckout}
                       disabled={isProcessing}
                       className="w-full flex items-center justify-center bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white py-3 px-4 rounded-md hover:opacity-90 transition-opacity disabled:opacity-70"
                     >
@@ -497,7 +456,7 @@ const Checkout = () => {
                       ) : (
                         <>
                           <Lock className="h-5 w-5 mr-2" />
-                          Place Order
+                          Pay with Crypto Wallet
                         </>
                       )}
                     </button>
