@@ -67,6 +67,10 @@ const ModelCard = ({ model, user, isFavorite, onRemoveFavorite }: ModelProps) =>
     try {
       if (!isLiked) {
         // Add to favorites
+        if (!user?.id) {
+          toast.error("Please log in to save favorites");
+          return;
+        }
         const result = await favoriteApiService.addToFavorites(Number(model.id), user.id);
         if (result) {
           setFavoriteId(result.id);
