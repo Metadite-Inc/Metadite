@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckIcon, CreditCardIcon, StarIcon, ShieldCheck, Zap } from 'lucide-react';
@@ -16,7 +15,6 @@ const tiers = [
   {
     name: 'Standard',
     price: 10,
-    //priceId: 'price_1RQYya00H2IuN3FqYfKZc81Q',
     description: 'Perfect for casual users',
     features: [
       '10 messages',// per day',
@@ -26,7 +24,6 @@ const tiers = [
     ],
     recommended: false,
     level: 'standard',
-    currency: 'USD',
     icon: <ShieldCheck className="h-10 w-10 text-blue-500" />,
     color: 'blue'
   },
@@ -43,7 +40,6 @@ const tiers = [
     ],
     recommended: true,
     level: 'vip',
-    currency: 'USD',
     icon: <StarIcon className="h-10 w-10 text-amber-500" />,
     color: 'amber'
   },
@@ -62,7 +58,6 @@ const tiers = [
     ],
     recommended: false,
     level: 'vvip',
-    currency: 'USD',
     icon: <Zap className="h-10 w-10 text-purple-500" />,
     color: 'purple'
   },
@@ -70,13 +65,15 @@ const tiers = [
 
 const Upgrade: React.FC = () => {
   const [loading, setLoading] = useState<Record<string, boolean>>({});
-  const { user } = useAuth();
+  const { user, updateMembership } = useAuth();
   const navigate = useNavigate();
   const { theme } = useTheme();
 
+
+
   // Navigate to the dedicated subscription checkout route with plan info
-  const handleUpgrade = (tierLevel: 'standard' | 'vip' | 'vvip', price: number, currency: string) => {
-    navigate('/subscription-checkout', { state: { tierLevel, price, currency } });
+  const handleUpgrade = (tierLevel: 'standard' | 'vip' | 'vvip', price: number) => {
+    navigate('/subscription-checkout', { state: { tierLevel, price } });
   };
 
   const getCurrentPlan = () => {
@@ -166,7 +163,7 @@ const Upgrade: React.FC = () => {
                       : `border-2 border-${tier.color}-500 ${currentPlan === tier.level ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50' : ''}`
                   }`}
                   variant={tier.recommended ? "default" : currentPlan === tier.level ? "outline" : "outline"}
-                  onClick={() => handleUpgrade(tier.level as 'standard' | 'vip' | 'vvip', tier.price, tier.currency)}
+                  onClick={() => handleUpgrade(tier.level as 'standard' | 'vip' | 'vvip', tier.price)}
                   disabled={loading[tier.level] || currentPlan === tier.level}
                 >
                   {loading[tier.level] ? (
