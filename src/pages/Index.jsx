@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import HeroSection from '../components/home/HeroSection';
@@ -13,9 +14,14 @@ import { fetchFeaturedModels, testimonials } from '../data/homePageData';
 
 const Index = () => {
   const { user, loading } = useAuth();
+  const { theme } = useTheme();
   const navigate = useNavigate();
   const [featuredModels, setFeaturedModels] = useState([]);
   const [modelsLoading, setModelsLoading] = useState(true);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Check if user has VIP access
+  const hasVipAccess = user?.membership_level === 'vip' || user?.membership_level === 'vvip';
 
   // Fetch featured models
   useEffect(() => {
@@ -45,6 +51,14 @@ const Index = () => {
     }
   }, [user, loading, navigate]);
 
+  useEffect(() => {
+    // Set loaded state for animations
+    const timer = setTimeout(() => {
+      setIsLoaded(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
   // Show loading while auth is loading
   if (loading) {
     return (
@@ -69,11 +83,11 @@ const Index = () => {
       <Navbar />
       
       <main>
-        <HeroSection />
-        <FeaturesSection />
-        <FeaturedModelsSection models={featuredModels} loading={modelsLoading} />
-        <TestimonialsSection testimonials={testimonials} />
-        <CtaSection />
+        <HeroSection isLoaded={isLoaded} user={user} hasVipAccess={hasVipAccess} theme={theme} />
+        <FeaturesSection theme={theme} />
+        <FeaturedModelsSection models={featuredModels} loading={modelsLoading} theme={theme} />
+        <TestimonialsSection testimonials={testimonials} theme={theme} />
+        <CtaSection user={user} hasVipAccess={hasVipAccess} />
       </main>
       
       <Footer />
