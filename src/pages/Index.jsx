@@ -3,9 +3,7 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
-import StaffNavbar from '../components/StaffNavbar';
 import Footer from '../components/Footer';
-import StaffFooter from '../components/StaffFooter';
 import HeroSection from '../components/home/HeroSection';
 import FeaturesSection from '../components/home/FeaturesSection';
 import FeaturedModelsSection from '../components/home/FeaturedModelsSection';
@@ -17,14 +15,12 @@ const Index = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Wait for auth to load, then redirect staff users
-    if (!loading && user) {
+    // Only redirect if user is logged in and is staff
+    if (!loading && user && (user.role === 'admin' || user.role === 'moderator')) {
       if (user.role === 'admin') {
         navigate('/admin', { replace: true });
-        return;
       } else if (user.role === 'moderator') {
         navigate('/moderator', { replace: true });
-        return;
       }
     }
   }, [user, loading, navigate]);
@@ -38,7 +34,7 @@ const Index = () => {
     );
   }
 
-  // Don't render the landing page content if we're about to redirect staff users
+  // Show loading spinner only if we're about to redirect logged-in staff users
   if (user && (user.role === 'admin' || user.role === 'moderator')) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -47,7 +43,7 @@ const Index = () => {
     );
   }
 
-  // Render landing page for non-staff users or when logged out
+  // Always render landing page for non-staff users or when logged out
   return (
     <div className="min-h-screen">
       <Navbar />
