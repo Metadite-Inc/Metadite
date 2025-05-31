@@ -75,12 +75,18 @@ const LoginForm = () => {
         toast.error("You must agree to the Terms of Service to create an account.");
         return;
       }
+      
       if (isLogin) {
-        await login(email, password);
-        toast.success("Login successful!");
-        
-        // Navigate to dashboard by default - server-side will handle role-based access
-        navigate('/dashboard');
+        const success = await login(email, password);
+        if (success) {
+          toast.success("Login successful!");
+          // Navigate to dashboard - server-side will handle role-based access
+          navigate('/dashboard');
+        } else {
+          // Only show error notification if login failed
+          toast.error("Login failed. Please check your credentials and try again.");
+          // Do not navigate - keep user on login page
+        }
       } else {
         // Validate password before registration
         const validationError = validatePassword(password);
@@ -94,9 +100,13 @@ const LoginForm = () => {
         setIsLogin(true);
       }
     } catch (error) {
-      toast.error("Authentication failed", {
-        description: error.message || "Please check your credentials and try again.",
-      });
+      if (isLogin) {
+        toast.error("Login failed. Please check your credentials and try again.");
+      } else {
+        toast.error("Registration failed", {
+          description: error.message || "Please try again.",
+        });
+      }
     }
   };
   
@@ -116,8 +126,6 @@ const LoginForm = () => {
         
         <div className="p-8">
           <form onSubmit={handleSubmit} className="space-y-5">
-
-
             {isLogin ? (
               <>
                 <FormInput
