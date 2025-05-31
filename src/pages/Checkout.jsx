@@ -50,7 +50,7 @@ const Checkout = () => {
       const data = {
         price_amount: totalAmount,
         price_currency: 'usd', // or allow user to select
-  
+        wallet_address: walletAddress, // Include wallet address for crypto payments
         order_id,
         user_id: user?.id,
         doll_id: items[0]?.id, // MVP: use first item only, or adapt for multi-item
