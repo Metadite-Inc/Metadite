@@ -1,5 +1,5 @@
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
@@ -9,10 +9,30 @@ import FeaturesSection from '../components/home/FeaturesSection';
 import FeaturedModelsSection from '../components/home/FeaturedModelsSection';
 import TestimonialsSection from '../components/home/TestimonialsSection';
 import CtaSection from '../components/home/CtaSection';
+import { fetchFeaturedModels, testimonials } from '../data/homePageData';
 
 const Index = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const [featuredModels, setFeaturedModels] = useState([]);
+  const [modelsLoading, setModelsLoading] = useState(true);
+
+  // Fetch featured models
+  useEffect(() => {
+    const loadFeaturedModels = async () => {
+      try {
+        const models = await fetchFeaturedModels();
+        setFeaturedModels(models);
+      } catch (error) {
+        console.error('Error fetching featured models:', error);
+        setFeaturedModels([]);
+      } finally {
+        setModelsLoading(false);
+      }
+    };
+
+    loadFeaturedModels();
+  }, []);
 
   useEffect(() => {
     // Only redirect if user is logged in and is staff
@@ -51,8 +71,8 @@ const Index = () => {
       <main>
         <HeroSection />
         <FeaturesSection />
-        <FeaturedModelsSection />
-        <TestimonialsSection />
+        <FeaturedModelsSection models={featuredModels} loading={modelsLoading} />
+        <TestimonialsSection testimonials={testimonials} />
         <CtaSection />
       </main>
       
