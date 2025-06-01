@@ -307,6 +307,12 @@ export const connectWebSocket = async (chatRoomId: number | string, onMessage: (
           console.log('System notification:', data.message);
         } else if (data.type === "history") {
           // Handle message history from WebSocket
+          /*bind backend url to file_url to display media types corectly especialy images
+          if (Array.isArray(msg.file_url)) {
+            messageMedia = `${backendUrl}${msg.file_url}` : '';
+          }
+            not working for now, needs proper implementation
+          */
           if (data.messages && data.messages.length > 0) {
             data.messages.forEach(msg => {
               onMessage({
