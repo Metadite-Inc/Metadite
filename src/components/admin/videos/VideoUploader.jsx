@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { FileVideo, X, Upload, Image, CalendarDays } from 'lucide-react';
 import { toast } from 'sonner';
@@ -5,9 +6,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { format } from "date-fns";
 import { useTheme } from '../../../context/ThemeContext';
 import { videoApiService } from '../../../lib/api/video_api';
 
@@ -20,6 +18,7 @@ const VideoUploader = ({ models, selectedModel, onVideoUploaded, fetchAllVideos 
     description: '',
     is_featured: false,
     doll_id: selectedModel || '',
+    created_at: '', // For release date
   });
   
   const [videoFile, setVideoFile] = useState(null);
@@ -94,7 +93,7 @@ const VideoUploader = ({ models, selectedModel, onVideoUploaded, fetchAllVideos 
       return;
     }
     
-    if (!videoData.title || !videoData.description || !videoData.doll_id) { // Changed from model_id to doll_id
+    if (!videoData.title || !videoData.description || !videoData.doll_id) {
       toast.error("Missing required fields", {
         description: "Please fill in all required fields."
       });
@@ -105,12 +104,18 @@ const VideoUploader = ({ models, selectedModel, onVideoUploaded, fetchAllVideos 
     setUploadProgress(0);
     
     try {
-      const result = await videoApiService.uploadVideo({
+      console.log('Starting video upload with data:', videoData);
+      
+      const uploadData = {
         ...videoData,
-        file: videoFile
-      });
+        file: videoFile,
+        doll_id: Number(videoData.doll_id)
+      };
+      
+      const result = await videoApiService.uploadVideo(uploadData);
       
       if (result) {
+        console.log('Video uploaded successfully:', result);
         setUploadProgress(100);
         toast.success("Video uploaded successfully!");
         
@@ -125,7 +130,7 @@ const VideoUploader = ({ models, selectedModel, onVideoUploaded, fetchAllVideos 
     } catch (error) {
       console.error("Error uploading video:", error);
       toast.error("Failed to upload video", {
-        description: error.message || "The upload was cancelled due to an error"
+        description: error.response?.data?.detail || error.message || "The upload was cancelled due to an error"
       });
       
       // Auto-cancel on failure
@@ -142,6 +147,7 @@ const VideoUploader = ({ models, selectedModel, onVideoUploaded, fetchAllVideos 
     }
     
     try {
+      console.log('Uploading thumbnail for video:', uploadedVideoId);
       const success = await videoApiService.uploadThumbnail(uploadedVideoId, thumbnailFile);
       
       if (success) {
@@ -157,7 +163,7 @@ const VideoUploader = ({ models, selectedModel, onVideoUploaded, fetchAllVideos 
     } catch (error) {
       console.error("Error uploading thumbnail:", error);
       toast.error("Failed to upload thumbnail", {
-        description: error.message || "The upload was cancelled due to an error"
+        description: error.response?.data?.detail || error.message || "The upload was cancelled due to an error"
       });
       
       // Reset form on failure
@@ -172,6 +178,7 @@ const VideoUploader = ({ models, selectedModel, onVideoUploaded, fetchAllVideos 
       description: '',
       is_featured: false,
       doll_id: selectedModel || '',
+      created_at: '',
     });
     setVideoFile(null);
     setThumbnailFile(null);
@@ -196,8 +203,8 @@ const VideoUploader = ({ models, selectedModel, onVideoUploaded, fetchAllVideos 
                   Select Model*
                 </label>
                 <Select
-                  value={videoData.doll_id} // Changed from model_id to doll_id
-                  onValueChange={(value) => setVideoData({...videoData, doll_id: value})} // Changed from model_id to doll_id
+                  value={videoData.doll_id.toString()}
+                  onValueChange={(value) => setVideoData({...videoData, doll_id: value})}
                 >
                   <SelectTrigger className="w-full bg-white">
                     <SelectValue>
@@ -206,7 +213,7 @@ const VideoUploader = ({ models, selectedModel, onVideoUploaded, fetchAllVideos 
                   </SelectTrigger>
                   <SelectContent className="bg-white">
                     {models.map(model => (
-                      <SelectItem key={model.id} value={model.id}>{model.name}</SelectItem>
+                      <SelectItem key={model.id} value={model.id.toString()}>{model.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -250,7 +257,7 @@ const VideoUploader = ({ models, selectedModel, onVideoUploaded, fetchAllVideos 
                       <span className="flex items-center space-x-2">
                         <FileVideo className="w-6 h-6 text-gray-400" />
                         <span className="font-medium text-gray-600">
-                          {videoFile ? videoFile.name : "Click to upload video (max 200MB)"}
+                          {videoFile ? videoFile.name : "Click to upload video (max 300MB)"}
                         </span>
                       </span>
                       <input 
@@ -281,14 +288,13 @@ const VideoUploader = ({ models, selectedModel, onVideoUploaded, fetchAllVideos 
               <div>
                 <label className={`block text-sm font-medium mb-1 
                   ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
-                  Release Date*
+                  Release Date
                 </label>
                 <input
                   type="date"
                   value={videoData.created_at}
                   onChange={e => setVideoData({ ...videoData, created_at: e.target.value })}
                   className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary"
-                  required
                 />
               </div>
             </div>

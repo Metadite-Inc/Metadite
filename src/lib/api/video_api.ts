@@ -1,3 +1,4 @@
+
 import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -151,6 +152,61 @@ export const videoApiService = {
         } catch (error) {
             console.error('Error deleting video:', error);
             return false;
+        }
+    },
+
+    // Upload video with file
+    async uploadVideo(videoData: any): Promise<VideoInDB | null> {
+        try {
+            const formData = new FormData();
+            
+            // Add the video file
+            if (videoData.file) {
+                formData.append('file', videoData.file);
+            }
+            
+            // Add other video data
+            formData.append('title', videoData.title);
+            formData.append('description', videoData.description);
+            formData.append('doll_id', videoData.doll_id.toString());
+            
+            if (videoData.is_featured !== undefined) {
+                formData.append('is_featured', videoData.is_featured.toString());
+            }
+            
+            if (videoData.created_at) {
+                formData.append('release_date', videoData.created_at);
+            }
+
+            const response = await api.post<VideoInDB>('/api/videos/upload', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+
+            return response.data;
+        } catch (error) {
+            console.error('Error uploading video:', error);
+            throw error;
+        }
+    },
+
+    // Upload thumbnail for video
+    async uploadThumbnail(videoId: number, thumbnailFile: File): Promise<boolean> {
+        try {
+            const formData = new FormData();
+            formData.append('thumbnail', thumbnailFile);
+
+            await api.post(`/api/videos/${videoId}/thumbnail`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+
+            return true;
+        } catch (error) {
+            console.error('Error uploading thumbnail:', error);
+            throw error;
         }
     }
 };
