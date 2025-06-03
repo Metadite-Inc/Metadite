@@ -642,7 +642,6 @@ const ModelChat = () => {
         </div>
       </div>
       
-      // <Footer />
     </div>
   );
 };
