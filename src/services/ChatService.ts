@@ -525,8 +525,6 @@ export const createChatRoom = async (dollId: string) => {
       return null;
     }
     
-    console.log(`Creating chat room for doll ${dollId} with user ${user.id}`);
-    
     // Include user_id in the API call
     const response = await axios.post(`${API_BASE_URL}/api/chat/rooms/`, 
       { doll_id: dollId },
