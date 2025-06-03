@@ -33,7 +33,7 @@ const useUnreadCount = () => {
     fetchUnreadCount();
     
     // Refresh unread count every 30 seconds
-    const interval = setInterval(fetchUnreadCount, 30000);
+    const interval = setInterval(fetchUnreadCount, 10000);
     
     return () => clearInterval(interval);
   }, [user]);
