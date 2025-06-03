@@ -2,7 +2,6 @@ import axios from 'axios';
 import { toast } from 'sonner';
 import { MessageType, MessageStatus, ChatError, ConnectionState, QueuedMessage } from '../types/chat';
 import { authApi } from '../lib/api/auth_api';
-import { apiService } from '../lib/api/api_service';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -775,9 +774,18 @@ export const deleteMessage = async (messageId: string | number) => {
 
 export const getUnreadCount = async () => {
   try {
+    const token = getAuthToken();
+    if (!token) {
+      console.log('No auth token for unread count');
+      return { total_unread: 0, unread_per_room: {} };
+    }
+
     console.log('Fetching unread count');
     
-    const response = await apiService.get('/chat/unread-count');
+    const response = await axios.get(`${API_BASE_URL}/api/chat/unread-count`, {
+      headers: { Authorization: `Bearer ${token}` },
+      timeout: 10000
+    });
     
     if (response.data) {
       console.log('Unread count fetched:', response.data);
