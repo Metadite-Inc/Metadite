@@ -200,7 +200,7 @@ export const videoApiService = {
 
             // Try the standard video update endpoint first
             try {
-                await api.put(`/api/videos/${videoId}/thumbnail`, formData, {
+                await api.put(`/api/images/videos/${videoId}/thumbnail`, formData, {
                     headers: {
                         'Content-Type': 'multipart/form-data',
                     },
