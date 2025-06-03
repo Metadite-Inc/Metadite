@@ -38,43 +38,29 @@ const getAuthToken = (): string | null => {
   return token;
 };
 
-// Centralized error handling - fixed to handle API error arrays
+// Centralized error handling
 const handleChatError = (error: ChatError) => {
   console.error(`Chat ${error.type} error:`, error.message, error.details);
-  
-  // Handle API validation errors that come as arrays
-  let errorMessage = error.message;
-  let errorDescription = error.details;
-  
-  if (error.details && Array.isArray(error.details)) {
-    // Convert API validation error array to readable string
-    errorDescription = error.details.map(err => 
-      typeof err === 'object' && err.msg ? err.msg : String(err)
-    ).join(', ');
-  } else if (error.details && typeof error.details === 'object') {
-    // Convert error object to string
-    errorDescription = JSON.stringify(error.details);
-  }
   
   switch (error.type) {
     case 'authentication':
       toast.error('Authentication required', {
-        description: errorDescription || 'You must be logged in to send messages.',
+        description: error.details || 'You must be logged in to send messages.',
       });
       break;
     case 'connection':
       toast.error('Connection error', {
-        description: errorDescription || 'Unable to connect to chat server.',
+        description: error.details || 'Unable to connect to chat server.',
       });
       break;
     case 'validation':
       toast.error('Invalid data', {
-        description: errorDescription || 'Please check your input and try again.',
+        description: error.details || 'Please check your input and try again.',
       });
       break;
     default:
       toast.error('Chat error', {
-        description: errorDescription || 'An unexpected error occurred.',
+        description: error.details || 'An unexpected error occurred.',
       });
   }
 };
@@ -321,12 +307,6 @@ export const connectWebSocket = async (chatRoomId: number | string, onMessage: (
           console.log('System notification:', data.message);
         } else if (data.type === "history") {
           // Handle message history from WebSocket
-          /*bind backend url to file_url to display media types corectly especialy images
-          if (Array.isArray(msg.file_url)) {
-            messageMedia = `${backendUrl}${msg.file_url}` : '';
-          }
-            not working for now, needs proper implementation
-          */
           if (data.messages && data.messages.length > 0) {
             data.messages.forEach(msg => {
               onMessage({
@@ -359,7 +339,7 @@ export const connectWebSocket = async (chatRoomId: number | string, onMessage: (
       const chatError: ChatError = {
         type: 'connection',
         message: 'WebSocket connection error',
-        details: String(error)
+        details: error
       };
       handleChatError(chatError);
     };
@@ -403,8 +383,7 @@ export const sendMessage = async (content: string, chatRoomId: number, moderator
   if (!content.trim()) {
     const error: ChatError = {
       type: 'validation',
-      message: 'Message content cannot be empty',
-      details: ''
+      message: 'Message content cannot be empty'
     };
     handleChatError(error);
     return null;
@@ -513,19 +492,7 @@ export const createChatRoom = async (dollId: string) => {
   }
   
   try {
-    // Get the current user ID for the request
-    const user = await authApi.getCurrentUser();
-    if (!user || !user.id) {
-      const error: ChatError = {
-        type: 'authentication',
-        message: 'User not found',
-        details: 'Please log in again'
-      };
-      handleChatError(error);
-      return null;
-    }
-    
-    // Include user_id in the API call
+    console.log(`Creating chat room for doll ${dollId}`);
     const response = await axios.post(`${API_BASE_URL}/api/chat/rooms/`, 
       { doll_id: dollId },
       {
@@ -539,20 +506,10 @@ export const createChatRoom = async (dollId: string) => {
     console.error('Failed to create chat room:', error);
     
     if (axios.isAxiosError(error)) {
-      // Format error properly for display
-      const errorDetails = error.response?.data;
-      
       const chatError: ChatError = {
         type: 'server',
         message: 'Failed to create chat room',
-        details: errorDetails || error.message
-      };
-      handleChatError(chatError);
-    } else {
-      const chatError: ChatError = {
-        type: 'server',
-        message: 'Failed to create chat room',
-        details: String(error)
+        details: error.response?.data?.detail || error.message
       };
       handleChatError(chatError);
     }
@@ -632,8 +589,7 @@ export const sendFileMessage = async (file: File, chatRoomId: number, receiverId
   if (!file) {
     const error: ChatError = {
       type: 'validation',
-      message: 'No file selected',
-      details: ''
+      message: 'No file selected'
     };
     handleChatError(error);
     return null;
@@ -766,29 +722,21 @@ export const deleteMessage = async (messageId: string | number) => {
 };
 
 export const getUnreadCount = async () => {
+  const token = getAuthToken();
+  if (!token) return 0;
+  
   try {
-    const token = getAuthToken();
-    if (!token) {
-      console.log('No auth token for unread count');
-      return { total_unread: 0, unread_per_room: {} };
-    }
-
-    console.log('Fetching unread count');
-    
-    const response = await axios.get(`${API_BASE_URL}/api/chat/unread-count`, {
-      headers: { Authorization: `Bearer ${token}` },
-      timeout: 10000
-    });
-    
-    if (response.data) {
-      console.log('Unread count fetched:', response.data);
-      return response.data;
-    }
-    
-    return { total_unread: 0, unread_per_room: {} };
+    const response = await axios.get(
+      `${API_BASE_URL}/api/chat/unread-count`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        timeout: 5000
+      }
+    );
+    return response.data.count || 0;
   } catch (error) {
-    console.error('Error fetching unread count:', error);
-    return { total_unread: 0, unread_per_room: {} };
+    console.error('Failed to get unread count:', error);
+    return 0;
   }
 };
 
