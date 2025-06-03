@@ -529,12 +529,7 @@ export const createChatRoom = async (dollId: string) => {
     
     // Include user_id in the API call
     const response = await axios.post(`${API_BASE_URL}/api/chat/rooms/`, 
-      { 
-        doll_id: dollId,
-        user_id: user.id,
-        // If moderator_id is required but not known, you may need to fetch it
-        moderator_id: 1  // Use an appropriate value or fetch from backend
-      },
+      { doll_id: dollId },
       {
         headers: { Authorization: `Bearer ${token}` },
         timeout: 10000
