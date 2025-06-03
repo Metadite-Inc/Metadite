@@ -1,125 +1,109 @@
-
 import React, { useState } from 'react';
-import { format } from 'date-fns';
+import { Download, Trash, MoreVertical, File, Flag } from 'lucide-react';
 import { getFileUrl, deleteMessage } from '../services/ChatService';
-import { MoreVertical, Download, Image as ImageIcon, Trash, File } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
 
-const MessageItem = ({ message, onDelete, onFlag }) => {
+const MessageItem = ({ message, onDelete }) => {
   const { user } = useAuth();
   const [showActions, setShowActions] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [imageError, setImageError] = useState(false);
+
   const isOwnMessage = message.sender_id === user?.id;
 
-  // Format the date safely
-  const formatMessageDate = (dateString) => {
+  const formatTime = (timestamp) => {
     try {
-      if (!dateString) return '';
-      const date = new Date(dateString);
-      // Check if date is valid
+      const date = new Date(timestamp);
       if (isNaN(date.getTime())) return '';
-      return format(date, 'HH:mm');
-    } catch (error) {
-      console.error('Error formatting date:', error);
+      return date.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      });
+    } catch {
       return '';
-    }
-  };
-
-  const renderMessageContent = () => {
-    switch (message.message_type) {
-      case 'IMAGE':
-        return (
-          <div className="relative group">
-            <div className="relative rounded-lg overflow-hidden">
-              <img 
-                src={message.file_url ? getFileUrl(message.file_url) : getFileUrl(message.content)} 
-                alt="Shared image" 
-                className="max-w-full max-h-[300px] object-contain rounded-lg hover:opacity-95 transition-opacity"
-                loading="lazy"
-                onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.src = 'https://placehold.co/400x300?text=Image+Not+Found';
-                }}
-              />
-              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-opacity rounded-lg" />
-            </div>
-            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-              <a 
-                href={message.file_url ? getFileUrl(message.file_url) : getFileUrl(message.content)}
-                target="_blank"
-                rel="noopener noreferrer"
-                download
-                className="p-2 bg-black/50 rounded-full hover:bg-black/70 transition-colors"
-              >
-                <Download className="h-4 w-4 text-white" />
-              </a>
-            </div>
-          </div>
-        );
-      case 'FILE':
-        return (
-          <a 
-            href={getFileUrl(message.file_url || message.content)} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            download
-            className="flex items-center space-x-2 p-3 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-          >
-            <File className="h-5 w-5 text-metadite-primary" />
-            <span className="text-sm truncate max-w-[200px]">
-              {message.file_name || message.content || 'Download file'}
-            </span>
-          </a>
-        );
-      default:
-        return (
-          <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">
-            {message.content}
-          </p>
-        );
     }
   };
 
   const handleDeleteMessage = async () => {
     if (isDeleting) return;
-    
+
     try {
       setIsDeleting(true);
       await deleteMessage(message.id);
       onDelete?.(message.id);
-      toast.success("Message deleted successfully");
-      setShowActions(false);
+      toast.success("Message deleted");
     } catch (error) {
-      console.error("Error deleting message:", error);
+      console.error("Delete error:", error);
       toast.error("Failed to delete message");
     } finally {
       setIsDeleting(false);
+      setShowActions(false);
     }
   };
 
   const handleFlagMessage = () => {
-    if (onFlag) {
-      onFlag(message.id);
-      setShowActions(false);
+    toast.success("Message flagged");
+    setShowActions(false);
+  };
+
+  const renderMessageContent = () => {
+    const fileUrl = getFileUrl(message.file_url || message.content);
+
+    if (message.message_type === 'IMAGE' && !imageError) {
+      return (
+        <div className="mt-2">
+          <img
+            src={fileUrl}
+            alt={message.file_name || 'Image'}
+            className="max-w-xs rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+            onError={() => setImageError(true)}
+            onClick={() => window.open(fileUrl, '_blank')}
+            loading="lazy"
+          />
+        </div>
+      );
     }
+
+    if (message.message_type === 'FILE') {
+      return (
+        <a
+          href={fileUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          download
+          className="flex items-center space-x-2 p-3 mt-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"
+        >
+          <File className="h-5 w-5 text-metadite-primary" />
+          <span className="text-sm truncate max-w-[200px]">
+            {message.file_name || 'Download file'}
+          </span>
+        </a>
+      );
+    }
+
+    return (
+      <p className="whitespace-pre-wrap break-words text-sm leading-relaxed mt-2">
+        {message.content}
+      </p>
+    );
   };
 
   return (
     <div className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} mb-4 group`}>
-      <div 
+      <div
         className={`relative max-w-xs md:max-w-md rounded-2xl p-3 ${
-          isOwnMessage 
-            ? 'bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white' 
+          isOwnMessage
+            ? 'bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white'
             : 'bg-white dark:bg-gray-800 shadow-sm'
         }`}
       >
-        <div className="flex justify-between items-start mb-1">
+        <div className="flex justify-between items-start">
           <span className={`text-xs font-medium ${isOwnMessage ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'}`}>
-            {message.sender_name || 'Anonymous'} • {formatMessageDate(message.created_at || message.timestamp)}
+            {message.sender_name || 'Anonymous'} • {formatTime(message.created_at || message.timestamp)}
           </span>
-          
-          <button 
+          <button
             className={`ml-2 opacity-0 group-hover:opacity-100 transition-opacity ${
               isOwnMessage ? 'text-white/70 hover:text-white' : 'text-gray-400 hover:text-gray-600'
             }`}
@@ -128,16 +112,21 @@ const MessageItem = ({ message, onDelete, onFlag }) => {
             <MoreVertical className="h-4 w-4" />
           </button>
         </div>
-        
-        <div className="mt-2">
-          {renderMessageContent()}
-        </div>
-        
+
+        {renderMessageContent()}
+
         {showActions && (
-          <div className="absolute right-0 mt-2 w-32 bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden z-10 animate-fade-in border border-gray-200 dark:border-gray-700">
+          <div className="absolute right-0 mt-2 w-32 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-10 animate-fade-in">
+            <button
+              className="w-full text-left px-3 py-2 text-sm flex items-center hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              onClick={handleFlagMessage}
+            >
+              <Flag className="h-4 w-4 mr-2" />
+              {message.flagged ? 'Unflag' : 'Flag'}
+            </button>
             {isOwnMessage && (
-              <button 
-                className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-red-500 flex items-center"
+              <button
+                className="w-full text-left px-3 py-2 text-sm flex items-center hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-red-500"
                 onClick={handleDeleteMessage}
                 disabled={isDeleting}
               >
@@ -147,18 +136,6 @@ const MessageItem = ({ message, onDelete, onFlag }) => {
                   <Trash className="h-4 w-4 mr-2" />
                 )}
                 Delete
-              </button>
-            )}
-            {onFlag && (
-              <button 
-                className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center"
-                onClick={handleFlagMessage}
-              >
-                <svg className="h-4 w-4 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1v12z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M4 22v-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                {message.flagged ? 'Unflag' : 'Flag'}
               </button>
             )}
           </div>
