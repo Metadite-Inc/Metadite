@@ -37,7 +37,6 @@ interface CartContextType {
 // Create a context for cart
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-
 interface CartProviderProps {
   children: ReactNode;
 }
@@ -64,6 +63,9 @@ export function CartProvider({ children }: CartProviderProps) {
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
+  // Check if user is staff (admin or moderator) who shouldn't use cart
+  const isStaffUser = user?.role === 'admin' || user?.role === 'moderator';
+
   // Transform API cart items to our CartItem format
   const transformApiCartItems = (apiItems: ApiCartItem[]): CartItem[] => {
     return apiItems.map(item => ({
@@ -80,6 +82,13 @@ export function CartProvider({ children }: CartProviderProps) {
   // Fetch cart items on component mount or when user changes
   useEffect(() => {
     const fetchCartItems = async () => {
+      // Skip cart operations for admin and moderator users
+      if (isStaffUser) {
+        setItems([]);
+        setLoading(false);
+        return;
+      }
+
       if (!user) {
         // If no user is logged in, try to load from localStorage
         const storedCart = localStorage.getItem(LOCAL_STORAGE_CART_KEY);
@@ -122,14 +131,14 @@ export function CartProvider({ children }: CartProviderProps) {
     };
 
     fetchCartItems();
-  }, [user]);
+  }, [user, isStaffUser]);
 
-  // Save cart to localStorage whenever it changes
+  // Save cart to localStorage whenever it changes (but not for staff users)
   useEffect(() => {
-    if (!loading) {
+    if (!loading && !isStaffUser) {
       localStorage.setItem('metaditeCart', JSON.stringify(items));
     }
-  }, [items, loading]);
+  }, [items, loading, isStaffUser]);
 
   // Calculate total amount and items in cart
   const totalAmount = items.reduce(
@@ -144,6 +153,12 @@ export function CartProvider({ children }: CartProviderProps) {
 
   // Add item to cart
   const addToCart = async (item: Model) => {
+    // Don't allow staff users to add to cart
+    if (isStaffUser) {
+      toast.error('Cart functionality is not available for staff accounts');
+      return;
+    }
+
     try {
       if (user) {
         // Add to backend
@@ -181,9 +196,13 @@ export function CartProvider({ children }: CartProviderProps) {
     }
   };
 
-
   // Remove item from cart
   const removeFromCart = async (itemId: number | string) => {
+    // Don't allow staff users to modify cart
+    if (isStaffUser) {
+      return;
+    }
+
     try {
       // Find the cart item with this cart row ID
       const cartItem = items.find(item => item.id === itemId);
@@ -205,6 +224,11 @@ export function CartProvider({ children }: CartProviderProps) {
 
   // Update item quantity
   const updateQuantity = async (itemId: number | string, quantity: number) => {
+    // Don't allow staff users to modify cart
+    if (isStaffUser) {
+      return;
+    }
+
     try {
       if (user) {
         // Try to update via API if user is logged in
@@ -234,6 +258,11 @@ export function CartProvider({ children }: CartProviderProps) {
 
   // Clear cart
   const clearCart = async () => {
+    // Don't allow staff users to modify cart
+    if (isStaffUser) {
+      return;
+    }
+
     try {
       if (user) {
         // Try to clear via API if user is logged in

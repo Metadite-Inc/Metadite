@@ -1,3 +1,4 @@
+
 import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -151,6 +152,89 @@ export const videoApiService = {
         } catch (error) {
             console.error('Error deleting video:', error);
             return false;
+        }
+    },
+
+    // Upload video with file
+    async uploadVideo(videoData: any): Promise<VideoInDB | null> {
+        try {
+            const formData = new FormData();
+            
+            // Add the video file
+            if (videoData.file) {
+                formData.append('file', videoData.file);
+            }
+            
+            // Add other video data
+            formData.append('title', videoData.title);
+            formData.append('description', videoData.description);
+            formData.append('doll_id', videoData.doll_id.toString());
+            
+            if (videoData.is_featured !== undefined) {
+                formData.append('is_featured', videoData.is_featured.toString());
+            }
+            
+            if (videoData.created_at) {
+                formData.append('release_date', videoData.created_at);
+            }
+
+            const response = await api.post<VideoInDB>('/api/videos/upload', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+
+            return response.data;
+        } catch (error) {
+            console.error('Error uploading video:', error);
+            throw error;
+        }
+    },
+
+    // Upload thumbnail for video - try multiple endpoint approaches
+    async uploadThumbnail(videoId: number, thumbnailFile: File): Promise<boolean> {
+        try {
+            const formData = new FormData();
+            formData.append('file', thumbnailFile);
+            formData.append('thumbnail', thumbnailFile);
+
+            // Try the standard video update endpoint first
+            try {
+                await api.put(`/api/images/videos/${videoId}/thumbnail`, formData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    },
+                });
+                return true;
+            } catch (error) {
+                console.log('First thumbnail upload method failed, trying alternative...');
+                
+                // Try alternative endpoint
+                await api.post(`/api/videos/${videoId}/thumbnail`, formData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    },
+                });
+                return true;
+            }
+        } catch (error) {
+            console.error('Error uploading thumbnail:', error);
+            
+            // If both specific thumbnail endpoints fail, try updating the video with thumbnail
+            try {
+                const updateData = new FormData();
+                updateData.append('thumbnail_file', thumbnailFile);
+                
+                await api.put(`/api/videos/${videoId}`, updateData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    },
+                });
+                return true;
+            } catch (updateError) {
+                console.error('All thumbnail upload methods failed:', updateError);
+                throw new Error('Unable to upload thumbnail. Please check if the thumbnail upload endpoint is available.');
+            }
         }
     }
 };
