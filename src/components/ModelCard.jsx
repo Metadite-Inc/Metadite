@@ -1,18 +1,20 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart, Heart, MessageSquare } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { toast } from 'sonner';
 import { favoriteApiService } from '../lib/api/favorite_api';
+import { createChatRoom } from '../services/ChatService';
+import { useAuth } from '../context/AuthContext'; 
 
 const ModelCard = ({ model, user, isFavorite: initialIsFavorite, onRemoveFavorite }) => {
+  const navigate = useNavigate();
+  const { user: authUser } = useAuth();
   const { addToCart } = useCart();
   const [imageLoaded, setImageLoaded] = useState(false);
   const [isLiked, setIsLiked] = useState(initialIsFavorite || false);
   const [favoriteId, setFavoriteId] = useState(null);
-  const [isChatOpen, setIsChatOpen] = useState(false);
-  const [message, setMessage] = useState('');
-
+  
   // Check if model is favorited on component mount
   useEffect(() => {
     const checkFavoriteStatus = async () => {
@@ -83,26 +85,24 @@ const ModelCard = ({ model, user, isFavorite: initialIsFavorite, onRemoveFavorit
       console.error("Favorite operation failed:", error);
     }
   };
-
-  const handleSendMessage = () => {
-    setIsChatOpen(true); // Open the chat popup
-  };
-
-  const handleSendChat = () => {
-    if (!user) {
-      toast.error("Please log in to send a message.");
+  
+  const handleChatButtonClick = async () => {
+    if (!authUser) {
+      toast.error("Please log in to start a chat");
       return;
     }
-
-    const moderatorName = model.moderator?.name || "our team";
-    toast.success("Message sent!", {
-      description: `Your message has been sent to ${moderatorName}.`,
-    });
-
-    // Simulate sending the message
-    console.log(`Message to ${moderatorName}: ${message}`);
-    setMessage(''); // Clear the input field
-    setIsChatOpen(false); // Close the chat popup after sending
+    
+    try {
+      // Create a chat room
+      const chatRoom = await createChatRoom(model.id.toString());
+      if (chatRoom) {
+        // Navigate to the chat page with the room ID
+        navigate(`/model-chat/${model.id}?roomId=${chatRoom.id}`);
+      }
+    } catch (error) {
+      console.error("Error creating chat room:", error);
+      toast.error("Failed to start chat. Please try again later.");
+    }
   };
 
   // Check if model exists and has required properties
@@ -149,7 +149,7 @@ const ModelCard = ({ model, user, isFavorite: initialIsFavorite, onRemoveFavorit
             View Details
           </Link>
           <button 
-            onClick={handleSendMessage}
+            onClick={handleChatButtonClick}
             className="flex items-center space-x-1 bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white px-3 py-2 rounded-md hover:opacity-90 transition-opacity"
           >
             <MessageSquare className="h-4 w-4" />
@@ -162,36 +162,6 @@ const ModelCard = ({ model, user, isFavorite: initialIsFavorite, onRemoveFavorit
           </button>
         </div>
       </div>
-
-      {/* Chat Popup */}
-      {isChatOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-96">
-            <h3 className="text-lg font-semibold mb-4">Send a Message</h3>
-            <textarea
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder={`Write your message to ${model.moderator?.name || "our team"}...`}
-              className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-metadite-primary"
-              rows="4"
-            ></textarea>
-            <div className="flex justify-end space-x-3 mt-4">
-              <button
-                onClick={() => setIsChatOpen(false)}
-                className="px-4 py-2 bg-gray-300 rounded-md hover:bg-gray-400 transition"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSendChat}
-                className="px-4 py-2 bg-metadite-primary text-white rounded-md hover:bg-metadite-secondary transition"
-              >
-                Send
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
