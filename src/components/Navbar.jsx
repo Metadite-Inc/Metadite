@@ -33,7 +33,8 @@ const Navbar = () => {
     toggleMobileMenu();
   };
 
-  const cartItemCount = cartItems.reduce((total, item) => total + item.quantity, 0);
+  // Add fallback for undefined cartItems
+  const cartItemCount = (cartItems || []).reduce((total, item) => total + item.quantity, 0);
 
   const navLinks = [
     { to: '/', label: 'Home' },
