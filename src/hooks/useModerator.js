@@ -100,6 +100,7 @@ const useModerator = () => {
             name: model?.name || 'Unknown',
             image: model?.image || null,
             receiverId: room.user_id,
+            receiverName: room.user?.full_name,
             lastMessage: room.last_message?.content || 'Check for messages',
             lastMessageTime: room.last_message?.created_at || null,
             unreadCount: room.unread_count || 0,
