@@ -55,7 +55,7 @@ const ChatHeader = ({ selectedModel, connectionStatus }) => {
             {selectedModel.name}
           </h2>
           <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-            Room ID: {selectedModel.id} • User Name: {selectedModel.receiverId}
+            Room ID: {selectedModel.id} • User Name: {selectedModel.receiverName?.split(' ')[0] || selectedModel.receiverName}e
           </p>
         </div>
       </div>
