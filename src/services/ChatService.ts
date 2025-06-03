@@ -39,39 +39,30 @@ const getAuthToken = (): string | null => {
 };
 
 // Centralized error handling
-const handleChatError = (error: any, context: string) => {
-  console.error(`Chat server error: ${context}`, error);
+const handleChatError = (error: ChatError) => {
+  console.error(`Chat ${error.type} error:`, error.message, error.details);
   
-  // Extract meaningful error message
-  let errorMessage = `${context} failed`;
-  
-  if (error?.response?.data) {
-    const errorData = error.response.data;
-    
-    // Handle validation errors (array of error objects)
-    if (Array.isArray(errorData)) {
-      const messages = errorData.map((err: any) => err.msg || 'Validation error').join(', ');
-      errorMessage = `${context}: ${messages}`;
-    }
-    // Handle string error messages
-    else if (typeof errorData === 'string') {
-      errorMessage = `${context}: ${errorData}`;
-    }
-    // Handle object with detail or message
-    else if (errorData.detail) {
-      errorMessage = `${context}: ${errorData.detail}`;
-    }
-    else if (errorData.message) {
-      errorMessage = `${context}: ${errorData.message}`;
-    }
+  switch (error.type) {
+    case 'authentication':
+      toast.error('Authentication required', {
+        description: error.details || 'You must be logged in to send messages.',
+      });
+      break;
+    case 'connection':
+      toast.error('Connection error', {
+        description: error.details || 'Unable to connect to chat server.',
+      });
+      break;
+    case 'validation':
+      toast.error('Invalid data', {
+        description: error.details || 'Please check your input and try again.',
+      });
+      break;
+    default:
+      toast.error('Chat error', {
+        description: error.details || 'An unexpected error occurred.',
+      });
   }
-  // Handle network errors
-  else if (error?.message) {
-    errorMessage = `${context}: ${error.message}`;
-  }
-  
-  toast.error(errorMessage);
-  throw error;
 };
 
 // Get connection state for a specific chat room
@@ -492,42 +483,43 @@ export const sendHttpMessage = async (content: string, chatRoomId: number, moder
 };
 
 // Chat Room APIs with better error handling
-export const createChatRoom = async (dollId: string): Promise<ChatRoom | null> => {
+export const createChatRoom = async (dollId: string) => {
+  const token = getAuthToken();
+  if (!token) return null;
+  
+  if (!dollId || isNaN(Number(dollId))) {
+    const error: ChatError = {
+      type: 'validation',
+      message: 'Invalid doll ID',
+      details: `Received: ${dollId}`
+    };
+    handleChatError(error);
+    return null;
+  }
+  
   try {
-    const token = localStorage.getItem('access_token');
-    if (!token) {
-      toast.error("Please login to start a chat");
-      return null;
-    }
-
-    // Get user data from localStorage or make an API call to get current user
-    const userData = JSON.parse(localStorage.getItem('user') || '{}');
-    const userId = userData.id;
-    
-    if (!userId) {
-      toast.error("User information not found. Please login again.");
-      return null;
-    }
-
-    const response = await axios.post(
-      `${API_BASE_URL}/chat/rooms/`,
+    console.log(`Creating chat room for doll ${dollId}`);
+    const response = await axios.post(`${API_BASE_URL}/api/chat/rooms/`, 
+      { doll_id: dollId },
       {
-        doll_id: dollId,
-        user_id: userId,
-        moderator_id: null // Can be null initially, assigned later by system
-      },
-      {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+        headers: { Authorization: `Bearer ${token}` },
+        timeout: 10000
       }
     );
-
-    console.log('Chat room created successfully:', response.data);
+    console.log('Chat room created:', response.data);
     return response.data;
   } catch (error) {
-    handleChatError(error, "Failed to create chat room");
+    console.error('Failed to create chat room:', error);
+    
+    if (axios.isAxiosError(error)) {
+      const chatError: ChatError = {
+        type: 'server',
+        message: 'Failed to create chat room',
+        details: error.response?.data?.detail || error.message
+      };
+      handleChatError(chatError);
+    }
+    
     return null;
   }
 };
