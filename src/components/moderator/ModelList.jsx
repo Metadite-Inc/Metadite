@@ -1,6 +1,7 @@
 import React from 'react';
 import { Search, MessageSquare } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
+import { User } from 'lucide-react';
 
 const ModelList = ({ models, searchTerm, setSearchTerm, selectedModel, onSelectModel, loading }) => {
   const { theme } = useTheme();
@@ -70,25 +71,27 @@ const ModelList = ({ models, searchTerm, setSearchTerm, selectedModel, onSelectM
                 }`}
               >
                 <div className="flex items-center p-3">
-                  <div className="relative w-12 h-12 rounded-full overflow-hidden mr-3 flex-shrink-0">
-                    <img
-                      src={model.image}
-                      alt={model.name}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = 'https://placehold.co/200?text=Model';
-                      }}
-                    />
+                  <div className="relative mr-3 flex-shrink-0">
+                    <div className="w-12 h-12 rounded-full overflow-hidden">
+                      <img
+                        src={model.image}
+                        alt={model.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = 'https://placehold.co/200?text=Model';
+                        }}
+                      />
+                    </div>
                     {model.unreadCount > 0 && (
-                      <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                      <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center z-10 border-2 border-white">
                         {model.unreadCount > 9 ? '9+' : model.unreadCount}
                       </div>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className={`text-sm font-medium truncate ${selectedModel?.id === model.id ? 'text-metadite-primary' : ''}`}>
-                      {model.name}
+                      {model.name} • {model.receiverName?.split(' ')[0] || model.receiverName}e
                     </p>
                     <p className="text-xs truncate text-gray-500 dark:text-gray-400 mt-1">
                       {model.lastMessage || 'No messages yet'}
