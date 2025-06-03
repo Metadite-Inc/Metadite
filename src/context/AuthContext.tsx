@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { authApi } from '../lib/api/auth_api';
 
@@ -20,6 +19,7 @@ interface AuthContextType {
   logout: () => void;
   refreshUser: () => Promise<void>;
   register: (email: string, password: string, name: string, region: string) => Promise<void>;
+  updateMembership: (membershipLevel: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -81,6 +81,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const updateMembership = async (membershipLevel: string) => {
+    try {
+      // Update user membership level via API
+      // This would need to be implemented with the actual API endpoint
+      console.log('Updating membership to:', membershipLevel);
+      
+      // For now, just update the local user state
+      if (user) {
+        setUser({ ...user, membership_level: membershipLevel as any });
+      }
+    } catch (error) {
+      console.error('Failed to update membership:', error);
+      throw error;
+    }
+  };
+
   useEffect(() => {
     const initializeAuth = async () => {
       const token = localStorage.getItem('access_token');
@@ -108,7 +124,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [user]);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, refreshUser, register }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, refreshUser, register, updateMembership }}>
       {children}
     </AuthContext.Provider>
   );
