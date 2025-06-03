@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { FileVideo, X, Upload, Image, CalendarDays } from 'lucide-react';
 import { toast } from 'sonner';
@@ -146,8 +145,15 @@ const VideoUploader = ({ models, selectedModel, onVideoUploaded, fetchAllVideos 
       return;
     }
     
+    if (!uploadedVideoId) {
+      toast.error("No video ID found. Please try uploading the video again.");
+      return;
+    }
+    
     try {
       console.log('Uploading thumbnail for video:', uploadedVideoId);
+      console.log('Thumbnail file:', thumbnailFile.name, 'Size:', thumbnailFile.size);
+      
       const success = await videoApiService.uploadThumbnail(uploadedVideoId, thumbnailFile);
       
       if (success) {
@@ -162,13 +168,28 @@ const VideoUploader = ({ models, selectedModel, onVideoUploaded, fetchAllVideos 
       }
     } catch (error) {
       console.error("Error uploading thumbnail:", error);
-      toast.error("Failed to upload thumbnail", {
-        description: error.response?.data?.detail || error.message || "The upload was cancelled due to an error"
-      });
       
-      // Reset form on failure
+      // More specific error handling
+      if (error.response?.status === 404) {
+        toast.error("Thumbnail upload endpoint not found", {
+          description: "The server doesn't support thumbnail uploads yet. The video was uploaded successfully without a thumbnail."
+        });
+      } else if (error.response?.status === 413) {
+        toast.error("Thumbnail file too large", {
+          description: "Please select a smaller image file for the thumbnail."
+        });
+      } else {
+        toast.error("Failed to upload thumbnail", {
+          description: error.message || "The video was uploaded successfully, but the thumbnail upload failed."
+        });
+      }
+      
+      // Still reset form and fetch videos since the main video upload was successful
       resetUploadForm();
       fetchAllVideos();
+      
+      // Notify parent that upload is complete (even if thumbnail failed)
+      if (onVideoUploaded) onVideoUploaded();
     }
   };
 
@@ -352,7 +373,7 @@ const VideoUploader = ({ models, selectedModel, onVideoUploaded, fetchAllVideos 
                 </h3>
               </div>
               <p className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-4`}>
-                Now you can upload a thumbnail for your video
+                Now you can upload a thumbnail for your video (optional)
               </p>
             </div>
 
@@ -360,7 +381,7 @@ const VideoUploader = ({ models, selectedModel, onVideoUploaded, fetchAllVideos 
               <div>
                 <label className={`block text-sm font-medium mb-1 
                   ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
-                  Thumbnail Image
+                  Thumbnail Image (Optional)
                 </label>
                 <div className="mt-1">
                   <label className="block w-full">
@@ -392,7 +413,7 @@ const VideoUploader = ({ models, selectedModel, onVideoUploaded, fetchAllVideos 
                     if (onVideoUploaded) onVideoUploaded();
                   }}
                 >
-                  Skip
+                  Skip Thumbnail
                 </Button>
                 <Button 
                   type="submit"

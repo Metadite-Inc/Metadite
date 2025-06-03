@@ -191,22 +191,50 @@ export const videoApiService = {
         }
     },
 
-    // Upload thumbnail for video
+    // Upload thumbnail for video - try multiple endpoint approaches
     async uploadThumbnail(videoId: number, thumbnailFile: File): Promise<boolean> {
         try {
             const formData = new FormData();
+            formData.append('file', thumbnailFile);
             formData.append('thumbnail', thumbnailFile);
 
-            await api.post(`/api/videos/${videoId}/thumbnail`, formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            });
-
-            return true;
+            // Try the standard video update endpoint first
+            try {
+                await api.put(`/api/videos/${videoId}/thumbnail`, formData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    },
+                });
+                return true;
+            } catch (error) {
+                console.log('First thumbnail upload method failed, trying alternative...');
+                
+                // Try alternative endpoint
+                await api.post(`/api/videos/${videoId}/thumbnail`, formData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    },
+                });
+                return true;
+            }
         } catch (error) {
             console.error('Error uploading thumbnail:', error);
-            throw error;
+            
+            // If both specific thumbnail endpoints fail, try updating the video with thumbnail
+            try {
+                const updateData = new FormData();
+                updateData.append('thumbnail_file', thumbnailFile);
+                
+                await api.put(`/api/videos/${videoId}`, updateData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    },
+                });
+                return true;
+            } catch (updateError) {
+                console.error('All thumbnail upload methods failed:', updateError);
+                throw new Error('Unable to upload thumbnail. Please check if the thumbnail upload endpoint is available.');
+            }
         }
     }
 };
