@@ -34,6 +34,7 @@ const ModelChat = () => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const messageEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
   const fileInputRef = useRef(null);
   const [fetchError, setFetchError] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -125,7 +126,7 @@ const ModelChat = () => {
     };
 
     initializeChat();
-  }, [id, roomIdFromUrl]); // Removed user?.id from dependencies
+  }, [id, roomIdFromUrl]);
   
   // Separate effect for WebSocket connection that only runs when chatRoom is set
   useEffect(() => {
@@ -152,7 +153,7 @@ const ModelChat = () => {
         clearTimeout(typingTimeoutRef.current);
       }
     };
-  }, [chatRoom?.id]); // Only depend on chatRoom.id, not the user
+  }, [chatRoom?.id]);
   
   // Handle incoming WebSocket messages
   const handleWebSocketMessage = (data) => {
@@ -189,10 +190,16 @@ const ModelChat = () => {
     }
   };
   
-  // Scroll to bottom when messages change
+  // Scroll to bottom only when new messages are added, not on page load
   useEffect(() => {
-    messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    if (messages.length > 0) {
+      // Only scroll to bottom for the latest message, don't auto-scroll on page load
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage && user && lastMessage.sender_id === user.id) {
+        messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  }, [messages, user]);
 
   const loadMoreMessages = async () => {
     if (!chatRoom || isLoadingMore || !hasMoreMessages) return;
@@ -204,8 +211,21 @@ const ModelChat = () => {
       
       if (olderMessages.length > 0) {
         console.log(`Loaded ${olderMessages.length} older messages`);
+        
+        // Store current scroll position
+        const container = messagesContainerRef.current;
+        const scrollHeight = container?.scrollHeight || 0;
+        
         setMessages(prev => [...olderMessages, ...prev]);
         setHasMoreMessages(olderMessages.length === 50);
+        
+        // Restore scroll position after new messages are added
+        setTimeout(() => {
+          if (container) {
+            const newScrollHeight = container.scrollHeight;
+            container.scrollTop = newScrollHeight - scrollHeight;
+          }
+        }, 100);
       } else {
         console.log('No more messages to load');
         setHasMoreMessages(false);
@@ -432,8 +452,8 @@ const ModelChat = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       
-      <div className={`flex-1 pt-20 pb-12 px-4 ${theme === 'dark' ? 'bg-gray-900' : 'bg-gradient-to-br from-white via-metadite-light to-white'}`}>
-        <div className="container mx-auto max-w-4xl">
+      <div className={`flex-1 pt-20 pb-4 px-4 ${theme === 'dark' ? 'bg-gray-900' : 'bg-gradient-to-br from-white via-metadite-light to-white'}`}>
+        <div className="container mx-auto max-w-4xl h-full flex flex-col">
           <div className="mb-6">
             <Link to={`/model/${model.id}`} className="flex items-center text-metadite-primary hover:underline">
               <ChevronLeft className="h-4 w-4 mr-1" />
@@ -441,7 +461,7 @@ const ModelChat = () => {
             </Link>
           </div>
           
-          <div className={`glass-card rounded-xl overflow-hidden h-[600px] flex flex-col ${theme === 'dark' ? 'bg-gray-800/70 border-gray-700' : ''}`}>
+          <div className={`glass-card rounded-xl overflow-hidden flex-1 flex flex-col ${theme === 'dark' ? 'bg-gray-800/70 border-gray-700' : ''}`}>
             <div className={`p-4 border-b flex items-center justify-between ${theme === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
               <div className="flex items-center">
                 <div className="w-10 h-10 rounded-full overflow-hidden mr-3">
@@ -480,7 +500,10 @@ const ModelChat = () => {
             
             {renderConnectionStatus()}
             
-            <div className="overflow-y-auto p-4 flex-grow space-y-4">
+            <div 
+              ref={messagesContainerRef}
+              className="overflow-y-auto p-4 flex-grow space-y-4"
+            >
               {hasMoreMessages && (
                 <div className="text-center my-2">
                   <button
