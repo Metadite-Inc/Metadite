@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
-import { Menu, X, ShoppingCart, MessageSquare } from 'lucide-react';
+import { Menu, X, LogIn, User, ShoppingCart, MessageSquare } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 import UserMenu from './UserMenu';
 import useUnreadCount from '../hooks/useUnreadCount';
@@ -39,8 +39,7 @@ const Navbar = () => {
   const navLinks = [
     { to: '/', label: 'Home' },
     { to: '/models', label: 'Models' },
-    ...(user && user.membership_level !== 'free' ? [{ to: '/vip', label: 'VIP Content' }] : []),
-    { to: '/contact', label: 'Contact' }
+    ...(user && user.membership_level !== 'free' ? [{ to: '/vip-content', label: 'VIP Content' }] : [])
   ];
 
   return (
@@ -82,7 +81,7 @@ const Navbar = () => {
           {user ? (
             <>
               <Link
-                to="/dashboard"
+                to="/chat"
                 className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors flex items-center"
               >
                 <MessageSquare className="h-5 w-5 mr-1" />
@@ -110,8 +109,9 @@ const Navbar = () => {
           ) : (
             <Link
               to="/login"
-              className="bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white px-4 py-2 rounded-md hover:opacity-90 transition-opacity"
+              className="flex items-center bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white px-4 py-2 rounded-md hover:opacity-90 transition-opacity"
             >
+              <LogIn className="h-4 w-4 mr-2" />
               Login
             </Link>
           )}
@@ -175,7 +175,7 @@ const Navbar = () => {
           ) : (
             <Link
               to="/login"
-              className="bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white px-4 py-2 rounded-md hover:opacity-90 transition-opacity"
+              className="bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white px-4 py-2 rounded-md hover:opacity-90 transition-opacity text-center"
               onClick={toggleMobileMenu}
             >
               Login
