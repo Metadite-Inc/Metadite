@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { Menu, X } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 import UserMenu from './UserMenu';
+import useUnreadCount from '../hooks/useUnreadCount';
 
 const StaffNavbar = () => {
   const { user, logout } = useAuth();
@@ -12,6 +13,7 @@ const StaffNavbar = () => {
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { unreadData } = useUnreadCount();
 
   const toggleMobileMenu = () => setMobileMenuOpen(!mobileMenuOpen);
 
@@ -32,7 +34,11 @@ const StaffNavbar = () => {
   const getNavLinks = () => {
     if (user?.role === 'moderator') {
       return [
-        { to: '/moderator', label: 'Moderator' },
+        { 
+          to: '/moderator', 
+          label: 'Moderator',
+          showUnread: true
+        },
         { to: '/staff-dashboard', label: 'Dashboard' }
       ];
     }
@@ -77,9 +83,14 @@ const StaffNavbar = () => {
             <Link
               key={link.to}
               to={link.to}
-              className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors"
+              className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors relative flex items-center"
             >
               {link.label}
+              {link.showUnread && unreadData.total_unread > 0 && (
+                <span className="ml-2 bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] h-5 flex items-center justify-center">
+                  {unreadData.total_unread}
+                </span>
+              )}
             </Link>
           ))}
           <ThemeToggle />
@@ -103,10 +114,15 @@ const StaffNavbar = () => {
             <Link
               key={link.to}
               to={link.to}
-              className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors py-2"
+              className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors py-2 flex items-center"
               onClick={toggleMobileMenu}
             >
               {link.label}
+              {link.showUnread && unreadData.total_unread > 0 && (
+                <span className="ml-2 bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] h-5 flex items-center justify-center">
+                  {unreadData.total_unread}
+                </span>
+              )}
             </Link>
           ))}
           <button
