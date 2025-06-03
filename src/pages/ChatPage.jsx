@@ -92,7 +92,7 @@ const ChatPage = () => {
             modelId: room.doll_id,
             modelName: model?.name || "Unknown",
             modelImage: model?.image || null,
-            lastMessage: room.last_message?.content || 'No messages yet',
+            lastMessage: room.last_message?.content || 'Check for messages',
             lastMessageTime: room.last_message?.created_at,
             unreadCount: room.unread_count || 0,
             createdAt: room.created_at,
@@ -593,9 +593,6 @@ const ChatPage = () => {
                               <h2 className={`font-medium ${theme === 'dark' ? 'text-white' : ''}`}>
                                 {selectedRoom.modelName}
                               </h2>
-                              <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                                Chat ID: {selectedRoom.id}
-                              </p>
                             </div>
                           </div>
                           
@@ -914,9 +911,6 @@ const ChatPage = () => {
                             <h2 className={`font-medium ${theme === 'dark' ? 'text-white' : ''}`}>
                               {selectedRoom.modelName}
                             </h2>
-                            <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                              Chat ID: {selectedRoom.id}
-                            </p>
                           </div>
                         </div>
                         
