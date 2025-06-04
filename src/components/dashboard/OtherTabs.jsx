@@ -39,7 +39,6 @@ const OtherTabs = ({ activeTab }) => {
       <div className="p-10 text-center">
         <h2 className={`text-xl font-semibold mb-2 ${theme === 'dark' ? 'text-white' : ''}`}>
           {activeTab === 'vip' && 'VIP Content'}
-          {activeTab === 'payment' && 'Payment Methods'}
           {activeTab === 'notifications' && 'Notifications'}
         </h2>
         <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} mb-4`}>
