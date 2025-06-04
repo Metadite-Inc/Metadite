@@ -92,7 +92,7 @@ const ChatPage = () => {
             modelId: room.doll_id,
             modelName: model?.name || "Unknown",
             modelImage: model?.image || null,
-            lastMessage: room.last_message?.content || 'Check for messages',
+            lastMessage: room.latest_message || 'Check for messages',
             lastMessageTime: room.last_message?.created_at,
             unreadCount: room.unread_count || 0,
             createdAt: room.created_at,
