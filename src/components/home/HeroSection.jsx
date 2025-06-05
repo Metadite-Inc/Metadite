@@ -1,12 +1,15 @@
 import { Link } from 'react-router-dom';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { slideshowApi } from '../../lib/api/slideshow_api';
 
 const HeroSection = ({ isLoaded, user, hasVipAccess, theme }) => {
   const [slideshowItems, setSlideshowItems] = useState([]);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [transitioning, setTransitioning] = useState(false);
+  const [nextSlide, setNextSlide] = useState(null);
   const videoRef = React.useRef(null);
+  const timeoutRef = React.useRef(null);
 
   useEffect(() => {
     // Load slideshow items from API
@@ -21,19 +24,37 @@ const HeroSection = ({ isLoaded, user, hasVipAccess, theme }) => {
     fetchSlides();
   }, []);
 
+  // Custom crossfade logic
   useEffect(() => {
     if (!slideshowItems.length || isPaused) return;
     const current = slideshowItems[currentSlide];
     let interval;
     if (current && current.type !== 'video') {
       interval = setInterval(() => {
-        setCurrentSlide((prev) => (prev + 1) % slideshowItems.length);
-      }, 3000);
+        handleNextSlide();
+      }, 3500);
     }
     return () => interval && clearInterval(interval);
   }, [slideshowItems, currentSlide, isPaused]);
+
+  // Handle next slide with crossfade
+  function handleNextSlide(idx = null) {
+    if (transitioning) return;
+    setTransitioning(true);
+    setNextSlide(idx !== null ? idx : (currentSlide + 1) % slideshowItems.length);
+    timeoutRef.current = setTimeout(() => {
+      setCurrentSlide(idx !== null ? idx : (currentSlide + 1) % slideshowItems.length);
+      setTransitioning(false);
+      setNextSlide(null);
+    }, 600); // Crossfade duration
+  }
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => timeoutRef.current && clearTimeout(timeoutRef.current);
+  }, []);
   return (
-    <section className={`pt-5 px-2 ${theme === 'dark' ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' : 'bg-gradient-to-br from-white via-metadite-light to-white'}`}>
+    <section className={`pt-20 px-2 ${theme === 'dark' ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' : 'bg-gradient-to-br from-white via-metadite-light to-white'}`}>
       <div className="container mx-auto max-w-6xl">
         <div className="flex flex-col md:flex-row items-center">
           <div className={`md:w-1/2 md:pr-8 mb-8 md:mb-0 transition-all duration-700 ${isLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10'}`}>
@@ -72,10 +93,10 @@ const HeroSection = ({ isLoaded, user, hasVipAccess, theme }) => {
             </div>
           </div>
           
-          <div className={`pt-8 pb-20 md:pl-10 md:w-1/2 transition-all duration-700 delay-300 ${isLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'} flex justify-center md:block`}>
+          <div className={`pt-10 pb-10 md:pl-20 md:w-2/5 transition-all duration-700 delay-300 ${isLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'} flex justify-center md:block`}>
             <div className="relative">
               {/* Slideshow Start */}
-              <div className="relative w-full max-w-[97vw] px-1 sm:w-96 sm:max-w-full sm:px-0 mx-auto aspect-[3/4.3] rounded-xl z-10 min-h-[420px] max-h-[480px] overflow-hidden">
+              <div className="relative w-screen max-w-none px-0 mx-0 rounded-none sm:w-auto sm:max-w-[97vw] sm:px-0 sm:mx-auto sm:rounded-xl aspect-[3.2/5.4] z-10 min-h-[420px] max-h-[500px] overflow-hidden">
 
                 {slideshowItems.length === 0 && (
                   <div className="flex items-center justify-center w-full h-full min-h-[200px] bg-gray-100 rounded-xl animate-pulse">
@@ -83,10 +104,12 @@ const HeroSection = ({ isLoaded, user, hasVipAccess, theme }) => {
                   </div>
                 )}
                 {slideshowItems.map((item, idx) => {
+                  const isActive = currentSlide === idx;
+                  const isNext = nextSlide === idx;
                   // More creative effects: drop, water, love, etc. (width/aspect unchanged)
                   const effects = [
                     // Drop-in (slide from top)
-                    currentSlide === idx ? 'translate-y-0 opacity-100 z-20 transition-all duration-700 ease-in-out' : '-translate-y-16 opacity-0 z-0 transition-all duration-700 ease-in-out',
+                    isActive ? 'translate-y-0 opacity-100 z-20 transition-all duration-700 ease-in-out' : '-translate-y-16 opacity-0 z-0 transition-all duration-700 ease-in-out',
                     // Water ripple (scale/skew)
                     currentSlide === idx ? 'scale-110 skew-y-0 opacity-100 z-20 transition-all duration-700 ease-in-out' : 'scale-90 skew-y-0 opacity-0 z-0 transition-all duration-700 ease-in-out',
                     // Love (scale with pink shadow, no pulse)
@@ -95,69 +118,69 @@ const HeroSection = ({ isLoaded, user, hasVipAccess, theme }) => {
                     currentSlide === idx ? 'scale-100 opacity-100 z-20 transition-all duration-700 ease-in-out' : 'scale-90 opacity-0 z-0 transition-all duration-700 ease-in-out',
                     // Rotate/zoom
                     currentSlide === idx ? 'scale-105 rotate-2 opacity-100 z-20 transition-all duration-700 ease-in-out' : 'scale-90 opacity-0 z-0 transition-all duration-700 ease-in-out',
-                    // Water drop (scaleY)
-                    currentSlide === idx ? 'scale-y-110 opacity-100 z-20 transition-all duration-700 ease-in-out' : 'scale-y-90 opacity-0 z-0 transition-all duration-700 ease-in-out',
                   ];
-                  const effect = effects[idx % effects.length];
-                  // Add pink shadow to all videos
-                  const loveShadow = item.type === 'video' ? 'shadow-pink-400/70' : '';
                   return (
                     <div
-                      key={item.url || idx}
-                      className={`absolute top-0 left-0 w-50 h-50 flex items-center justify-center ${effect} ${loveShadow}`}
-                      style={{ position: 'absolute' }}
+                      key={idx}
+                      className={`absolute inset-0 transition-all duration-600 ease-in-out z-10 slide-fade ${isActive ? (transitioning ? 'opacity-0' : 'opacity-100 z-20') : isNext ? 'opacity-100 z-30' : 'opacity-0 z-0'}`}
+                      style={{
+                        transition: 'opacity 0.6s, transform 0.6s, filter 0.6s',
+                        opacity: isActive && !transitioning ? 1 : isNext ? 1 : 0,
+                        pointerEvents: isNext ? 'auto' : 'none',
+                        transform: isNext ? 'scale(1.03)' : 'scale(1)',
+                        //filter: isNext ? 'brightness(1.1) contrast(1.15)' : 'brightness(0.9) blur(1.5px)',
+                      }}
                     >
-                      <div className={`w-full h-full p-1 bg-white/80 dark:bg-gray-900/60 rounded-xl border-2 border-metadite-primary/40 flex items-center justify-center shadow-2xl relative group ${loveShadow}`}>
-                        {item.type === 'video' ? (
-                          <video
-                            src={item.url}
-                            className="w-full h-full object-cover rounded-lg drop-shadow-xl scale-90"
-                            style={{ display: 'block', transition: 'transform 0.7s, filter 0.7s', filter: currentSlide === idx ? 'brightness(1) contrast(1.1)' : 'brightness(0.8) blur(2px)' }}
-                            autoPlay
-                            muted
-                            playsInline
-                            ref={currentSlide === idx ? videoRef : null}
-                            onEnded={() => {
-                              if (slideshowItems.length > 1) {
-                                setCurrentSlide((prev) => (prev + 1) % slideshowItems.length);
-                              } else {
-                                // If only one video, loop it
-                                if (videoRef.current) videoRef.current.play();
+                      {item.type === 'video' ? (
+                        <video
+                          key={isActive ? `video-active-${currentSlide}` : `video-inactive-${idx}`}
+                          src={item.url}
+                          className="w-full h-full object-cover rounded-lg drop-shadow-xl"
+                          style={{ display: 'block', width: '100%', height: '100%', margin: 'auto' }}
+                          autoPlay
+                          muted
+                          playsInline
+                          ref={isActive ? videoRef : null}
+                          onEnded={() => {
+                            if (slideshowItems.length > 1) {
+                              handleNextSlide();
+                            } else {
+                              if (videoRef.current) videoRef.current.currentTime = 0;
+                              if (videoRef.current) videoRef.current.play();
+                            }
+                          }}
+                        />
+                      ) : (
+                        <img
+                          src={item.url}
+                          alt={item.name || `Slide ${idx + 1}`}
+                          className="w-full h-full object-contain rounded-lg drop-shadow-xl"
+                          style={{ display: 'block', width: '100%', height: '100%' }}
+                        />
+                      )}
+                      {/* Pause/Play Button - bottom right, always on mobile, hover on desktop */}
+                      {isNext && (
+                        <button
+                          className="absolute bottom-3 right-3 z-30 flex items-center px-3 py-1 bg-gray-800 text-white rounded-full shadow hover:bg-gray-700 transition-colors text-xs flex sm:flex md:hidden lg:hidden xl:hidden 2xl:hidden group-hover:flex"
+                          style={{ pointerEvents: 'auto' }}
+                          onClick={() => {
+                            setIsPaused((prev) => {
+                              const next = !prev;
+                              if (videoRef.current) {
+                                if (next) videoRef.current.pause();
+                                else videoRef.current.play();
                               }
-                            }}
-                          />
-                        ) : (
-                          <img
-                            src={item.url}
-                            alt={item.name || `Slide ${idx + 1}`}
-                            className="w-full h-full object-contain rounded-lg drop-shadow-xl scale-90"
-                            style={{ display: 'block', transition: 'transform 0.7s, filter 0.7s', filter: currentSlide === idx ? 'brightness(1) contrast(1.1)' : 'brightness(0.8) blur(2px)' }}
-                          />
-                        )}
-                        {/* Pause/Play Button - bottom right, always on mobile, hover on desktop */}
-                        {currentSlide === idx && (
-                          <button
-                            className="absolute bottom-3 right-3 z-30 flex items-center px-3 py-1 bg-gray-800 text-white rounded-full shadow hover:bg-gray-700 transition-colors text-xs flex sm:flex md:hidden lg:hidden xl:hidden 2xl:hidden group-hover:flex"
-                            style={{ pointerEvents: 'auto' }}
-                            onClick={() => {
-                              setIsPaused((prev) => {
-                                const next = !prev;
-                                if (videoRef.current) {
-                                  if (next) videoRef.current.pause();
-                                  else videoRef.current.play();
-                                }
-                                return next;
-                              });
-                            }}
-                          >
-                            {isPaused ? (
-                              <span>&#9654;</span>
-                            ) : (
-                              <span>&#10073;&#10073;</span>
-                            )}
-                          </button>
-                        )}
-                      </div>
+                              return next;
+                            });
+                          }}
+                        >
+                          {isPaused ? (
+                            <span>&#9654;</span>
+                          ) : (
+                            <span>&#10073;&#10073;</span>
+                          )}
+                        </button>
+                      )}
                     </div>
                   );
                 })}
@@ -168,7 +191,7 @@ const HeroSection = ({ isLoaded, user, hasVipAccess, theme }) => {
                       <button
                         key={idx}
                         className={`w-2 h-2 rounded-full ${currentSlide === idx ? 'bg-metadite-primary' : 'bg-gray-300'} focus:outline-none`}
-                        onClick={() => setCurrentSlide(idx)}
+                        onClick={() => handleNextSlide(idx)}
                         aria-label={`Go to slide ${idx + 1}`}
                       />
                     ))}
@@ -185,6 +208,6 @@ const HeroSection = ({ isLoaded, user, hasVipAccess, theme }) => {
       </div>
     </section>
   );
-};
+}
 
 export default HeroSection;

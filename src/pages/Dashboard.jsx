@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { useAuth } from '../context/AuthContext';
@@ -14,6 +14,16 @@ const Dashboard = () => {
   const { user, logout, loading } = useAuth();
   const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState('overview');
+
+  // Set tab from URL query param if present
+  const location = useLocation();
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tab = params.get('tab');
+    if (tab && tab !== activeTab) {
+      setActiveTab(tab);
+    }
+  }, [location.search, activeTab]);
   const [isLoaded, setIsLoaded] = useState(false);
   const navigate = useNavigate();
 

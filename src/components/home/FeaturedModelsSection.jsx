@@ -9,9 +9,12 @@ const FeaturedModelsSection = ({ models = [], loading = false, theme }) => {
       <div className="container mx-auto max-w-6xl">
         <div className="flex justify-between items-center mb-8">
           <h2 className={`text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Featured Models</h2>
-          <Link to="/models" className="flex items-center text-metadite-primary hover:text-metadite-secondary transition-colors">
+          <Link
+            to="/models"
+            className="inline-flex items-center bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white rounded-md px-4 py-2 font-medium shadow hover:opacity-90 focus:ring-2 focus:ring-metadite-primary transition"
+          >
             <span>View All</span>
-            <ChevronRight className="h-5 w-5 ml-1" />
+            <ChevronRight className="h-5 w-5 ml-2" />
           </Link>
         </div>
         
