@@ -2,6 +2,7 @@ import axios from 'axios';
 import { toast } from 'sonner';
 import { MessageType, MessageStatus, ChatError, ConnectionState, QueuedMessage } from '../types/chat';
 import { authApi } from '../lib/api/auth_api';
+import NotificationService from './NotificationService';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -22,6 +23,9 @@ const messageQueues: Map<number, QueuedMessage[]> = new Map();
 
 // Event listeners for connection state changes per chat room
 const connectionListeners: Map<number, ((state: ConnectionState) => void)[]> = new Map();
+
+// Get notification service instance
+const notificationService = NotificationService.getInstance();
 
 // Get auth token from localStorage and validate
 const getAuthToken = (): string | null => {
@@ -212,7 +216,7 @@ const reconnectWebSocket = (chatRoomId: number, onMessage: (data: any) => void) 
   reconnectTimeouts.set(chatRoomId, timeout);
 };
 
-// Enhanced WebSocket connection for a specific chat room
+// Enhanced WebSocket connection for a specific chat room with notification integration
 export const connectWebSocket = async (chatRoomId: number | string, onMessage: (data: any) => void) => {
   const token = getAuthToken();
   if (!token) return null;
@@ -301,6 +305,14 @@ export const connectWebSocket = async (chatRoomId: number | string, onMessage: (
               updated_at: data.updated
             }
           };
+          
+          // Trigger notification for new message if it's not from the current user
+          if (data.sender_id && data.sender_id.toString() !== userId.toString()) {
+            const senderName = data.sender_name || 'Someone';
+            const messageContent = data.message || data.content || 'New message';
+            notificationService.notifyNewMessage(senderName, messageContent, validChatRoomId);
+          }
+          
           onMessage(normalizedData);
         } else if (data.action === "delete") {
           onMessage({
@@ -321,12 +333,6 @@ export const connectWebSocket = async (chatRoomId: number | string, onMessage: (
           console.log('System notification:', data.message);
         } else if (data.type === "history") {
           // Handle message history from WebSocket
-          /*bind backend url to file_url to display media types corectly especialy images
-          if (Array.isArray(msg.file_url)) {
-            messageMedia = `${backendUrl}${msg.file_url}` : '';
-          }
-            not working for now, needs proper implementation
-          */
           if (data.messages && data.messages.length > 0) {
             data.messages.forEach(msg => {
               onMessage({
