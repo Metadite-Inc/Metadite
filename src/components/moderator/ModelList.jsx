@@ -91,7 +91,7 @@ const ModelList = ({ models, searchTerm, setSearchTerm, selectedModel, onSelectM
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className={`text-sm font-medium truncate ${selectedModel?.id === model.id ? 'text-metadite-primary' : ''}`}>
-                      {model.name} • {model.receiverName?.split(' ')[0] || model.receiverName}e
+                      {model.name} • {model.receiverName?.split(' ')[0] || model.receiverName}
                     </p>
                     <p className="text-xs truncate text-gray-500 dark:text-gray-400 mt-1">
                       {model.lastMessage || 'No messages yet'}
