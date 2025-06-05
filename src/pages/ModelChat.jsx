@@ -435,8 +435,11 @@ const ModelChat = () => {
       <div className={`flex-1 pt-20 pb-12 px-4 ${theme === 'dark' ? 'bg-gray-900' : 'bg-gradient-to-br from-white via-metadite-light to-white'}`}>
         <div className="container mx-auto max-w-4xl">
           <div className="mb-6">
-            <Link to={`/model/${model.id}`} className="flex items-center text-metadite-primary hover:underline">
-              <ChevronLeft className="h-4 w-4 mr-1" />
+            <Link
+              to={`/model/${model.id}`}
+              className="inline-flex items-center bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white rounded-md px-4 py-2 font-medium shadow hover:opacity-90 focus:ring-2 focus:ring-metadite-primary transition"
+            >
+              <ChevronLeft className="h-4 w-4 mr-2" />
               Back to {model.name}
             </Link>
           </div>

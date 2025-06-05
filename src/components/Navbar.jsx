@@ -144,7 +144,6 @@ const Navbar = () => {
                 className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors py-2 flex items-center"
                 onClick={toggleMobileMenu}
               >
-                <MessageSquare className="h-5 w-5 mr-2" />
                 Messages
                 {unreadData.total_unread > 0 && (
                   <span className="ml-2 bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] h-5 flex items-center justify-center">
@@ -157,13 +156,19 @@ const Navbar = () => {
                 className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors py-2 flex items-center"
                 onClick={toggleMobileMenu}
               >
-                <ShoppingCart className="h-5 w-5 mr-2" />
                 Cart
                 {cartItemCount > 0 && (
                   <span className="ml-2 bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] h-5 flex items-center justify-center">
                     {cartItemCount}
                   </span>
                 )}
+              </Link>
+              <Link
+                to="/dashboard"
+                className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors py-2 flex items-center"
+                onClick={toggleMobileMenu}
+              >
+                Dashboard
               </Link>
               <button
                 onClick={handleLogout}

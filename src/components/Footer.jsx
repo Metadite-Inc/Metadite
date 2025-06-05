@@ -1,6 +1,5 @@
-
 import { Link } from 'react-router-dom';
-import { Facebook, Twitter, Instagram, Mail, ShoppingCart, Heart, User, Home } from 'lucide-react';
+import { Facebook, Twitter, Instagram, Mail, ShoppingCart, Heart, User, Home, MessageCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const Footer = () => {
@@ -80,22 +79,26 @@ const Footer = () => {
         <div className="md:hidden fixed bottom-0 left-0 w-full bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex justify-around items-center py-2 z-50">
           <Link to="/models" className="flex flex-col items-center text-gray-700 dark:text-gray-300 hover:text-metadite-primary transition-colors">
             <Home className="h-6 w-6" />
-            <span className="text-xs mt-1">Doll</span>
+            <span className="text-xs mt-1 text-[10px]">Doll</span>
           </Link>
-          <Link to="/models" className="flex flex-col items-center text-gray-700 dark:text-gray-300 hover:text-metadite-primary transition-colors">
-            <Heart className="h-6 w-6" />
-            <span className="text-xs mt-1">Favourites</span>
+          <Link to="/chat" className="flex flex-col items-center text-gray-700 dark:text-gray-300 hover:text-metadite-primary transition-colors">
+            <MessageCircle className="h-6 w-6" />
+            <span className="text-xs mt-1 text-[10px]">Messages</span>
           </Link>
           <Link to="/cart" className="flex flex-col items-center text-gray-700 dark:text-gray-300 hover:text-metadite-primary transition-colors">
             <ShoppingCart className="h-6 w-6" />
-            <span className="text-xs mt-1">Cart</span>
+            <span className="text-xs mt-1 text-[10px]">Cart</span>
+          </Link>
+          <Link to="/dashboard?tab=favorites" className="flex flex-col items-center text-gray-700 dark:text-gray-300 hover:text-metadite-primary transition-colors">
+            <Heart className="h-6 w-6" />
+            <span className="text-xs mt-1 text-[10px]">Favorites</span>
           </Link>
           <Link 
-            to={user ? '/dashboard' : '/login'} 
+            to={user ? '/dashboard?tab=overview' : '/login'} 
             className="flex flex-col items-center text-gray-700 dark:text-gray-300 hover:text-metadite-primary transition-colors"
           >
             <User className="h-6 w-6" />
-            <span className="text-xs mt-1">Me</span>
+            <span className="text-xs mt-1 text-[10px]">Me</span>
           </Link>
         </div>
       )}
