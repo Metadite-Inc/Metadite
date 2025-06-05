@@ -4,42 +4,19 @@ import { getFileUrl, deleteMessage } from '../services/ChatService';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
 
-const MessageItem = ({ message, onDelete, chatRoom }) => {
+const MessageItem = ({ message, onDelete }) => {
   const { user } = useAuth();
   const [showActions, setShowActions] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [imageError, setImageError] = useState(false);
 
-  // Determine if this is the current user's message based on role and chat room context
-  const isOwnMessage = () => {
-    if (!user || !message.sender_id) return false;
-    
-    // If user is moderator, check if sender is the moderator assigned to this chat room
-    if (user.role === 'moderator') {
-      return message.sender_id === chatRoom?.moderator_id;
-    }
-    
-    // If user is regular user, check if sender is the user
-    return message.sender_id === user.id;
-  };
-
-  const canDeleteMessage = () => {
-    if (!user) return false;
-    
-    // Moderators can delete any message in their assigned chat rooms
-    if (user.role === 'moderator') {
-      return chatRoom?.moderator_id === user.id;
-    }
-    
-    // Users can only delete their own messages
-    return message.sender_id === user.id;
-  };
+  const isOwnMessage = message.sender_id === user?.id;
 
   const formatTime = (timestamp) => {
     try {
-      // Handle different timestamp formats and ensure proper UTC to local conversion
+            // Handle different timestamp formats and ensure proper UTC to local conversion
       let date;
-      
+
       if (timestamp) {
         // If timestamp is a string, parse it as UTC
         if (typeof timestamp === 'string') {
@@ -49,9 +26,9 @@ const MessageItem = ({ message, onDelete, chatRoom }) => {
         } else {
           date = new Date(timestamp);
         }
-        
+
         if (isNaN(date.getTime())) return '';
-        
+
         // Convert to local time and format
         return date.toLocaleTimeString('en-US', {
           hour: '2-digit',
@@ -59,7 +36,7 @@ const MessageItem = ({ message, onDelete, chatRoom }) => {
           hour12: false,
         });
       }
-      
+
       return '';
     } catch (error) {
       console.error('Error formatting time:', error);
@@ -131,24 +108,22 @@ const MessageItem = ({ message, onDelete, chatRoom }) => {
     );
   };
 
-  const messageIsOwn = isOwnMessage();
-
   return (
-    <div className={`flex ${messageIsOwn ? 'justify-end' : 'justify-start'} mb-4 group`}>
+    <div className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} mb-4 group`}>
       <div
         className={`relative max-w-xs md:max-w-md rounded-2xl p-3 ${
-          messageIsOwn
+          isOwnMessage
             ? 'bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white'
             : 'bg-white dark:bg-gray-800 shadow-sm'
         }`}
       >
         <div className="flex justify-between items-start">
-          <span className={`text-xs font-medium ${messageIsOwn ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'}`}>
+          <span className={`text-xs font-medium ${isOwnMessage ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'}`}>
             {message.sender_name || 'Anonymous'} • {formatTime(message.created_at || message.timestamp)}
           </span>
           <button
             className={`ml-2 opacity-0 group-hover:opacity-100 transition-opacity ${
-              messageIsOwn ? 'text-white/70 hover:text-white' : 'text-gray-400 hover:text-gray-600'
+              isOwnMessage ? 'text-white/70 hover:text-white' : 'text-gray-400 hover:text-gray-600'
             }`}
             onClick={() => setShowActions(!showActions)}
           >
@@ -167,7 +142,7 @@ const MessageItem = ({ message, onDelete, chatRoom }) => {
               <Flag className="h-4 w-4 mr-2" />
               {message.flagged ? 'Unflag' : 'Flag'}
             </button>
-            {canDeleteMessage() && (
+            {isOwnMessage && (
               <button
                 className="w-full text-left px-3 py-2 text-sm flex items-center hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-red-500"
                 onClick={handleDeleteMessage}
