@@ -23,8 +23,7 @@ const Dashboard = () => {
     if (tab && tab !== activeTab) {
       setActiveTab(tab);
     }
-    // eslint-disable-next-line
-  }, [location.search]);
+  }, [location.search, activeTab]);
   const [isLoaded, setIsLoaded] = useState(false);
   const navigate = useNavigate();
 
