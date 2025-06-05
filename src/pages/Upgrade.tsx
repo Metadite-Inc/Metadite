@@ -14,10 +14,10 @@ import { createNowpaymentsSubscriptionInvoice } from '../lib/api/payment_api';
 const tiers = [
   {
     name: 'Standard',
-    price: 10,
+    price: 12,
     description: 'Perfect for casual users',
     features: [
-      '10 messages',// per day',
+      '12 messages',// per day',
       'Access to all models',
       'One photo',// per model',
       'Email support',
