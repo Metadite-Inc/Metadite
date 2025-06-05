@@ -39,6 +39,8 @@ const Navbar = () => {
   const navLinks = [
     { to: '/', label: 'Home' },
     { to: '/models', label: 'Models' },
+    // Show Pricing link for non-logged-in users
+    ...(!user ? [{ to: '/upgrade', label: 'Pricing' }] : []),
     ...(user && user.membership_level !== 'free' ? [{ to: '/vip-content', label: 'VIP Content' }] : [])
   ];
 
@@ -80,18 +82,21 @@ const Navbar = () => {
         <div className="hidden md:flex items-center space-x-4">
           {user ? (
             <>
-              <Link
-                to="/chat"
-                className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors flex items-center"
-              >
-                <MessageSquare className="h-5 w-5 mr-1" />
-                Messages
-                {unreadData.total_unread > 0 && (
-                  <span className="ml-2 bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] h-5 flex items-center justify-center">
-                    {unreadData.total_unread}
-                  </span>
-                )}
-              </Link>
+              {/* Only show Messages link for non-free users */}
+              {user.membership_level !== 'free' && (
+                <Link
+                  to="/chat"
+                  className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors flex items-center"
+                >
+                  <MessageSquare className="h-5 w-5 mr-1" />
+                  Messages
+                  {unreadData.total_unread > 0 && (
+                    <span className="ml-2 bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] h-5 flex items-center justify-center">
+                      {unreadData.total_unread}
+                    </span>
+                  )}
+                </Link>
+              )}
               <Link
                 to="/cart"
                 className="relative text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors flex items-center"
@@ -139,36 +144,34 @@ const Navbar = () => {
           ))}
           {user ? (
             <>
-              <Link
-                to="/dashboard"
-                className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors py-2 flex items-center"
-                onClick={toggleMobileMenu}
-              >
-                Messages
-                {unreadData.total_unread > 0 && (
-                  <span className="ml-2 bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] h-5 flex items-center justify-center">
-                    {unreadData.total_unread}
-                  </span>
-                )}
-              </Link>
+              {/* Only show Messages link for non-free users in mobile menu */}
+              {user.membership_level !== 'free' && (
+                <Link
+                  to="/chat"
+                  className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors py-2 flex items-center"
+                  onClick={toggleMobileMenu}
+                >
+                  <MessageSquare className="h-5 w-5 mr-2" />
+                  Messages
+                  {unreadData.total_unread > 0 && (
+                    <span className="ml-2 bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] h-5 flex items-center justify-center">
+                      {unreadData.total_unread}
+                    </span>
+                  )}
+                </Link>
+              )}
               <Link
                 to="/cart"
                 className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors py-2 flex items-center"
                 onClick={toggleMobileMenu}
               >
+                <ShoppingCart className="h-5 w-5 mr-2" />
                 Cart
                 {cartItemCount > 0 && (
                   <span className="ml-2 bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] h-5 flex items-center justify-center">
                     {cartItemCount}
                   </span>
                 )}
-              </Link>
-              <Link
-                to="/dashboard"
-                className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors py-2 flex items-center"
-                onClick={toggleMobileMenu}
-              >
-                Dashboard
               </Link>
               <button
                 onClick={handleLogout}
