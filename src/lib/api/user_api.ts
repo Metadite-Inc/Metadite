@@ -64,6 +64,41 @@ class userApiService {
       throw error;
     }
   }
+
+  async updatePassword(data: { current_password: string; new_password: string }): Promise<any> {
+    try {
+      const result = await this.request<any>(`/api/auth/change-password`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+      toast.success('Password updated successfully');
+      return result;
+    } catch (error: any) {
+      if (error.message?.includes('401') || error.message?.includes('403')) {
+        toast.error('Authentication failed. Please log in again.');
+      } else {
+        toast.error('Failed to update password');
+      }
+      throw error;
+    }
+  }
+
+  async deleteAccount(): Promise<void> {
+    try {
+      await this.request<void>(`/api/users/account`, {
+        method: 'DELETE',
+      });
+      toast.success('Account deleted successfully');
+    } catch (error: any) {
+      if (error.message?.includes('401') || error.message?.includes('403')) {
+        toast.error('Authentication failed. Please log in again.');
+      } else {
+        toast.error('Failed to delete account');
+      }
+      throw error;
+    }
+  }
+
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     // Use access_token to match auth_api.ts implementation
     const token = localStorage.getItem('access_token');
