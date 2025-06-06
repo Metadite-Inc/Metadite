@@ -20,7 +20,7 @@ const ModeratorAssignments = () => {
 
   useEffect(() => {
     // Redirect users who don't have access (only admin and moderator can access)
-    if (!user || (user.role !== 'admin' && user.role !== 'moderator')) {
+    if (!user || (user.role !== 'moderator')) {
       navigate('/');
       return;
     }
