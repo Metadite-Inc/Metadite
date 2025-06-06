@@ -19,8 +19,8 @@ const ModeratorAssignments = () => {
   const [filterActive, setFilterActive] = useState('all');
 
   useEffect(() => {
-    // Redirect non-admin users
-    if (!user || user.role !== 'admin') {
+    // Redirect users who don't have access (only admin and moderator can access)
+    if (!user || (user.role !== 'admin' && user.role !== 'moderator')) {
       navigate('/');
       return;
     }
