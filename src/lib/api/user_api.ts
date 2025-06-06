@@ -29,6 +29,11 @@ interface FavoriteModel {
   created_at?: string;
 }
 
+export interface ChatAccessStatus {
+  can_send_messages: boolean;
+  can_watch_videos: boolean;
+}
+
 class userApiService {
   async getUserOrders(): Promise<Order[]> {
     try {
@@ -96,6 +101,22 @@ class userApiService {
         toast.error('Failed to delete account');
       }
       throw error;
+    }
+  }
+
+  async getChatAccessStatus(): Promise<ChatAccessStatus> {
+    try {
+      const result = await this.request<ChatAccessStatus>(`/api/chat/access-status`, {
+        method: 'GET',
+      });
+      return result;
+    } catch (error) {
+      console.error("Failed to fetch chat access status:", error);
+      // Return default restricted access on error
+      return {
+        can_send_messages: false,
+        can_watch_videos: false
+      };
     }
   }
 

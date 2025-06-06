@@ -42,6 +42,7 @@ const useModerator = () => {
   const [connectionStatus, setConnectionStatus] = useState('disconnected');
   const wsRef = useRef(null);
   const connectionListenerRef = useRef(null);
+  const [refreshModelsCounter, setRefreshModelsCounter] = useState(0);
   
   // Server-side role validation for moderator access
   useEffect(() => {
@@ -75,7 +76,7 @@ const useModerator = () => {
     validateModeratorAccess();
   }, [user, navigate]);
   
-  // Load assigned models/dolls when component mounts
+  // Load assigned models/dolls when component mounts or when refresh is triggered
   useEffect(() => {
     const loadAssignedModels = async () => {
       setLoading(true);
@@ -119,7 +120,7 @@ const useModerator = () => {
     if (user?.role === 'moderator') {
       loadAssignedModels();
     }
-  }, [user]);
+  }, [user, refreshModelsCounter]);
   
   // Handle model selection
   const handleSelectModel = useCallback((model) => {
@@ -292,11 +293,18 @@ const useModerator = () => {
               ? {
                   ...model,
                   lastMessage: data.message.content || 'New message',
-                  lastMessageTime: data.message.created_at || new Date().toISOString()
+                  lastMessageTime: data.message.created_at || new Date().toISOString(),
+                  unreadCount: model.id === selectedModel?.id ? model.unreadCount : (model.unreadCount || 0) + 1
                 }
               : model
           )
         );
+      }
+
+      // If message is for a different room than currently selected, refresh the models list
+      if (chatRoomId && chatRoomId !== selectedModel?.id) {
+        console.log('Message received for different room, refreshing models list');
+        setRefreshModelsCounter(prev => prev + 1);
       }
     } else if (data.type === 'typing' && data.user_id) {
       setTypingUsers(prev => {
@@ -560,7 +568,8 @@ const useModerator = () => {
     handleFlagMessage,
     handleDeleteMessage,
     handleTyping,
-    loadMoreMessages
+    loadMoreMessages,
+    refreshModels: () => setRefreshModelsCounter(prev => prev + 1)
   };
 };
 

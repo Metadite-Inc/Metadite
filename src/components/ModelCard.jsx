@@ -5,12 +5,14 @@ import { useCart } from '../context/CartContext';
 import { toast } from 'sonner';
 import { favoriteApiService } from '../lib/api/favorite_api';
 import { createChatRoom } from '../services/ChatService';
-import { useAuth } from '../context/AuthContext'; 
+import { useAuth } from '../context/AuthContext';
+import { useChatAccess } from '../hooks/useChatAccess';
 
 const ModelCard = ({ model, user, isFavorite: initialIsFavorite, onRemoveFavorite }) => {
   const navigate = useNavigate();
   const { user: authUser } = useAuth();
   const { addToCart } = useCart();
+  const { canSendMessages } = useChatAccess();
   const [imageLoaded, setImageLoaded] = useState(false);
   const [isLiked, setIsLiked] = useState(initialIsFavorite || false);
   const [favoriteId, setFavoriteId] = useState(null);
@@ -89,6 +91,19 @@ const ModelCard = ({ model, user, isFavorite: initialIsFavorite, onRemoveFavorit
   const handleChatButtonClick = async () => {
     if (!authUser) {
       toast.error("Please log in to start a chat");
+      return;
+    }
+    
+    // Check if user has free membership - redirect to upgrade page
+    if (authUser.membership_level === 'free') {
+      navigate('/upgrade');
+      toast.info("Upgrade your membership to chat with models");
+      return;
+    }
+
+    // Check if user has chat access
+    if (!canSendMessages) {
+      toast.error("You don't have permission to send messages");
       return;
     }
     
