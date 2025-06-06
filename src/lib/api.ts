@@ -457,6 +457,25 @@ class ApiService {
       console.error(error);
     }
   }
+
+  // Get user's chat rooms
+  async getUserChatRooms(): Promise<any[]> {
+    try {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        return [];
+      }
+
+      return await this.request<any[]>('/api/chat/user/rooms/', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    } catch (error) {
+      console.error('Failed to fetch user chat rooms:', error);
+      return [];
+    }
+  }
 }
 
 export const apiService = new ApiService();
