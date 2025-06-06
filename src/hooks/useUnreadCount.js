@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getUnreadCount } from '../services/ChatService';
 import NotificationService from '../services/NotificationService';
@@ -12,6 +11,7 @@ const useUnreadCount = () => {
   });
   const [loading, setLoading] = useState(true);
   const [previousUnreadCount, setPreviousUnreadCount] = useState(0);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const notificationService = NotificationService.getInstance();
 
   const fetchUnreadCount = async () => {
@@ -45,6 +45,11 @@ const useUnreadCount = () => {
     }
   };
 
+  // Function to trigger a refresh from external components
+  const triggerRefresh = () => {
+    setRefreshTrigger(prev => prev + 1);
+  };
+
   useEffect(() => {
     fetchUnreadCount();
     
@@ -52,12 +57,13 @@ const useUnreadCount = () => {
     const interval = setInterval(fetchUnreadCount, 10000);
     
     return () => clearInterval(interval);
-  }, [user]);
+  }, [user, refreshTrigger]);
 
   return { 
     unreadData, 
     loading, 
-    refreshUnreadCount: fetchUnreadCount 
+    refreshUnreadCount: fetchUnreadCount,
+    triggerRefresh
   };
 };
 
