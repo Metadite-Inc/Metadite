@@ -154,6 +154,28 @@ class ModeratorApiService extends BaseApiService {
     }
   }
 
+  // Unassign a doll from moderator (admin only)
+  async unassignDollFromModerator(moderatorId: number, dollId: number): Promise<void> {
+    try {
+      // Validate admin role server-side before making request
+      await this.validateRole('admin');
+      const token = this.validateAuth();
+      
+      await this.request(`/api/moderators/${moderatorId}/dolls/${dollId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      
+      toast.success('Doll unassigned from moderator successfully');
+    } catch (error) {
+      toast.error('Failed to unassign doll from moderator', {
+        description: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  }
+
   // Get dolls assigned to a moderator
   async getDollsAssignedToModerator(moderatorId: number): Promise<Model[]> {
     try {
