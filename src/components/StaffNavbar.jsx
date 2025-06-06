@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -39,6 +38,7 @@ const StaffNavbar = () => {
           label: 'Moderator',
           showUnread: true
         },
+        { to: '/moderator-assignments', label: 'Assignments' },
         { to: '/staff-dashboard', label: 'Dashboard' }
       ];
     }
