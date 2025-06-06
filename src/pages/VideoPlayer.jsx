@@ -1,12 +1,13 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Lock } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useVipVideos } from '../hooks/useVipVideos';
+import { useChatAccess } from '../hooks/useChatAccess';
 import { toast } from 'sonner';
 import VideoContainer from '../components/video/VideoContainer';
 import VideoInfo from '../components/video/VideoInfo';
@@ -17,6 +18,9 @@ const VideoPlayer = () => {
   const { user } = useAuth();
   const { theme } = useTheme();
   const { getVideoById, fetchVideoById, getPreviousVideoId, getNextVideoId } = useVipVideos();
+  const { canWatchVideos, loading: accessLoading } = useChatAccess();
+  
+  // All state hooks at the top
   const [isLoading, setIsLoading] = useState(true);
   const [videoData, setVideoData] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -25,6 +29,8 @@ const VideoPlayer = () => {
   const [volume, setVolume] = useState(0.7);
   const [isMuted, setIsMuted] = useState(false);
   const [showControls, setShowControls] = useState(true);
+  
+  // All ref hooks at the top
   const videoContainerRef = useRef(null);
   const videoRef = useRef(null);
   const controlsTimeoutRef = useRef(null);
@@ -33,9 +39,27 @@ const VideoPlayer = () => {
   const previousVideoId = getPreviousVideoId(parseInt(videoId));
   const nextVideoId = getNextVideoId(parseInt(videoId));
   
+  // All useEffect hooks at the top
+  // Check VIP access
+  useEffect(() => {
+    if (!user?.membership_level || (user.membership_level !== 'vip' && user.membership_level !== 'vvip')) {
+      navigate('/upgrade');
+    }
+  }, [user, navigate]);
+
+  // Check video access
+  useEffect(() => {
+    if (!accessLoading && !canWatchVideos) {
+      navigate('/vip-content');
+      toast.error("You don't have permission to watch videos");
+    }
+  }, [canWatchVideos, accessLoading, navigate]);
+
   // Load video data
   useEffect(() => {
     const loadVideo = async () => {
+      if (!canWatchVideos && !accessLoading) return;
+      
       setIsLoading(true);
       
       // Try to get from cache first
@@ -59,15 +83,18 @@ const VideoPlayer = () => {
     if (user?.membership_level === 'vip' || user?.membership_level === 'vvip') {
       loadVideo();
     }
-  }, [videoId, user, getVideoById, fetchVideoById]);
-  
-  // Check VIP access
-  useEffect(() => {
-    if (!user?.membership_level || (user.membership_level !== 'vip' && user.membership_level !== 'vvip')) {
-      navigate('/upgrade');
-    }
-  }, [user, navigate]);
+  }, [videoId, user, getVideoById, fetchVideoById, canWatchVideos, accessLoading]);
 
+  // Cleanup effect
+  useEffect(() => {
+    return () => {
+      if (controlsTimeoutRef.current) {
+        clearTimeout(controlsTimeoutRef.current);
+      }
+    };
+  }, []);
+  
+  // Function definitions
   // Handle play/pause
   const togglePlay = () => {
     if (videoRef.current) {
@@ -153,20 +180,68 @@ const VideoPlayer = () => {
     }, 3000);
   };
   
-  useEffect(() => {
-    return () => {
-      if (controlsTimeoutRef.current) {
-        clearTimeout(controlsTimeoutRef.current);
-      }
-    };
-  }, []);
-  
   // Handle navigation between videos
   const navigateToVideo = (id) => {
     if (id) {
       navigate(`/video/${id}`);
     }
   };
+  
+  // Now all conditional rendering logic after all hooks
+  // Show loading while checking access
+  if (accessLoading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <div className={`flex-1 pt-20 pb-12 px-4 ${
+          theme === 'dark' 
+            ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' 
+            : 'bg-gradient-to-br from-white via-metadite-light to-white'
+        }`}>
+          <div className="container mx-auto max-w-6xl">
+            <div className="flex justify-center items-center py-16">
+              <Loader2 className="h-12 w-12 text-metadite-primary animate-spin" />
+              <span className="ml-4 text-lg font-medium text-gray-700 dark:text-gray-300">
+                Checking access permissions...
+              </span>
+            </div>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Show access denied if user can't watch videos
+  if (!canWatchVideos) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <div className={`flex-1 pt-20 pb-12 px-4 ${
+          theme === 'dark' 
+            ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' 
+            : 'bg-gradient-to-br from-white via-metadite-light to-white'
+        }`}>
+          <div className="container mx-auto max-w-6xl text-center py-20">
+            <Lock className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+            <h1 className={`text-2xl font-bold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
+              Access Restricted
+            </h1>
+            <p className={`mb-6 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+              You don't have permission to watch videos.
+            </p>
+            <button 
+              onClick={() => navigate('/vip-content')}
+              className="bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white px-6 py-2 rounded-md hover:opacity-90 transition-opacity"
+            >
+              Back to Videos
+            </button>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
   
   // Handle if video not found
   if (!videoData && !isLoading) {
