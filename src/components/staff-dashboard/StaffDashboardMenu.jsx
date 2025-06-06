@@ -1,7 +1,8 @@
+
 import React from 'react';
 import { 
   User, MessageSquare, Settings, Calendar, BarChart3,
-  Bell, LogOut, Shield, Users
+  Bell, LogOut, Shield, Users, UserCheck
 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -22,6 +23,7 @@ const StaffDashboardMenu = ({ activeTab, setActiveTab, logout, user }) => {
         { id: 'admin-summary', label: 'Admin Summary', icon: BarChart3 },
         { id: 'system-health', label: 'System Health', icon: Shield },
         { id: 'user-management', label: 'Quick User Mgmt', icon: Users },
+        { id: 'moderator-assignments', label: 'Moderator Assignments', icon: UserCheck, external: true },
         ...commonItems.slice(1) // Notifications, Settings
       ];
     }
@@ -41,6 +43,15 @@ const StaffDashboardMenu = ({ activeTab, setActiveTab, logout, user }) => {
 
   const menuItems = getMenuItems();
 
+  const handleItemClick = (item) => {
+    if (item.external) {
+      // Navigate to external page
+      window.location.href = '/moderator-assignments';
+    } else {
+      setActiveTab(item.id);
+    }
+  };
+
   return (
     <div className={`glass-card rounded-xl overflow-hidden ${theme === 'dark' ? 'bg-gray-800/70' : ''}`}>
       <div className={`p-4 border-b ${theme === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
@@ -57,9 +68,9 @@ const StaffDashboardMenu = ({ activeTab, setActiveTab, logout, user }) => {
           return (
             <li key={item.id}>
               <button 
-                onClick={() => setActiveTab(item.id)}
+                onClick={() => handleItemClick(item)}
                 className={`flex items-center w-full px-4 py-3 rounded-lg transition-colors ${
-                  activeTab === item.id 
+                  activeTab === item.id && !item.external
                     ? 'bg-metadite-primary/10 text-metadite-primary' 
                     : theme === 'dark' 
                       ? 'text-gray-300 hover:bg-gray-700/50' 
