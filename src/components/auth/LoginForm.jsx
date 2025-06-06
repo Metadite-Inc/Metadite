@@ -15,7 +15,8 @@ const LoginForm = () => {
   const [passwordError, setPasswordError] = useState('');
   const [name, setName] = useState('');
   const [role, setRole] = useState('user');
-  const [region, setRegion] = useState('north_america');
+  const [region, setRegion] = useState('');
+  const [regionError, setRegionError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   // ToS checkbox for sign up
   const [tosChecked, setTosChecked] = useState(false);
@@ -31,7 +32,7 @@ const LoginForm = () => {
     setPasswordError('');
     setName('');
     setRole('user');
-    setRegion('north_america');
+    setRegion('');
   };
   
   const validatePassword = (password) => {
@@ -71,6 +72,12 @@ const LoginForm = () => {
     e.preventDefault();
     
     try {
+      if (!isLogin && !region) {
+        setRegionError("Please select your region.");
+        return;
+      } else {
+        setRegionError("");
+      }
       if (!isLogin && !tosChecked) {
         toast.error("You must agree to the Terms of Service to create an account.");
         return;
@@ -81,7 +88,7 @@ const LoginForm = () => {
         if (success) {
           toast.success("Login successful!");
           // Navigate to dashboard - server-side will handle role-based access
-          navigate('/dashboard');
+          navigate('/#home');
         } else {
           // Only show error notification if login failed
           toast.error("Login failed. Please check your credentials and try again.");
@@ -207,7 +214,23 @@ const LoginForm = () => {
                   toggleShowPassword={() => setShowPassword(!showPassword)}
                   error={passwordError}
                 />
-                <RegionSelect region={region} setRegion={setRegion} />
+                <RegionSelect
+                  region={region}
+                  setRegion={value => {
+                    setRegion(value);
+                    if (regionError && value) setRegionError("");
+                  }}
+                  error={regionError}
+                  onBlur={() => {
+                    if (!region) setRegionError("Please select your region.");
+                  }}
+                  onFocus={() => {
+                    if (regionError) setRegionError("");
+                  }}
+                />
+                {regionError && (
+                  <div id="region-error" className="text-red-500 text-xs mt-1 mb-2">{regionError}</div>
+                )}
                 <div className="flex items-center mb-2 bg-yellow-50 dark:bg-gray-900 p-3 rounded shadow animate-fadeIn">
                   <input
                     id="tos-checkbox"

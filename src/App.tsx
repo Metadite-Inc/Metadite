@@ -5,6 +5,7 @@ import { Toaster as Sonner } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import ScrollToTop from "./components/ScrollToTop";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { CartProvider } from "./context/CartContext";
@@ -46,6 +47,7 @@ const App = () => {
       <TooltipProvider>
         <ThemeProvider>
           <BrowserRouter>
+            <ScrollToTop />
             <AgeVerificationGate>
               <AuthProvider>
                 <CartProvider>

@@ -456,7 +456,7 @@ const Checkout = () => {
                       ) : (
                         <>
                           <Lock className="h-5 w-5 mr-2" />
-                          Pay with Crypto Wallet
+                          Pay in Crypto
                         </>
                       )}
                     </button>
