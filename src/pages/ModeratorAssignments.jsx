@@ -20,7 +20,7 @@ const ModeratorAssignments = () => {
 
   useEffect(() => {
     // Redirect users who don't have access (only admin and moderator can access)
-    if (!user || (user.role !== 'moderator')) {
+    if (!user || (user.role !== 'moderator' && user.role !== 'admin')) {
       navigate('/');
       return;
     }
@@ -111,76 +111,87 @@ const ModeratorAssignments = () => {
                   <Users className="h-10 w-10 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-3xl font-bold mb-2">Moderator Assignments</h1>
-                  <p className="opacity-90 text-lg">View and manage model assignments for moderators</p>
+                  <h1 className="text-3xl font-bold mb-2">
+                    {user?.role === 'admin' ? 'Moderator Assignments' : 'My Assignments'}
+                  </h1>
+                  <p className="opacity-90 text-lg">
+                    {user?.role === 'admin' 
+                      ? 'View and manage model assignments for moderators'
+                      : 'View your assigned models'
+                    }
+                  </p>
                 </div>
               </div>
               
               <div className="text-center">
                 <div className="text-3xl font-bold">{moderators.length}</div>
-                <div className="opacity-80">Total Moderators</div>
+                <div className="opacity-80">
+                  {user?.role === 'admin' ? 'Total Moderators' : 'Your Profile'}
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Search and Filters */}
-          <div className={`glass-card rounded-xl p-6 mb-8 ${theme === 'dark' ? 'bg-gray-800/70' : ''}`}>
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                <input
-                  type="text"
-                  placeholder="Search moderators..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className={`w-full pl-10 pr-4 py-3 rounded-lg border ${
-                    theme === 'dark' 
-                      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                      : 'bg-white border-gray-200 text-gray-900 placeholder-gray-500'
-                  } focus:outline-none focus:ring-2 focus:ring-metadite-primary`}
-                />
-              </div>
-              
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setFilterActive('all')}
-                  className={`px-4 py-3 rounded-lg font-medium transition-colors ${
-                    filterActive === 'all'
-                      ? 'bg-metadite-primary text-white'
-                      : theme === 'dark'
-                        ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  All
-                </button>
-                <button
-                  onClick={() => setFilterActive('active')}
-                  className={`px-4 py-3 rounded-lg font-medium transition-colors ${
-                    filterActive === 'active'
-                      ? 'bg-metadite-primary text-white'
-                      : theme === 'dark'
-                        ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  Active
-                </button>
-                <button
-                  onClick={() => setFilterActive('inactive')}
-                  className={`px-4 py-3 rounded-lg font-medium transition-colors ${
-                    filterActive === 'inactive'
-                      ? 'bg-metadite-primary text-white'
-                      : theme === 'dark'
-                        ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  Inactive
-                </button>
+          {/* Search and Filters - only show for admins viewing multiple moderators */}
+          {user?.role === 'admin' && (
+            <div className={`glass-card rounded-xl p-6 mb-8 ${theme === 'dark' ? 'bg-gray-800/70' : ''}`}>
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                  <input
+                    type="text"
+                    placeholder="Search moderators..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className={`w-full pl-10 pr-4 py-3 rounded-lg border ${
+                      theme === 'dark' 
+                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                        : 'bg-white border-gray-200 text-gray-900 placeholder-gray-500'
+                    } focus:outline-none focus:ring-2 focus:ring-metadite-primary`}
+                  />
+                </div>
+                
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setFilterActive('all')}
+                    className={`px-4 py-3 rounded-lg font-medium transition-colors ${
+                      filterActive === 'all'
+                        ? 'bg-metadite-primary text-white'
+                        : theme === 'dark'
+                          ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    All
+                  </button>
+                  <button
+                    onClick={() => setFilterActive('active')}
+                    className={`px-4 py-3 rounded-lg font-medium transition-colors ${
+                      filterActive === 'active'
+                        ? 'bg-metadite-primary text-white'
+                        : theme === 'dark'
+                          ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    Active
+                  </button>
+                  <button
+                    onClick={() => setFilterActive('inactive')}
+                    className={`px-4 py-3 rounded-lg font-medium transition-colors ${
+                      filterActive === 'inactive'
+                        ? 'bg-metadite-primary text-white'
+                        : theme === 'dark'
+                          ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    Inactive
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Moderator Cards */}
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
