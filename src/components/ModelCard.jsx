@@ -92,6 +92,13 @@ const ModelCard = ({ model, user, isFavorite: initialIsFavorite, onRemoveFavorit
       return;
     }
     
+    // Check if user has free membership - redirect to upgrade page
+    if (authUser.membership_level === 'free') {
+      navigate('/upgrade');
+      toast.info("Upgrade your membership to chat with models");
+      return;
+    }
+    
     try {
       // Create a chat room
       const chatRoom = await createChatRoom(model.id.toString());
