@@ -52,30 +52,35 @@ const Navbar = () => {
       style={{ height: '74px' }}
     >
       <div className="container mx-auto px-4 flex justify-between items-center h-full">
-        <Link to="/" className="flex items-center h-full">
-          <img
-            src="/logo.png"
-            alt="Metadite Logo"
-            className="h-12 w-auto mr-2"
-          />
-          <span className="hidden md:block text-2xl font-bold bg-gradient-to-r from-metadite-primary to-metadite-secondary bg-clip-text text-transparent">
-            Metadite
-          </span>
-          <span className="md:hidden text-xl font-bold bg-gradient-to-r from-metadite-primary to-metadite-secondary bg-clip-text text-transparent">
-            Metadite
-          </span>
-        </Link>
+        <a
+  href="/"
+  className="flex items-center h-full"
+  onClick={e => { e.preventDefault(); window.location.href = '/'; }}
+>
+  <img
+    src="/logo.png"
+    alt="Metadite Logo"
+    className="h-12 w-auto mr-2"
+  />
+  <span className="hidden md:block text-2xl font-bold bg-gradient-to-r from-metadite-primary to-metadite-secondary bg-clip-text text-transparent">
+    Metadite
+  </span>
+  <span className="md:hidden text-xl font-bold bg-gradient-to-r from-metadite-primary to-metadite-secondary bg-clip-text text-transparent">
+    Metadite
+  </span>
+</a>
 
         <div className="hidden md:flex items-center space-x-8">
           {navLinks.map((link) => (
-            <Link
-              key={link.to}
-              to={link.to}
-              className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors"
-            >
-              {link.label}
-            </Link>
-          ))}
+  <a
+    key={link.to}
+    href={link.to}
+    className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors"
+    onClick={e => { e.preventDefault(); window.location.href = link.to; }}
+  >
+    {link.label}
+  </a>
+))}
           <ThemeToggle />
         </div>
 
@@ -133,15 +138,15 @@ const Navbar = () => {
       {mobileMenuOpen && (
         <div className="md:hidden glass-card animate-slide-down absolute top-16 left-0 w-full py-4 px-6 flex flex-col space-y-4 bg-white">
           {navLinks.map((link) => (
-            <Link
-              key={link.to}
-              to={link.to}
-              className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors py-2"
-              onClick={toggleMobileMenu}
-            >
-              {link.label}
-            </Link>
-          ))}
+  <a
+    key={link.to}
+    href={link.to}
+    className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors py-2"
+    onClick={e => { e.preventDefault(); window.location.href = link.to; }}
+  >
+    {link.label}
+  </a>
+))}
           {user ? (
             <>
               {/* Only show Messages link for non-free users in mobile menu */}

@@ -14,12 +14,12 @@ import { createNowpaymentsSubscriptionInvoice } from '../lib/api/payment_api';
 const tiers = [
   {
     name: 'Standard',
-    price: 12,
+    price: 15,
     description: 'Perfect for casual users',
     features: [
-      '12 messages',// per day',
+      '10 messages',
       'Access to all models',
-      'One photo',// per model',
+      'One photo',
       'Email support',
     ],
     recommended: false,
@@ -32,10 +32,10 @@ const tiers = [
     price: 20,
     description: 'Enhanced experience for enthusiasts',
     features: [
-      '30 messages',// per day',
+      '30 messages',
       'Access to all models',
       'Access to 1 exclusive video',
-      '3 photos',// per model',
+      '3 photos',
       'Priority email support',
     ],
     recommended: true,
@@ -53,7 +53,7 @@ const tiers = [
       'Access to 2 premium videos',
       'Access to limited edition content',
       'Chances of winning collectible items',
-      '5 photos',// per model',
+      '5 photos',
       '24/7 priority support',
     ],
     recommended: false,
