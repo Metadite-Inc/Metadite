@@ -1,30 +1,89 @@
+
 import React from 'react';
 import { 
   Users, MessageSquare, ShieldCheck, TrendingUp, 
   DollarSign, AlertTriangle, Server, Activity
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext';
 
 const AdminSummaryTab = () => {
   const { theme } = useTheme();
+  const navigate = useNavigate();
 
   const summaryData = [
     {
       title: 'Platform Overview',
       stats: [
-        { label: 'Total Users', value: '1,234', change: '+12%', icon: Users, color: 'blue' },
-        { label: 'Active Models', value: '45', change: '+5%', icon: MessageSquare, color: 'green' },
-        { label: 'System Uptime', value: '99.8%', change: '+0.1%', icon: ShieldCheck, color: 'emerald' },
-        { label: 'Revenue (MTD)', value: '$24,389', change: '+15%', icon: DollarSign, color: 'purple' }
+        { 
+          label: 'Total Users', 
+          value: '1,234', 
+          change: '+12%', 
+          icon: Users, 
+          color: 'blue',
+          action: () => navigate('/admin?tab=admins')
+        },
+        { 
+          label: 'Active Models', 
+          value: '45', 
+          change: '+5%', 
+          icon: MessageSquare, 
+          color: 'green',
+          action: () => navigate('/admin?tab=models')
+        },
+        { 
+          label: 'System Uptime', 
+          value: '99.8%', 
+          change: '+0.1%', 
+          icon: ShieldCheck, 
+          color: 'emerald',
+          action: () => navigate('/staff-dashboard?tab=system-health')
+        },
+        { 
+          label: 'Revenue (MTD)', 
+          value: '$24,389', 
+          change: '+15%', 
+          icon: DollarSign, 
+          color: 'purple',
+          action: () => navigate('/admin?tab=payments')
+        }
       ]
     },
     {
       title: 'Security & Moderation',
       stats: [
-        { label: 'Flagged Messages', value: '3', change: '-2', icon: AlertTriangle, color: 'red' },
-        { label: 'Active Moderators', value: '8', change: '+1', icon: Users, color: 'orange' },
-        { label: 'Server Health', value: '98%', change: '+1%', icon: Server, color: 'cyan' },
-        { label: 'API Requests', value: '45.2K', change: '+8%', icon: Activity, color: 'indigo' }
+        { 
+          label: 'Flagged Messages', 
+          value: '3', 
+          change: '-2', 
+          icon: AlertTriangle, 
+          color: 'red',
+          action: () => navigate('/admin?tab=flagged')
+        },
+        { 
+          label: 'Active Moderators', 
+          value: '8', 
+          change: '+1', 
+          icon: Users, 
+          color: 'orange',
+          action: () => navigate('/admin?tab=moderators')
+        },
+        { 
+          label: 'Server Health', 
+          value: '98%', 
+          change: '+1%', 
+          icon: Server, 
+          color: 'cyan',
+          action: () => navigate('/staff-dashboard?tab=system-health')
+        },
+        { 
+          label: 'API Requests', 
+          value: '45.2K', 
+          change: '+8%', 
+          icon: Activity, 
+          color: 'indigo',
+          action: () => navigate('/staff-dashboard?tab=system-health')
+        }
       ]
     }
   ];
@@ -86,16 +145,17 @@ const AdminSummaryTab = () => {
             {section.stats.map((stat, index) => {
               const IconComponent = stat.icon;
               return (
-                <div
+                <button
                   key={index}
-                  className={`p-4 rounded-lg border ${
+                  onClick={stat.action}
+                  className={`p-4 rounded-lg border transition-all duration-200 hover:scale-105 hover:shadow-lg active:scale-95 cursor-pointer ${
                     theme === 'dark' 
-                      ? 'bg-gray-700/50 border-gray-600' 
-                      : 'bg-white border-gray-200'
+                      ? 'bg-gray-700/50 border-gray-600 hover:bg-gray-600/70' 
+                      : 'bg-white border-gray-200 hover:bg-gray-50 hover:border-metadite-primary/30'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <div className={`w-8 h-8 ${getColorClasses(stat.color)} rounded-lg flex items-center justify-center`}>
+                    <div className={`w-8 h-8 ${getColorClasses(stat.color)} rounded-lg flex items-center justify-center transition-transform group-hover:scale-110`}>
                       <IconComponent className="h-4 w-4 text-white" />
                     </div>
                     <span className={`text-sm font-medium ${
@@ -105,7 +165,7 @@ const AdminSummaryTab = () => {
                       {stat.change}
                     </span>
                   </div>
-                  <div>
+                  <div className="text-left">
                     <p className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                       {stat.value}
                     </p>
@@ -113,7 +173,7 @@ const AdminSummaryTab = () => {
                       {stat.label}
                     </p>
                   </div>
-                </div>
+                </button>
               );
             })}
           </div>
@@ -126,7 +186,10 @@ const AdminSummaryTab = () => {
           <h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
             Recent Activity
           </h3>
-          <button className="text-sm text-metadite-primary hover:text-metadite-secondary transition-colors">
+          <button 
+            onClick={() => navigate('/admin')}
+            className="text-sm text-metadite-primary hover:text-metadite-secondary transition-colors"
+          >
             View All
           </button>
         </div>
