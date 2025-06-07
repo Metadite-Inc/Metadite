@@ -46,7 +46,7 @@ const StaffDashboardMenu = ({ activeTab, setActiveTab, logout, user }) => {
   const handleItemClick = (item) => {
     if (item.external) {
       // Navigate to external page
-      window.location.href = '/moderator-assignments';
+      navigate('/moderator-assignments');
     } else {
       setActiveTab(item.id);
     }
