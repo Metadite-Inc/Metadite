@@ -312,9 +312,6 @@ const ModeratorsTab = ({ isLoaded }) => {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex space-x-2">
-                        <button className="text-blue-500 hover:text-blue-700 transition-colors">
-                          <Edit className="h-4 w-4" />
-                        </button>
                         <button 
                           onClick={() => handleDeleteModerator(mod.id)} 
                           className="text-red-500 hover:text-red-700 transition-colors"
