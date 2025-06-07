@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 import { BaseApiService } from "./base_api";
 import { User } from "./admin_users_api";
@@ -115,7 +114,10 @@ class ModeratorApiService extends BaseApiService {
     try {
       const token = this.validateAuth();
       
-      return await this.request<Model[]>(`/api/dolls/assigned/false?skip=${skip}&limit=${limit}`, {
+      // Ensure limit doesn't exceed server maximum of 10
+      const validLimit = Math.min(limit, 10);
+      
+      return await this.request<Model[]>(`/api/dolls/assigned/false?skip=${skip}&limit=${validLimit}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../../context/ThemeContext';
 import { moderatorApiService } from '../../lib/api/moderator_api';
@@ -62,7 +61,8 @@ const AdminAssignmentsView = () => {
 
   const loadUnassignedModels = async () => {
     try {
-      const unassigned = await moderatorApiService.getUnassignedDolls(0, 50);
+      // Use the corrected limit of 10 (server maximum)
+      const unassigned = await moderatorApiService.getUnassignedDolls(0, 10);
       setUnassignedModels(unassigned || []);
     } catch (error) {
       console.error('Error loading unassigned models:', error);
