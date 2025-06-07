@@ -9,12 +9,18 @@ export const useVipVideos = (searchTerm) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch videos from API
+  // Fetch videos from API with performance optimization
   useEffect(() => {
     const fetchVideos = async () => {
       try {
         setIsLoading(true);
-        const fetchedVideos = await videoApiService.getAllVideos();
+        
+        // Add a small delay to prevent flash of loading state
+        const [fetchedVideos] = await Promise.all([
+          videoApiService.getAllVideos(),
+          new Promise(resolve => setTimeout(resolve, 100))
+        ]);
+        
         console.log('Fetched videos:', fetchedVideos);
         setVideos(fetchedVideos);
         setIsLoaded(true);
@@ -31,20 +37,24 @@ export const useVipVideos = (searchTerm) => {
     fetchVideos();
   }, []);
   
-  // Filter videos based on search term
+  // Filter videos based on search term with debouncing
   useEffect(() => {
-    if (searchTerm === undefined || searchTerm.trim() === '') {
-      setFilteredVideos(videos);
-    } else {
-      const term = searchTerm.toLowerCase();
-      setFilteredVideos(
-        videos.filter(
-          video => 
-            video.title.toLowerCase().includes(term) || 
-            (video.description && video.description.toLowerCase().includes(term))
-        )
-      );
-    }
+    const timeoutId = setTimeout(() => {
+      if (searchTerm === undefined || searchTerm.trim() === '') {
+        setFilteredVideos(videos);
+      } else {
+        const term = searchTerm.toLowerCase();
+        setFilteredVideos(
+          videos.filter(
+            video => 
+              video.title.toLowerCase().includes(term) || 
+              (video.description && video.description.toLowerCase().includes(term))
+          )
+        );
+      }
+    }, 150); // Debounce search for better performance
+
+    return () => clearTimeout(timeoutId);
   }, [searchTerm, videos]);
 
   // Get a specific video by ID
