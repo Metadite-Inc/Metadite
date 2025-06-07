@@ -34,12 +34,12 @@ const ModeratorCard = ({
           </div>
           
           <div className="flex items-center gap-2">
-            <button
+            <buttonAdd commentMore actions
               onClick={() => onEditModerator(moderator)}
-              className="p-2 bg-metadite-primary text-white rounded-lg hover:bg-metadite-primary/80 transition-colors"
-              title="Edit assignments"
+              className="p-1 text-blue-500 hover:text-blue-700 transition-colors"
+              title="Edit moderator"
             >
-              <Edit3 className="h-4 w-4" />
+              <Edit className="h-4 w-4" />
             </button>
             <span className={`px-3 py-1 rounded-full text-xs font-medium ${
               moderator.is_active
