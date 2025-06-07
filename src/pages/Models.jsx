@@ -20,7 +20,7 @@ const Models = () => {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [totalModels, setTotalModels] = useState(0);
-  const modelsPerPage = 12;
+  const modelsPerPage = 24;
   
   // Categories derived from fetched models
   const [categories, setCategories] = useState(['all']);
