@@ -34,7 +34,7 @@ const ModeratorCard = ({
           </div>
           
           <div className="flex items-center gap-2">
-            <buttonAdd commentMore actions
+            <button
               onClick={() => onEditModerator(moderator)}
               className="p-1 text-blue-500 hover:text-blue-700 transition-colors"
               title="Edit moderator"
