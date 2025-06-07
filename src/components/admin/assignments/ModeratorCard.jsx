@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Bot, UserCheck, Trash2, Edit3 } from 'lucide-react';
+import { Bot, UserCheck, Trash2, Edit } from 'lucide-react';
 
 const ModeratorCard = ({ 
   moderator, 
