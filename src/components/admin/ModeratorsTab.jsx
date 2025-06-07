@@ -334,7 +334,7 @@ const ModeratorsTab = ({ isLoaded }) => {
           </div>
         )}
         
-        {!loading && moderators.length > 0 && (
+        {!loading && moderators.length > 4 && (
           <div className="p-4 border-t border-gray-100 text-center">
             <Link 
               to="/moderator-assignments"
