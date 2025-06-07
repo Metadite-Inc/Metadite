@@ -7,6 +7,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 
 const VideoCard = ({ video, vipAccess = false }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const { theme } = useTheme();
 
@@ -37,20 +38,39 @@ const VideoCard = ({ video, vipAccess = false }) => {
     return 'https://images.unsplash.com/photo-1545239705-1564e6722e81?q=80&w=1000&auto=format&fit=crop';
   };
 
+  const handleImageLoad = () => {
+    setImageLoaded(true);
+  };
+
+  const handleImageError = () => {
+    setImageError(true);
+    setImageLoaded(true);
+  };
+
   return (
     <div className={`glass-card rounded-xl overflow-hidden transition-all duration-300 hover:shadow-lg ${theme === 'dark' ? 'bg-gray-800/70' : ''}`}>
       <div className="relative overflow-hidden h-48">
-        {!imageLoaded && <div className="absolute inset-0 shimmer"></div>}
-        <img
-          src={getThumbnailUrl()}
-          alt={video.title}
-          className={`w-full h-full object-cover ${imageLoaded ? 'image-fade-in loaded' : 'image-fade-in'}`}
-          onLoad={() => setImageLoaded(true)}
-          onError={(e) => {
-            console.error('Error loading image:', e);
-            e.target.src = 'https://images.unsplash.com/photo-1545239705-1564e6722e81?q=80&w=1000&auto=format&fit=crop';
-          }}
-        />
+        {!imageLoaded && !imageError && (
+          <div className="absolute inset-0 shimmer bg-gray-200 dark:bg-gray-700"></div>
+        )}
+        
+        {!imageError ? (
+          <img
+            src={getThumbnailUrl()}
+            alt={video.title}
+            className={`w-full h-full object-cover transition-all duration-700 ${
+              imageLoaded ? 'opacity-100' : 'opacity-0'
+            }`}
+            onLoad={handleImageLoad}
+            onError={handleImageError}
+            loading="lazy"
+            decoding="async"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
+            <span className="text-sm">Thumbnail unavailable</span>
+          </div>
+        )}
         
         {vipAccess ? (
           <div className="absolute inset-0 flex items-center justify-center">
@@ -115,6 +135,7 @@ const VideoCard = ({ video, vipAccess = false }) => {
               controls
               poster={getThumbnailUrl()}
               src={video.url}
+              preload="metadata"
             >
               Your browser does not support the video tag.
             </video>
