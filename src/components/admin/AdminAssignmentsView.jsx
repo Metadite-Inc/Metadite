@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../../context/ThemeContext';
 import { moderatorApiService } from '../../lib/api/moderator_api';
-import { Users, Bot, Search, Filter, Loader2, UserCheck, Trash2, Plus, X } from 'lucide-react';
+import { Users, Bot, Search, Filter, Loader2, UserCheck, Trash2, Plus, X, Edit } from 'lucide-react';
 import { toast } from 'sonner';
 
 const AdminAssignmentsView = () => {
@@ -13,8 +12,18 @@ const AdminAssignmentsView = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterActive, setFilterActive] = useState('all');
   const [assignModalOpen, setAssignModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedModel, setSelectedModel] = useState(null);
+  const [selectedModerator, setSelectedModerator] = useState(null);
   const [assigning, setAssigning] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    full_name: '',
+    email: '',
+    region: '',
+    is_active: true,
+    password: ''
+  });
 
   useEffect(() => {
     loadData();
@@ -100,6 +109,54 @@ const AdminAssignmentsView = () => {
   const openAssignModal = (model) => {
     setSelectedModel(model);
     setAssignModalOpen(true);
+  };
+
+  const openEditModal = (moderator) => {
+    setSelectedModerator(moderator);
+    setEditFormData({
+      full_name: moderator.full_name || '',
+      email: moderator.email || '',
+      region: moderator.region || '',
+      is_active: moderator.is_active || false,
+      password: ''
+    });
+    setEditModalOpen(true);
+  };
+
+  const handleEditModerator = async () => {
+    if (!selectedModerator) return;
+    
+    setEditing(true);
+    try {
+      const updateData = {
+        email: editFormData.email,
+        full_name: editFormData.full_name,
+        region: editFormData.region,
+        is_active: editFormData.is_active
+      };
+
+      // Only include password if it's provided
+      if (editFormData.password.trim()) {
+        updateData.password = editFormData.password;
+      }
+
+      await moderatorApiService.updateModeratorProfile(selectedModerator.id, updateData);
+      setEditModalOpen(false);
+      setSelectedModerator(null);
+      setEditFormData({
+        full_name: '',
+        email: '',
+        region: '',
+        is_active: true,
+        password: ''
+      });
+      // Reload the data to reflect changes
+      loadData();
+    } catch (error) {
+      console.error('Error updating moderator:', error);
+    } finally {
+      setEditing(false);
+    }
   };
 
   const filteredModerators = moderators.filter(moderator => {
@@ -261,13 +318,22 @@ const AdminAssignmentsView = () => {
                   </div>
                 </div>
                 
-                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  moderator.is_active
-                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                    : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                }`}>
-                  {moderator.is_active ? 'Active' : 'Inactive'}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                    moderator.is_active
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                      : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                  }`}>
+                    {moderator.is_active ? 'Active' : 'Inactive'}
+                  </span>
+                  <button
+                    onClick={() => openEditModal(moderator)}
+                    className="p-1 text-blue-500 hover:text-blue-700 transition-colors"
+                    title="Edit moderator"
+                  >
+                    <Edit className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
               
               <div className="flex items-center justify-between text-sm">
@@ -446,6 +512,134 @@ const AdminAssignmentsView = () => {
                 </span>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Edit Moderator Modal */}
+      {editModalOpen && selectedModerator && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className={`rounded-xl max-w-md w-full p-6 ${
+            theme === 'dark' ? 'bg-gray-800' : 'bg-white'
+          }`}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                Edit Moderator
+              </h3>
+              <button
+                onClick={() => setEditModalOpen(false)}
+                className={`p-1 rounded-lg hover:bg-gray-100 ${theme === 'dark' ? 'hover:bg-gray-700' : ''}`}
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  value={editFormData.full_name}
+                  onChange={(e) => setEditFormData({...editFormData, full_name: e.target.value})}
+                  className={`w-full px-3 py-2 rounded-lg border ${
+                    theme === 'dark' 
+                      ? 'bg-gray-700 border-gray-600 text-white' 
+                      : 'bg-white border-gray-300 text-gray-900'
+                  } focus:outline-none focus:ring-2 focus:ring-metadite-primary`}
+                />
+              </div>
+
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={editFormData.email}
+                  onChange={(e) => setEditFormData({...editFormData, email: e.target.value})}
+                  className={`w-full px-3 py-2 rounded-lg border ${
+                    theme === 'dark' 
+                      ? 'bg-gray-700 border-gray-600 text-white' 
+                      : 'bg-white border-gray-300 text-gray-900'
+                  } focus:outline-none focus:ring-2 focus:ring-metadite-primary`}
+                />
+              </div>
+
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                  Region
+                </label>
+                <input
+                  type="text"
+                  value={editFormData.region}
+                  onChange={(e) => setEditFormData({...editFormData, region: e.target.value})}
+                  className={`w-full px-3 py-2 rounded-lg border ${
+                    theme === 'dark' 
+                      ? 'bg-gray-700 border-gray-600 text-white' 
+                      : 'bg-white border-gray-300 text-gray-900'
+                  } focus:outline-none focus:ring-2 focus:ring-metadite-primary`}
+                />
+              </div>
+
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                  New Password (optional)
+                </label>
+                <input
+                  type="password"
+                  value={editFormData.password}
+                  onChange={(e) => setEditFormData({...editFormData, password: e.target.value})}
+                  placeholder="Leave blank to keep current password"
+                  className={`w-full px-3 py-2 rounded-lg border ${
+                    theme === 'dark' 
+                      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                  } focus:outline-none focus:ring-2 focus:ring-metadite-primary`}
+                />
+              </div>
+
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="is_active"
+                  checked={editFormData.is_active}
+                  onChange={(e) => setEditFormData({...editFormData, is_active: e.target.checked})}
+                  className="mr-2"
+                />
+                <label htmlFor="is_active" className={`text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                  Active
+                </label>
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setEditModalOpen(false)}
+                className={`flex-1 px-4 py-2 rounded-lg border ${
+                  theme === 'dark' 
+                    ? 'border-gray-600 text-gray-300 hover:bg-gray-700' 
+                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                } transition-colors`}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleEditModerator}
+                disabled={editing}
+                className="flex-1 px-4 py-2 bg-metadite-primary text-white rounded-lg hover:bg-metadite-primary/80 transition-colors disabled:opacity-50"
+              >
+                {editing ? (
+                  <div className="flex items-center justify-center">
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Updating...
+                  </div>
+                ) : (
+                  'Update'
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}
