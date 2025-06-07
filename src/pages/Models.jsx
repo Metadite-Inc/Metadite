@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -8,6 +7,7 @@ import ModelPagination from '../components/models/ModelPagination';
 import NoResults from '../components/models/NoResults';
 import { useTheme } from '../context/ThemeContext';
 import { apiService } from '../lib/api';
+import { usePerformanceOptimization } from '../hooks/usePerformanceOptimization';
 
 const Models = () => {
   const [models, setModels] = useState([]);
@@ -117,6 +117,9 @@ const Models = () => {
     setCurrentPage(1);
   }, [searchTerm, priceFilter, categoryFilter]);
 
+  // Add performance optimization
+  usePerformanceOptimization();
+
   console.log("Pagination info:", { currentPage, totalPages, modelsPerPage, totalItems, filteredModelsCount: filteredModels.length });
 
   return (
@@ -166,7 +169,7 @@ const Models = () => {
                 )}
 
                 {/* Display info about pagination */}
-                <div className="text-center text-sm text-gray-500 mt-4">
+                <div className="text-center text-sm text-gray-500 dark:text-gray-400 mt-4">
                   Page {currentPage} of {totalPages} | 
                   Showing {Math.min((currentPage - 1) * modelsPerPage + 1, totalItems)} - {Math.min(currentPage * modelsPerPage, totalItems)} of {totalItems} models
                 </div>
