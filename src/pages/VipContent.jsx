@@ -10,6 +10,7 @@ import VideoSearch from '../components/vip/VideoSearch';
 import VideoGrid from '../components/vip/VideoGrid';
 import { useVipVideos } from '../hooks/useVipVideos';
 import { useChatAccess } from '../hooks/useChatAccess';
+import { usePerformanceOptimization } from '../hooks/usePerformanceOptimization';
 import { Loader2, Lock } from 'lucide-react';
 
 const VipContent = () => {
@@ -20,6 +21,9 @@ const VipContent = () => {
   const { canWatchVideos, loading: accessLoading } = useChatAccess();
   const { theme } = useTheme();
   
+  // Add performance optimization
+  usePerformanceOptimization();
+
   useEffect(() => {
     // Redirect non-VIP users
     if (!user?.membership_level || (user.membership_level !== 'vip' && user.membership_level !== 'vvip')) {
@@ -94,7 +98,8 @@ const VipContent = () => {
           : 'bg-gradient-to-br from-white via-metadite-light to-white'
       }`}>
         <div className="container mx-auto max-w-6xl">
-          <VipHeader filteredVideosCount={filteredVideos.length} />
+          {/* Render header immediately to improve LCP */}
+          <VipHeader filteredVideosCount={isLoaded ? filteredVideos.length : 0} />
           <VideoSearch searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
           
           {isLoading ? (
