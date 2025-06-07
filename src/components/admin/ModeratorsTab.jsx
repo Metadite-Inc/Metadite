@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Search, Edit, Trash2, AlertTriangle } from 'lucide-react';
+import { Users, Search, Edit, Trash2, AlertTriangle, ExternalLink } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useTheme } from '../../context/ThemeContext';
 import { adminApiService } from '../../lib/api/admin_api';
@@ -26,9 +27,9 @@ const ModeratorsTab = ({ isLoaded }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch moderators
+        // Fetch moderators - limit to first 5
         const moderatorsData = await adminApiService.getModerators();
-        setModerators(moderatorsData || []);
+        setModerators((moderatorsData || []).slice(0, 5));
         setLoading(false);
         
         // Fetch models for assignment
@@ -36,11 +37,11 @@ const ModeratorsTab = ({ isLoaded }) => {
         setModels(modelsData || []);
         setModelsLoading(false);
 
-        // Fetch assigned dolls for each moderator
+        // Fetch assigned dolls for each moderator (only for first 5)
         if (moderatorsData && moderatorsData.length > 0) {
           const dollsMap = {};
           await Promise.all(
-            moderatorsData.map(async (mod) => {
+            moderatorsData.slice(0, 5).map(async (mod) => {
               try {
                 const dolls = await moderatorApiService.getDollsAssignedToModerator(mod.id);
                 dollsMap[mod.id] = dolls || [];
@@ -106,7 +107,7 @@ const ModeratorsTab = ({ isLoaded }) => {
       
       // Refresh moderators list after adding
       const updatedModerators = await adminApiService.getModerators();
-      setModerators(updatedModerators || []);
+      setModerators((updatedModerators || []).slice(0, 5));
       
       // Reset form
       setNewModeratorData({
@@ -252,7 +253,16 @@ const ModeratorsTab = ({ isLoaded }) => {
 
       <div className="glass-card rounded-xl overflow-hidden">
         <div className="p-4 border-b border-gray-100 flex justify-between items-center">
-          <h2 className="font-semibold">Manage Moderators</h2>
+          <div className="flex items-center gap-4">
+            <h2 className="font-semibold">Recent Moderators (Top 5)</h2>
+            <Link 
+              to="/moderator-assignments"
+              className="flex items-center text-metadite-primary hover:text-metadite-secondary transition-colors text-sm"
+            >
+              <ExternalLink className="h-4 w-4 mr-1" />
+              View All Assignments
+            </Link>
+          </div>
           <div className="relative">
             <Search className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
@@ -296,7 +306,7 @@ const ModeratorsTab = ({ isLoaded }) => {
                     <td className="px-6 py-4">{mod.email}</td>
                     <td className="px-6 py-4">
                       {assignedDolls[mod.id] && assignedDolls[mod.id].length > 0
-                        ? assignedDolls[mod.id].map(doll => doll.name).join(', ')
+                        ? `${assignedDolls[mod.id].length} models assigned`
                         : 'None assigned'
                       }
                     </td>
@@ -324,6 +334,18 @@ const ModeratorsTab = ({ isLoaded }) => {
           <div className="text-center py-10">
             <Users className="h-10 w-10 text-gray-300 mx-auto mb-2" />
             <p className="text-gray-500">No moderators found.</p>
+          </div>
+        )}
+        
+        {!loading && moderators.length > 0 && (
+          <div className="p-4 border-t border-gray-100 text-center">
+            <Link 
+              to="/moderator-assignments"
+              className="inline-flex items-center bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white px-4 py-2 rounded-md hover:opacity-90 transition-opacity"
+            >
+              <Users className="h-4 w-4 mr-2" />
+              View All Moderator Assignments
+            </Link>
           </div>
         )}
       </div>

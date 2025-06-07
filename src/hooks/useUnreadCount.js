@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getUnreadCount } from '../services/ChatService';
 import NotificationService from '../services/NotificationService';

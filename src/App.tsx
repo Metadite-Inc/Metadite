@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "sonner";
@@ -26,6 +25,7 @@ import Success from "./pages/Success";
 import Cancel from "./pages/Cancel";
 import Admin from "./pages/Admin";
 import Moderator from "./pages/Moderator";
+import ModeratorAssignments from "./pages/ModeratorAssignments";
 import Models from "./pages/Models";
 import ModelDetail from "./pages/ModelDetail";
 import ModelEdit from "./pages/ModelEdit";
@@ -159,6 +159,14 @@ const App = () => {
                       element={
                         <ProtectedRoute allowedRoles={['moderator']}>
                           <Moderator />
+                        </ProtectedRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/moderator-assignments" 
+                      element={
+                        <ProtectedRoute allowedRoles={['admin', 'moderator']}>
+                          <ModeratorAssignments />
                         </ProtectedRoute>
                       } 
                     />
