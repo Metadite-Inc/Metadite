@@ -4,9 +4,8 @@ import { useTheme } from '../../context/ThemeContext';
 import { moderatorApiService } from '../../lib/api/moderator_api';
 import { Users, Search, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import UnassignedModelsSection from './assignments/UnassignedModelsSection';
 import ModeratorCard from './assignments/ModeratorCard';
-import AssignmentModal from './assignments/AssignmentModal';
+import ModeratorEditModal from './assignments/ModeratorEditModal';
 
 const AdminAssignmentsView = () => {
   const { theme } = useTheme();
@@ -15,8 +14,8 @@ const AdminAssignmentsView = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterActive, setFilterActive] = useState('all');
-  const [assignModalOpen, setAssignModalOpen] = useState(false);
-  const [selectedModel, setSelectedModel] = useState(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [selectedModerator, setSelectedModerator] = useState(null);
   const [assigning, setAssigning] = useState(false);
 
   useEffect(() => {
@@ -63,7 +62,7 @@ const AdminAssignmentsView = () => {
 
   const loadUnassignedModels = async () => {
     try {
-      const unassigned = await moderatorApiService.getUnassignedDolls(0, 10);
+      const unassigned = await moderatorApiService.getUnassignedDolls(0, 50);
       setUnassignedModels(unassigned || []);
     } catch (error) {
       console.error('Error loading unassigned models:', error);
@@ -85,14 +84,14 @@ const AdminAssignmentsView = () => {
     }
   };
 
-  const handleAssignModel = async (moderatorId) => {
-    if (!selectedModel) return;
+  const handleAssignModel = async (modelId) => {
+    if (!selectedModerator) return;
     
     setAssigning(true);
     try {
-      await moderatorApiService.assignDollToModerator(moderatorId, selectedModel.id);
-      setAssignModalOpen(false);
-      setSelectedModel(null);
+      await moderatorApiService.assignDollToModerator(selectedModerator.id, modelId);
+      setEditModalOpen(false);
+      setSelectedModerator(null);
       toast.success('Model assigned successfully');
       // Reload the data to reflect changes
       loadData();
@@ -104,14 +103,14 @@ const AdminAssignmentsView = () => {
     }
   };
 
-  const openAssignModal = (model) => {
-    setSelectedModel(model);
-    setAssignModalOpen(true);
+  const openEditModal = (moderator) => {
+    setSelectedModerator(moderator);
+    setEditModalOpen(true);
   };
 
-  const closeAssignModal = () => {
-    setAssignModalOpen(false);
-    setSelectedModel(null);
+  const closeEditModal = () => {
+    setEditModalOpen(false);
+    setSelectedModerator(null);
   };
 
   const filteredModerators = moderators.filter(moderator => {
@@ -154,13 +153,6 @@ const AdminAssignmentsView = () => {
           </div>
         </div>
       </div>
-
-      {/* Unassigned Models Section */}
-      <UnassignedModelsSection 
-        unassignedModels={unassignedModels}
-        theme={theme}
-        onAssignModel={openAssignModal}
-      />
 
       {/* Search and Filters */}
       <div className={`glass-card rounded-xl p-6 ${theme === 'dark' ? 'bg-gray-800/70' : ''}`}>
@@ -208,6 +200,7 @@ const AdminAssignmentsView = () => {
             moderator={moderator}
             theme={theme}
             onUnassignModel={handleUnassignModel}
+            onEditModerator={openEditModal}
           />
         ))}
       </div>
@@ -224,14 +217,14 @@ const AdminAssignmentsView = () => {
         </div>
       )}
 
-      {/* Assignment Modal */}
-      <AssignmentModal
-        isOpen={assignModalOpen}
-        selectedModel={selectedModel}
-        moderators={moderators}
+      {/* Edit Modal */}
+      <ModeratorEditModal
+        isOpen={editModalOpen}
+        moderator={selectedModerator}
+        unassignedModels={unassignedModels}
         theme={theme}
         assigning={assigning}
-        onClose={closeAssignModal}
+        onClose={closeEditModal}
         onAssignModel={handleAssignModel}
       />
     </div>

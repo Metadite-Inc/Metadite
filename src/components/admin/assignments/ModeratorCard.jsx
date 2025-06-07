@@ -1,11 +1,12 @@
 
 import React from 'react';
-import { Bot, UserCheck, Trash2 } from 'lucide-react';
+import { Bot, UserCheck, Trash2, Edit3 } from 'lucide-react';
 
 const ModeratorCard = ({ 
   moderator, 
   theme, 
-  onUnassignModel 
+  onUnassignModel,
+  onEditModerator
 }) => {
   return (
     <div
@@ -33,6 +34,13 @@ const ModeratorCard = ({
           </div>
           
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => onEditModerator(moderator)}
+              className="p-2 bg-metadite-primary text-white rounded-lg hover:bg-metadite-primary/80 transition-colors"
+              title="Edit assignments"
+            >
+              <Edit3 className="h-4 w-4" />
+            </button>
             <span className={`px-3 py-1 rounded-full text-xs font-medium ${
               moderator.is_active
                 ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
