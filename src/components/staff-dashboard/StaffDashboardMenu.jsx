@@ -23,8 +23,7 @@ const StaffDashboardMenu = ({ activeTab, setActiveTab, logout, user }) => {
         { id: 'admin-summary', label: 'Admin Summary', icon: BarChart3 },
         { id: 'system-health', label: 'System Health', icon: Shield },
         { id: 'user-management', label: 'Quick User Mgmt', icon: Users },
-        { id: 'moderator-assignments', label: 'Moderator Assignments', icon: UserCheck, external: true },
-        ...commonItems.slice(1) // Notifications, Settings
+        ...commonItems.slice(1)
       ];
     }
 
