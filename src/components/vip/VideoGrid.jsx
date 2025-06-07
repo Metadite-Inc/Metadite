@@ -25,9 +25,16 @@ const VideoGrid = ({ videos, isLoaded }) => {
               ? 'opacity-100 translate-y-0' 
               : 'opacity-0 translate-y-10'
           }`}
-          style={{ transitionDelay: `${index * 50}ms` }}
+          style={{ 
+            transitionDelay: `${Math.min(index * 50, 300)}ms`,
+            // Prioritize loading of first 8 videos (above the fold)
+            ...(index < 8 && { loadingPriority: 'high' })
+          }}
         >
-          <VideoCard video={video} vipAccess={true} />
+          <VideoCard 
+            video={video} 
+            vipAccess={true}
+          />
         </div>
       ))}
     </div>
