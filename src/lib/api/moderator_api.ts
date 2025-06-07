@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 import { BaseApiService } from "./base_api";
 import { User } from "./admin_users_api";
@@ -28,20 +27,34 @@ export interface CreateModeratorRequest {
 }
 
 class ModeratorApiService extends BaseApiService {
-  // Get all moderators
+  // Get all moderators (admin only) or current moderator info (for moderators)
   async getModerators(): Promise<Moderator[]> {
     try {
-      // Validate admin role server-side before making request
-      await this.validateRole('admin');
       const token = this.validateAuth();
       
-      return await this.request<Moderator[]>('/api/moderators/moderators?skip=0&limit=5', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      // Import authApi to get current user role
+      const { authApi } = await import('./auth_api');
+      const currentUser = await authApi.getCurrentUser();
+      
+      if (currentUser.role === 'admin') {
+        // Admins can see all moderators
+        return await this.request<Moderator[]>('/api/moderators/moderators?skip=0&limit=5', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      } else if (currentUser.role === 'moderator') {
+        // Moderators can only see their own info
+        const moderatorData = {
+          ...currentUser,
+          assigned_dolls: []
+        } as Moderator;
+        return [moderatorData];
+      } else {
+        throw new Error('Access denied. Insufficient privileges.');
+      }
     } catch (error) {
-      toast.error('Failed to fetch moderators', {
+      toast.error('Failed to fetch moderator data', {
         description: error instanceof Error ? error.message : 'Unknown error occurred',
       });
       console.error(error);
@@ -49,7 +62,7 @@ class ModeratorApiService extends BaseApiService {
     }
   }
 
-  // Create a new moderator
+  // Create a new moderator (admin only)
   async createModerator(data: CreateModeratorRequest): Promise<void> {
     try {
       // Validate admin role server-side before making request
@@ -73,7 +86,7 @@ class ModeratorApiService extends BaseApiService {
     }
   }
 
-  // Delete a moderator
+  // Delete a moderator (admin only)
   async deleteModerator(moderatorId: number): Promise<void> {
     try {
       // Validate admin role server-side before making request
@@ -101,7 +114,10 @@ class ModeratorApiService extends BaseApiService {
     try {
       const token = this.validateAuth();
       
-      return await this.request<Model[]>(`/api/dolls/assigned/false?skip=${skip}&limit=${limit}`, {
+      // Ensure limit doesn't exceed server maximum of 10
+      const validLimit = Math.min(limit, 10);
+      
+      return await this.request<Model[]>(`/api/dolls/assigned/false?skip=${skip}&limit=${validLimit}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -118,7 +134,7 @@ class ModeratorApiService extends BaseApiService {
     return this.getUnassignedDolls(0, 10);
   }
 
-  // Assign a doll to moderator
+  // Assign a doll to moderator (admin only)
   async assignDollToModerator(moderatorId: number, dollId: number): Promise<void> {
     try {
       // Validate admin role server-side before making request
@@ -135,6 +151,28 @@ class ModeratorApiService extends BaseApiService {
       toast.success('Doll assigned to moderator successfully');
     } catch (error) {
       toast.error('Failed to assign doll to moderator', {
+        description: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  }
+
+  // Unassign a doll from moderator (admin only)
+  async unassignDollFromModerator(moderatorId: number, dollId: number): Promise<void> {
+    try {
+      // Validate admin role server-side before making request
+      await this.validateRole('admin');
+      const token = this.validateAuth();
+      
+      await this.request(`/api/moderators/${moderatorId}/dolls/${dollId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      
+      toast.success('Doll unassigned from moderator successfully');
+    } catch (error) {
+      toast.error('Failed to unassign doll from moderator', {
         description: error instanceof Error ? error.message : 'Unknown error',
       });
     }

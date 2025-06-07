@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart, Heart, MessageSquare } from 'lucide-react';
@@ -130,16 +131,18 @@ const ModelCard = ({ model, user, isFavorite: initialIsFavorite, onRemoveFavorit
       <div className="relative overflow-hidden">
         {!imageLoaded && <div className="absolute inset-0 shimmer"></div>}
         <div className="aspect-square w-full">
-          <img
-            src={model.image}
-            alt={model.name}
-            className={`w-full h-80% object-cover transition-transform duration-700 hover:scale-110 ${imageLoaded ? 'image-fade-in loaded' : 'image-fade-in'}`}
-            onLoad={() => setImageLoaded(true)}
-            onError={(e) => {
-              e.target.onerror = null;
-              e.target.src = 'https://placehold.co/600x400?text=No+Image';
-            }}
-          />
+          <Link to={`/model/${model.id}`}>
+            <img
+              src={model.image}
+              alt={model.name}
+              className={`w-full h-80% object-cover transition-transform duration-700 hover:scale-110 cursor-pointer ${imageLoaded ? 'image-fade-in loaded' : 'image-fade-in'}`}
+              onLoad={() => setImageLoaded(true)}
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = 'https://placehold.co/600x400?text=No+Image';
+              }}
+            />
+          </Link>
         </div>
         <button 
           onClick={handleLike}

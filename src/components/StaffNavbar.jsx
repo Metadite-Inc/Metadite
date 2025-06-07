@@ -39,12 +39,14 @@ const StaffNavbar = () => {
           label: 'Moderator',
           showUnread: true
         },
+        { to: '/moderator-assignments', label: 'My Assignments' },
         { to: '/staff-dashboard', label: 'Dashboard' }
       ];
     }
     if (user?.role === 'admin') {
       return [
         { to: '/admin', label: 'Admin' },
+        { to: '/moderator-assignments', label: 'Assignments' },
         { to: '/staff-dashboard', label: 'Dashboard' }
       ];
     }

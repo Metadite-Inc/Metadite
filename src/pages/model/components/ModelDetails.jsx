@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Flag, Heart, Share2, Star } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -6,6 +5,7 @@ import { useTheme } from '../../../context/ThemeContext';
 import { useNavigate } from 'react-router-dom';
 import { createChatRoom } from '../../../services/ChatService';
 import { toast } from 'sonner';
+import { useAuth } from '../../../context/AuthContext';
 
 const ModelDetails = ({ 
   model, 
@@ -17,10 +17,23 @@ const ModelDetails = ({
   handleAddToCart
 }) => {
   const { theme } = useTheme();
+  const { user } = useAuth();
   const isDark = theme === 'dark';
   const navigate = useNavigate();
   
   const handleChatButtonClick = async () => {
+    if (!user) {
+      toast.error("Please log in to start a chat");
+      return;
+    }
+
+    // Check if user has free membership - redirect to upgrade page
+    if (user.membership_level === 'free') {
+      navigate('/upgrade');
+      toast.info("Upgrade your membership to chat with models");
+      return;
+    }
+
     try {
       // Create a chat room first
       const chatRoom = await createChatRoom(model.id.toString());
@@ -138,7 +151,7 @@ const ModelDetails = ({
           <svg xmlns="http://www.w3.org/2000/svg" className="mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
           </svg>
-          Chat
+          {user?.membership_level === 'free' ? 'Upgrade to Chat' : 'Chat'}
         </Button>
       </div>
     </div>
