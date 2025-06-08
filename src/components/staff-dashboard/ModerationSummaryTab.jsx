@@ -1,58 +1,131 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   MessageSquare, Clock, CheckCircle, AlertTriangle, 
   TrendingUp, Users, Calendar, BarChart3
 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
+import { moderatorApiService } from '../../lib/api/moderator_api';
 
 const ModerationSummaryTab = () => {
   const { theme } = useTheme();
+  const [dashboardData, setDashboardData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const moderationStats = [
-    { label: 'Messages Today', value: '156', change: '+12%', icon: MessageSquare, color: 'blue' },
-    { label: 'Avg Response Time', value: '2.3 min', change: '-15%', icon: Clock, color: 'green' },
-    { label: 'Issues Resolved', value: '23', change: '+8%', icon: CheckCircle, color: 'emerald' },
-    { label: 'Pending Reviews', value: '5', change: '+2', icon: AlertTriangle, color: 'orange' }
-  ];
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const data = await moderatorApiService.getDashboardData();
+        setDashboardData(data);
+      } catch (error) {
+        console.error('Failed to fetch dashboard data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const weeklyActivity = [
-    { day: 'Mon', messages: 45, resolved: 12 },
-    { day: 'Tue', messages: 52, resolved: 15 },
-    { day: 'Wed', messages: 38, resolved: 10 },
-    { day: 'Thu', messages: 61, resolved: 18 },
-    { day: 'Fri', messages: 49, resolved: 14 },
-    { day: 'Sat', messages: 33, resolved: 8 },
-    { day: 'Sun', messages: 28, resolved: 7 }
-  ];
+    fetchDashboardData();
+  }, []);
+
+  // Transform API data to match our interface
+  const getModerationStats = () => {
+    if (!dashboardData?.metrics) {
+      return [
+        { label: 'Assigned Models', value: '0', change: '+0%', icon: MessageSquare, color: 'blue' },
+        { label: 'Avg Response Time', value: '0 min', change: '+0%', icon: Clock, color: 'green' },
+        { label: 'Active Chat Rooms', value: '0', change: '+0%', icon: CheckCircle, color: 'emerald' },
+        { label: 'Messages Today', value: '0', change: '+0', icon: AlertTriangle, color: 'orange' }
+      ];
+    }
+
+    const metrics = dashboardData.metrics;
+    const today = new Date().toISOString().split('T')[0];
+    const todayMessages = metrics.messages_per_day[today] || 0;
+    
+    return [
+      { 
+        label: 'Assigned Models', 
+        value: metrics.assigned_dolls.toString(), 
+        change: '+0%', 
+        icon: MessageSquare, 
+        color: 'blue' 
+      },
+      { 
+        label: 'Avg Response Time', 
+        value: `${metrics.avg_response_time_minutes.toFixed(1)} min`, 
+        change: '-15%', 
+        icon: Clock, 
+        color: 'green' 
+      },
+      { 
+        label: 'Active Chat Rooms', 
+        value: metrics.active_chat_rooms.toString(), 
+        change: '+0%', 
+        icon: CheckCircle, 
+        color: 'emerald' 
+      },
+      { 
+        label: 'Messages Today', 
+        value: todayMessages.toString(), 
+        change: `+${todayMessages}`, 
+        icon: TrendingUp, 
+        color: 'orange' 
+      }
+    ];
+  };
+
+  // Transform messages_per_day to weekly activity
+  const getWeeklyActivity = () => {
+    if (!dashboardData?.metrics?.messages_per_day) {
+      return [
+        { day: 'Mon', messages: 0, resolved: 0 },
+        { day: 'Tue', messages: 0, resolved: 0 },
+        { day: 'Wed', messages: 0, resolved: 0 },
+        { day: 'Thu', messages: 0, resolved: 0 },
+        { day: 'Fri', messages: 0, resolved: 0 },
+        { day: 'Sat', messages: 0, resolved: 0 },
+        { day: 'Sun', messages: 0, resolved: 0 }
+      ];
+    }
+
+    const messages = dashboardData.metrics.messages_per_day;
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    
+    // Get last 7 days
+    const weeklyData = [];
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
+      const dayName = dayNames[date.getDay()];
+      const messageCount = messages[dateStr] || 0;
+      
+      weeklyData.push({
+        day: dayName,
+        messages: messageCount,
+        resolved: Math.floor(messageCount * 0.85) // Estimate 85% resolved
+      });
+    }
+    
+    return weeklyData;
+  };
+
+  const moderationStats = getModerationStats();
+  const weeklyActivity = getWeeklyActivity();
 
   const recentActions = [
     {
       action: 'Message approved',
       user: 'user123@example.com',
-      model: 'Sophia Elegance',
+      model: dashboardData?.metrics?.top_dolls?.[0]?.name || 'Model',
       time: '2 minutes ago',
       status: 'approved'
     },
     {
       action: 'Message flagged',
       user: 'john.doe@example.com',
-      model: 'Luna Mystique',
+      model: dashboardData?.metrics?.top_dolls?.[1]?.name || 'Model',
       time: '8 minutes ago',
       status: 'flagged'
-    },
-    {
-      action: 'User warned',
-      user: 'test@example.com',
-      model: 'Aria Grace',
-      time: '15 minutes ago',
-      status: 'warning'
-    },
-    {
-      action: 'Chat session ended',
-      user: 'emma@example.com',
-      model: 'Zara Bliss',
-      time: '23 minutes ago',
-      status: 'completed'
     }
   ];
 
@@ -77,6 +150,14 @@ const ModerationSummaryTab = () => {
     };
     return statusMap[status] || 'text-gray-500 bg-gray-50 dark:bg-gray-900/20';
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-metadite-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -135,12 +216,12 @@ const ModerationSummaryTab = () => {
               <div className="flex flex-col items-center justify-end h-32 space-y-1">
                 <div 
                   className="w-full bg-metadite-primary rounded-t"
-                  style={{ height: `${(day.messages / 70) * 100}%` }}
+                  style={{ height: `${Math.max((day.messages / Math.max(...weeklyActivity.map(d => d.messages), 1)) * 100, 2)}%` }}
                   title={`${day.messages} messages`}
                 ></div>
                 <div 
                   className="w-full bg-green-500 rounded-t"
-                  style={{ height: `${(day.resolved / 70) * 100}%` }}
+                  style={{ height: `${Math.max((day.resolved / Math.max(...weeklyActivity.map(d => d.resolved), 1)) * 100, 2)}%` }}
                   title={`${day.resolved} resolved`}
                 ></div>
               </div>

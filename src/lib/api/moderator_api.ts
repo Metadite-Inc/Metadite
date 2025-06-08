@@ -26,8 +26,40 @@ export interface CreateModeratorRequest {
   password: string;
 }
 
+export interface ModeratorDashboardData {
+  message: string;
+  metrics: {
+    assigned_dolls: number;
+    active_chat_rooms: number;
+    avg_response_time_minutes: number;
+    messages_per_day: Record<string, number>;
+    top_dolls: Array<{
+      id: number;
+      name: string;
+      message_count: number;
+    }>;
+  };
+}
+
 class ModeratorApiService extends BaseApiService {
-  // Get all moderators (admin only) or current moderator info (for moderators)
+  async getDashboardData(): Promise<ModeratorDashboardData | null> {
+    try {
+      const token = this.validateAuth();
+      
+      return await this.request<ModeratorDashboardData>('/api/moderators/dashboard', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    } catch (error) {
+      toast.error('Failed to fetch dashboard data', {
+        description: error instanceof Error ? error.message : 'Unknown error occurred',
+      });
+      console.error('Dashboard data fetch error:', error);
+      return null;
+    }
+  }
+  
   async getModerators(): Promise<Moderator[]> {
     try {
       const token = this.validateAuth();
