@@ -1,9 +1,17 @@
 import { Link } from 'react-router-dom';
 import { Facebook, Twitter, Instagram, Mail, ShoppingCart, Heart, User, Home, MessageCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
+import useUnreadCount from '../hooks/useUnreadCount';
 
 const Footer = () => {
   const { user } = useAuth();
+  const { unreadData } = useUnreadCount();
+  const { cartItems } = useCart();
+
+
+  // Add fallback for undefined cartItems
+  const cartItemCount = (cartItems || []).reduce((total, item) => total + item.quantity, 0);
 
   return (
     <>
@@ -83,10 +91,20 @@ const Footer = () => {
           </Link>
           <Link to="/chat" className="flex flex-col items-center text-gray-700 dark:text-gray-300 hover:text-metadite-primary transition-colors">
             <MessageCircle className="h-6 w-6" />
+            {unreadData.total_unread > 0 && (
+              <span className="ml-2 bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] h-5 flex items-center justify-center">
+                {unreadData.total_unread}
+              </span>
+            )}
             <span className="text-xs mt-1 text-[10px]">Messages</span>
           </Link>
           <Link to="/cart" className="flex flex-col items-center text-gray-700 dark:text-gray-300 hover:text-metadite-primary transition-colors">
             <ShoppingCart className="h-6 w-6" />
+            {cartItemCount > 0 && (
+              <span className="ml-2 bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] h-5 flex items-center justify-center">
+                {cartItemCount}
+              </span>
+            )}
             <span className="text-xs mt-1 text-[10px]">Cart</span>
           </Link>
           <Link to="/dashboard?tab=favorites" className="flex flex-col items-center text-gray-700 dark:text-gray-300 hover:text-metadite-primary transition-colors">
