@@ -3,16 +3,15 @@ import { Facebook, Twitter, Instagram, Mail, ShoppingCart, Heart, User, Home, Me
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import useUnreadCount from '../hooks/useUnreadCount';
+import { useMemo } from 'react';
 
 const Footer = () => {
   const { user } = useAuth();
   const { unreadData } = useUnreadCount();
   const { cartItems } = useCart();
 
-
-  // Add fallback for undefined cartItems
-  const cartItemCount = (cartItems || []).reduce((total, item) => total + item.quantity, 0);
-
+  // Memoize the cart item count calculation
+  const cartItemCount = useMemo(() => (cartItems || []).reduce((total, item) => total + item.quantity, 0), [cartItems]);
   return (
     <>
       <footer className="bg-gradient-to-r from-metadite-dark to-metadite-primary text-white py-6">
