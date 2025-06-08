@@ -1,13 +1,29 @@
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   User, Mail, Calendar, Shield, MessageSquare, 
   Clock, BarChart3, Users, AlertTriangle, Settings
 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
+import { moderatorApiService } from '../../lib/api/moderator_api';
 
 const StaffAccountOverview = ({ user, isLoaded }) => {
   const { theme } = useTheme();
+  const [dashboardData, setDashboardData] = useState(null);
+
+  useEffect(() => {
+    if (user?.role === 'moderator') {
+      const fetchDashboardData = async () => {
+        try {
+          const data = await moderatorApiService.getDashboardData();
+          setDashboardData(data);
+        } catch (error) {
+          console.error('Failed to fetch dashboard data:', error);
+        }
+      };
+
+      fetchDashboardData();
+    }
+  }, [user]);
 
   // Get role-specific stats and information
   const getRoleSpecificData = () => {
@@ -24,13 +40,37 @@ const StaffAccountOverview = ({ user, isLoaded }) => {
     }
 
     if (user?.role === 'moderator') {
+      const metrics = dashboardData?.metrics;
+      const today = new Date().toISOString().split('T')[0];
+      const todayMessages = metrics?.messages_per_day?.[today] || 0;
+
       return {
         title: 'Moderator Account Overview',
         stats: [
-          { label: 'Assigned Models', value: user?.assigned_dolls?.length || '0', icon: MessageSquare, color: 'blue' },
-          { label: 'Messages Today', value: '127', icon: BarChart3, color: 'green' },
-          { label: 'Active Chats', value: '8', icon: Clock, color: 'purple' },
-          { label: 'Response Time', value: '2.3min', icon: Clock, color: 'orange' }
+          { 
+            label: 'Assigned Models', 
+            value: metrics?.assigned_dolls?.toString() || '0', 
+            icon: MessageSquare, 
+            color: 'blue' 
+          },
+          { 
+            label: 'Messages Today', 
+            value: todayMessages.toString(), 
+            icon: BarChart3, 
+            color: 'green' 
+          },
+          { 
+            label: 'Active Chats', 
+            value: metrics?.active_chat_rooms?.toString() || '0', 
+            icon: Clock, 
+            color: 'purple' 
+          },
+          { 
+            label: 'Response Time', 
+            value: metrics ? `${metrics.avg_response_time_minutes.toFixed(1)}min` : '0min', 
+            icon: Clock, 
+            color: 'orange' 
+          }
         ]
       };
     }
