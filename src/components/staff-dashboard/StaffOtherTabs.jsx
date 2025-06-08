@@ -9,7 +9,6 @@ import { Bell, BellOff, Volume2, VolumeX } from 'lucide-react';
 import StaffAccountSettings from './StaffAccountSettings';
 import AdminSummaryTab from './AdminSummaryTab';
 import ModerationSummaryTab from './ModerationSummaryTab';
-import SystemHealthTab from './SystemHealthTab';
 import ChatActivityTab from './ChatActivityTab';
 import NotificationService from '../../services/NotificationService';
 
@@ -260,6 +259,7 @@ const StaffOtherTabs = ({ activeTab, user }) => {
       );
     }
 
+    /**
     if (activeTab === 'system-health') {
       return (
         <div className={`glass-card rounded-xl ${theme === 'dark' ? 'bg-gray-800/70' : ''}`}>
@@ -267,6 +267,7 @@ const StaffOtherTabs = ({ activeTab, user }) => {
         </div>
       );
     }
+    **/
 
     if (activeTab === 'user-management') {
       return (
