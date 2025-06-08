@@ -72,15 +72,15 @@ const Navbar = () => {
 
         <div className="hidden md:flex items-center space-x-8">
           {navLinks.map((link) => (
-  <a
-    key={link.to}
-    href={link.to}
-    className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors"
-    onClick={e => { e.preventDefault(); window.location.href = link.to; }}
-  >
-    {link.label}
-  </a>
-))}
+            <a
+              key={link.to}
+              href={link.to}
+              className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors"
+              onClick={e => { e.preventDefault(); window.location.href = link.to; }}
+            >
+              {link.label}
+            </a>
+          ))}
           <ThemeToggle />
         </div>
 
@@ -138,46 +138,17 @@ const Navbar = () => {
       {mobileMenuOpen && (
         <div className="md:hidden glass-card animate-slide-down absolute top-16 left-0 w-full py-4 px-6 flex flex-col space-y-4 bg-white">
           {navLinks.map((link) => (
-  <a
-    key={link.to}
-    href={link.to}
-    className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors py-2"
-    onClick={e => { e.preventDefault(); window.location.href = link.to; }}
-  >
-    {link.label}
-  </a>
-))}
+            <a
+              key={link.to}
+              href={link.to}
+              className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors py-2"
+              onClick={e => { e.preventDefault(); window.location.href = link.to; }}
+            >
+              {link.label}
+            </a>
+          ))}
           {user ? (
             <>
-              {/* Only show Messages link for non-free users in mobile menu */}
-              {user.membership_level !== 'free' && (
-                <Link
-                  to="/chat"
-                  className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors py-2 flex items-center"
-                  onClick={toggleMobileMenu}
-                >
-                  <MessageSquare className="h-5 w-5 mr-2" />
-                  Messages
-                  {unreadData.total_unread > 0 && (
-                    <span className="ml-2 bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] h-5 flex items-center justify-center">
-                      {unreadData.total_unread}
-                    </span>
-                  )}
-                </Link>
-              )}
-              <Link
-                to="/cart"
-                className="text-gray-800 dark:text-gray-200 hover:text-metadite-primary transition-colors py-2 flex items-center"
-                onClick={toggleMobileMenu}
-              >
-                <ShoppingCart className="h-5 w-5 mr-2" />
-                Cart
-                {cartItemCount > 0 && (
-                  <span className="ml-2 bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] h-5 flex items-center justify-center">
-                    {cartItemCount}
-                  </span>
-                )}
-              </Link>
               <button
                 onClick={handleLogout}
                 className="bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white px-4 py-2 rounded-md hover:opacity-90 transition-opacity"
