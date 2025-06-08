@@ -21,7 +21,7 @@ const StaffDashboardMenu = ({ activeTab, setActiveTab, logout, user }) => {
       return [
         ...commonItems.slice(0, 1), // Overview
         { id: 'admin-summary', label: 'Admin Summary', icon: BarChart3 },
-        { id: 'system-health', label: 'System Health', icon: Shield },
+        //{ id: 'system-health', label: 'System Health', icon: Shield },
         { id: 'user-management', label: 'Quick User Mgmt', icon: Users },
         ...commonItems.slice(1)
       ];
