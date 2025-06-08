@@ -94,7 +94,7 @@ const Footer = () => {
             <span className="text-xs mt-1 text-[10px]">Favorites</span>
           </Link>
           <Link 
-            to={user ? '/dashboard?tab=overview' : '/login'} 
+            to={user ? "/dashboard" : "/login"} 
             className="flex flex-col items-center text-gray-700 dark:text-gray-300 hover:text-metadite-primary transition-colors"
           >
             <User className="h-6 w-6" />
