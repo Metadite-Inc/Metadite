@@ -81,7 +81,7 @@ const ChatActivityTab = () => {
 
     return dashboardData.metrics.top_dolls.map(doll => ({
       name: doll.name,
-      activeChats: Math.floor(Math.random() * 5) + 1, // Estimate since not provided
+      activeChats: Math.min(doll.message_count, 5), // Fallback: capped by totalMessages
       totalMessages: doll.message_count,
       avgRating: 4.5 + Math.random() * 0.5, // Estimate rating
       status: ['online', 'busy', 'away'][Math.floor(Math.random() * 3)]
