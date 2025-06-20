@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Minus, Plus } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useTheme } from '../context/ThemeContext';
@@ -8,23 +8,32 @@ const CartItem = ({ item }) => {
   const { updateQuantity, removeFromCart } = useCart();
   const [imageLoaded, setImageLoaded] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [localQuantity, setLocalQuantity] = useState(item.quantity);
   const { theme } = useTheme();
 
-  // Use item.doll_id for display, item.id for cart actions
+  useEffect(() => {
+    // Keep in sync with external changes like reload or global cart update
+    setLocalQuantity(item.quantity);
+  }, [item.quantity]);
+
   const handleIncrease = async () => {
+    const newQty = localQuantity + 1;
+    setLocalQuantity(newQty);
     setIsUpdating(true);
     try {
-      await updateQuantity(item.id, item.quantity + 1);
+      await updateQuantity(item.id, newQty);
     } finally {
       setIsUpdating(false);
     }
   };
 
   const handleDecrease = async () => {
-    if (item.quantity > 1) {
+    if (localQuantity > 1) {
+      const newQty = localQuantity - 1;
+      setLocalQuantity(newQty);
       setIsUpdating(true);
       try {
-        await updateQuantity(item.id, item.quantity - 1);
+        await updateQuantity(item.id, newQty);
       } finally {
         setIsUpdating(false);
       }
@@ -39,7 +48,6 @@ const CartItem = ({ item }) => {
       setIsUpdating(false);
     }
   };
-
 
   return (
     <div className={`glass-card rounded-lg p-4 mb-4 flex items-center ${
@@ -71,7 +79,7 @@ const CartItem = ({ item }) => {
           </button>
           
           <span className={`${theme === 'dark' ? 'text-white' : 'text-gray-800'} w-6 text-center`}>
-            {isUpdating ? '...' : item.quantity}
+            {isUpdating ? '...' : localQuantity}
           </span>
           
           <button 

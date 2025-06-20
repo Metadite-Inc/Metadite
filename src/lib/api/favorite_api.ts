@@ -7,7 +7,6 @@ const API_URL = import.meta.env.VITE_API_BASE_URL;
  */
 export interface FavoriteModel {
   id: number;
-  user_id: number;
   doll_id: number;
   doll?: {
     id: number;
@@ -30,7 +29,6 @@ export interface FavoriteModel {
  * Request data for adding a favorite
  */
 export interface AddFavoriteRequest {
-  user_id: number;
   doll_id: number;
 }
 
@@ -86,10 +84,9 @@ class FavoriteApiService {
   /**
    * Add a model to favorites
    */
-  async addToFavorites(dollId: number, userId: number): Promise<FavoriteModel | null> {
+  async addToFavorites(dollId: number): Promise<FavoriteModel | null> {
     try {
       const data: AddFavoriteRequest = {
-        user_id: userId,
         doll_id: dollId
       };
       
@@ -135,7 +132,7 @@ class FavoriteApiService {
    */
   async checkIsFavorite(dollId: number): Promise<{is_favorite: boolean, favorite_id?: number}> {
     try {
-      const response = await this.request<{message: string, user_id: number, is_favorite: boolean, favorite_id?: number}>(
+      const response = await this.request<{message: string, is_favorite: boolean, favorite_id?: number}>(
         `/api/favorites/check/${dollId}`
       );
       
