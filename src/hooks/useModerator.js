@@ -18,6 +18,7 @@ import {
   cleanup,
   getCurrentConnectionState
 } from '../services/ChatService';
+import useUnreadCount from './useUnreadCount';
 
 const useModerator = () => {
   const { user } = useAuth();
@@ -44,6 +45,10 @@ const useModerator = () => {
   const wsRef = useRef(null);
   const connectionListenerRef = useRef(null);
   const [refreshModelsCounter, setRefreshModelsCounter] = useState(0);
+  
+  // Add unread count tracking to trigger model refresh
+  const { unreadData } = useUnreadCount();
+  const previousUnreadCountRef = useRef(0);
   
   // Server-side role validation for moderator access
   useEffect(() => {
@@ -76,6 +81,20 @@ const useModerator = () => {
 
     validateModeratorAccess();
   }, [user, navigate]);
+
+  // Watch for unread count changes and refresh models when count increases
+  useEffect(() => {
+    const currentTotal = unreadData.total_unread || 0;
+    const previousTotal = previousUnreadCountRef.current;
+    
+    // If unread count increased and we're not on initial load
+    if (currentTotal > previousTotal && previousTotal > 0) {
+      console.log('Unread count increased, refreshing models list');
+      setRefreshModelsCounter(prev => prev + 1);
+    }
+    
+    previousUnreadCountRef.current = currentTotal;
+  }, [unreadData.total_unread]);
   
   // Load assigned models/dolls when component mounts or when refresh is triggered
   useEffect(() => {
@@ -356,7 +375,6 @@ const useModerator = () => {
     }
   };
   
-  // Clear selected file
   const clearSelectedFile = () => {
     setSelectedFile(null);
     setPreviewUrl(null);
@@ -503,7 +521,6 @@ const useModerator = () => {
     }
   };
   
-  // Toggle flag status for a message
   const handleFlagMessage = async (messageId) => {
     try {
       const message = messages.find(msg => msg.id === messageId);
@@ -530,7 +547,6 @@ const useModerator = () => {
     }
   };
   
-  // Handle message deletion
   const handleDeleteMessage = async (messageId) => {
     try {
       await deleteMessage(messageId);
