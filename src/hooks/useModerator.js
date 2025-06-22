@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -44,7 +43,6 @@ const useModerator = () => {
   const [connectionStatus, setConnectionStatus] = useState('disconnected');
   const wsRef = useRef(null);
   const connectionListenerRef = useRef(null);
-  const [refreshModelsCounter, setRefreshModelsCounter] = useState(0);
   
   // Add unread count tracking to trigger model refresh
   const { unreadData } = useUnreadCount();
@@ -82,65 +80,72 @@ const useModerator = () => {
     validateModeratorAccess();
   }, [user, navigate]);
 
+  // Function to load assigned models
+  const loadAssignedModels = useCallback(async () => {
+    if (!user?.role || user.role !== 'moderator') return;
+    
+    setLoading(true);
+    try {
+      console.log('Loading assigned models...');
+      const rooms = await getModeratorChatRooms();
+
+      if (!rooms) {
+        toast.error('Failed to load assigned models');
+        return;
+      }
+
+      // Fetch model details for all rooms in parallel
+      const modelDetailsList = await Promise.all(
+        rooms.map(room => apiService.getModelDetails(room.doll_id))
+      );
+
+      // Format the rooms data for display
+      const models = rooms.map((room, index) => {
+        const model = modelDetailsList[index];
+        return {
+          id: room.id,
+          name: model?.name || 'Unknown',
+          image: model?.image || null,
+          receiverId: room.user_id,
+          receiverName: room.user?.full_name,
+          lastMessage: room.latest_message || 'Check for messages',
+          lastMessageTime: room.last_message?.created_at || null,
+          unreadCount: room.unread_count || 0,
+        };
+      });
+
+      console.log('Loaded models:', models.length);
+      setAssignedModels(models);
+    } catch (error) {
+      console.error('Error loading assigned models:', error);
+      toast.error('Failed to load assigned models');
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
   // Watch for unread count changes and refresh models when count increases
   useEffect(() => {
     const currentTotal = unreadData.total_unread || 0;
     const previousTotal = previousUnreadCountRef.current;
     
+    console.log('Unread count check:', { currentTotal, previousTotal });
+    
     // If unread count increased and we're not on initial load
-    if (currentTotal > previousTotal && previousTotal > 0) {
-      console.log('Unread count increased, refreshing models list');
-      setRefreshModelsCounter(prev => prev + 1);
+    if (currentTotal > previousTotal && previousTotal >= 0) {
+      console.log('Unread count increased, triggering model refresh');
+      loadAssignedModels();
     }
     
     previousUnreadCountRef.current = currentTotal;
-  }, [unreadData.total_unread]);
+  }, [unreadData.total_unread, loadAssignedModels]);
   
-  // Load assigned models/dolls when component mounts or when refresh is triggered
+  // Load assigned models/dolls when component mounts
   useEffect(() => {
-    const loadAssignedModels = async () => {
-      setLoading(true);
-      try {
-        const rooms = await getModeratorChatRooms();
-
-        if (!rooms) {
-          toast.error('Failed to load assigned models');
-          return;
-        }
-
-        // Fetch model details for all rooms in parallel
-        const modelDetailsList = await Promise.all(
-          rooms.map(room => apiService.getModelDetails(room.doll_id))
-        );
-
-        // Format the rooms data for display
-        const models = rooms.map((room, index) => {
-          const model = modelDetailsList[index];
-          return {
-            id: room.id,
-            name: model?.name || 'Unknown',
-            image: model?.image || null,
-            receiverId: room.user_id,
-            receiverName: room.user?.full_name,
-            lastMessage: room.latest_message || 'Check for messages',
-            lastMessageTime: room.last_message?.created_at || null,
-            unreadCount: room.unread_count || 0,
-          };
-        });
-
-        setAssignedModels(models);
-      } catch (error) {
-        console.error('Error loading assigned models:', error);
-        toast.error('Failed to load assigned models');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     if (user?.role === 'moderator') {
       loadAssignedModels();
     }
-  }, [user, refreshModelsCounter]);
+  }, [user, loadAssignedModels]);
   
   // Handle model selection
   const handleSelectModel = useCallback((model) => {
@@ -586,7 +591,7 @@ const useModerator = () => {
     handleDeleteMessage,
     handleTyping,
     loadMoreMessages,
-    refreshModels: () => setRefreshModelsCounter(prev => prev + 1)
+    refreshModels: loadAssignedModels
   };
 };
 
