@@ -14,7 +14,6 @@ export interface Order {
 
 interface ModelReview {
   id?: number;
-  user_id: number;
   doll_id: number;
   rating: number;
   comment: string;
@@ -24,7 +23,6 @@ interface ModelReview {
 
 interface FavoriteModel {
   id?: number;
-  user_id: number;
   doll_id: number;
   created_at?: string;
 }
@@ -174,12 +172,11 @@ class userApiService {
     }
   }
 
-  async addModelToFavorites(userId: number, dollId: number): Promise<FavoriteModel> {
+  async addModelToFavorites(dollId: number): Promise<FavoriteModel> {
     try {
       const result = await this.request<FavoriteModel>('/api/favorites/', {
         method: 'POST',
         body: JSON.stringify({
-          user_id: userId, // This will be ignored by the backend as it uses the token
           doll_id: dollId
         })
       });
@@ -213,12 +210,11 @@ class userApiService {
     }
   }
 
-  async createModelReview(userId: number, dollId: number, rating: number, comment: string): Promise<ModelReview> {
+  async createModelReview(dollId: number, rating: number, comment: string): Promise<ModelReview> {
     try {
       const result = await this.request<ModelReview>('/api/reviews/', {
         method: 'POST',
         body: JSON.stringify({
-          user_id: userId, // This will be ignored by the backend as it uses the token
           doll_id: dollId,
           rating,
           comment
@@ -276,9 +272,9 @@ class userApiService {
     }
   }
   
-  async getUserModelReviews(userId: number, skip: number = 0, limit: number = 10): Promise<ModelReview[]> {
+  async getUserModelReviews(skip: number = 0, limit: number = 10): Promise<ModelReview[]> {
     try {
-      const result = await this.request<ModelReview[]>(`/api/reviews/user/${userId}?skip=${skip}&limit=${limit}`, {
+      const result = await this.request<ModelReview[]>(`/api/reviews/user/?skip=${skip}&limit=${limit}`, {
         method: 'GET',
       });
       return result;

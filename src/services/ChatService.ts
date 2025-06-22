@@ -217,79 +217,71 @@ const reconnectWebSocket = (chatRoomId: number, onMessage: (data: any) => void) 
 };
 
 // Enhanced WebSocket connection for a specific chat room with notification integration
-export const connectWebSocket = async (chatRoomId: number | string, onMessage: (data: any) => void) => {
+export const connectWebSocket = async (
+  chatRoomId: number | string,
+  onMessage: (data: any) => void
+) => {
   const token = getAuthToken();
   if (!token) return null;
-  
+
   try {
     const user = await authApi.getCurrentUser();
     const userId = user.id;
-    
-    // Validate chat room ID to prevent NaN issues
+    const userRole = user.role;
+
     const validChatRoomId = Number(chatRoomId);
     if (isNaN(validChatRoomId)) {
-      const error: ChatError = {
+      handleChatError({
         type: 'validation',
         message: 'Invalid chat room ID',
         details: `Received: ${chatRoomId}`
-      };
-      handleChatError(error);
+      });
       return null;
     }
-    
-    // Close existing connection for this chat room if any
+
     const existingWs = connections.get(validChatRoomId);
     if (existingWs) {
-      console.log(`Closing existing connection for room ${validChatRoomId}`);
       existingWs.close();
       connections.delete(validChatRoomId);
     }
-    
+
     updateConnectionState(validChatRoomId, { status: 'connecting' });
-    
-    // Build the WebSocket URL - match the working example
+
     const wsUrl = `${API_BASE_URL.replace('http', 'ws')}/api/chat/ws/${validChatRoomId}/${userId}`;
-    
-    console.log(`Connecting to WebSocket: ${wsUrl}`);
-    console.log(`User ID: ${userId}, Chat Room ID: ${validChatRoomId}`);
-    
     const ws = new WebSocket(wsUrl);
-    
+
     ws.onopen = async () => {
-      console.log(`WebSocket connected successfully for room ${validChatRoomId}`);
-      updateConnectionState(validChatRoomId, { 
+      console.log(`WebSocket connected for room ${validChatRoomId}`);
+
+      updateConnectionState(validChatRoomId, {
         status: 'connected',
         reconnectAttempts: 0,
         lastConnected: new Date()
       });
-      
-      // Send join message
-      try {
-        ws.send(JSON.stringify({
-          action: "join",
-          chat_room_id: validChatRoomId,
-          user_id: userId
-        }));
-        console.log(`Sent join message to WebSocket for room ${validChatRoomId}`);
-      } catch (error) {
-        console.error('Failed to send join message:', error);
-      }
-      
-      // Process any queued messages for this room
+
+      ws.send(JSON.stringify({
+        action: 'identify',
+        chat_room_id: validChatRoomId,
+        user_id: userId,
+        user_role: userRole
+      }));
+
+      // send a "join" action after identifying
+      ws.send(JSON.stringify({
+        action: 'join',
+        chat_room_id: validChatRoomId,
+        user_id: userId
+      }));
+
       await processMessageQueue(validChatRoomId);
-      
-      // Mark messages as read
       markMessagesAsRead(validChatRoomId);
     };
-    
+
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        console.log(`WebSocket message received for room ${validChatRoomId}:`, data);
-        
-        // Handle the message format from your backend (matching the working example)
-        if (data.action === "create") {
-          // Transform backend message format to frontend format
+
+        if (data.action === 'create') {
           const normalizedData = {
             type: 'new_message',
             message: {
@@ -305,21 +297,17 @@ export const connectWebSocket = async (chatRoomId: number | string, onMessage: (
               updated_at: data.updated
             }
           };
-          
-          // Trigger notification for new message if it's not from the current user
+
           if (data.sender_id && data.sender_id.toString() !== userId.toString()) {
             const senderName = data.sender_name || 'Someone';
             const messageContent = data.message || data.content || 'New message';
             notificationService.notifyNewMessage(senderName, messageContent, validChatRoomId);
           }
-          
+
           onMessage(normalizedData);
-        } else if (data.action === "delete") {
-          onMessage({
-            type: 'message_deleted',
-            message_id: data.id
-          });
-        } else if (data.action === "update") {
+        } else if (data.action === 'delete') {
+          onMessage({ type: 'message_deleted', message_id: data.id });
+        } else if (data.action === 'update') {
           onMessage({
             type: 'message_updated',
             message: {
@@ -328,78 +316,63 @@ export const connectWebSocket = async (chatRoomId: number | string, onMessage: (
               updated_at: data.updated
             }
           });
-        } else if (data.action === "notification") {
-          // Handle system notifications
-          console.log('System notification:', data.message);
-        } else if (data.type === "history") {
-          // Handle message history from WebSocket
-          if (data.messages && data.messages.length > 0) {
-            data.messages.forEach(msg => {
-              onMessage({
-                type: 'new_message',
-                message: {
-                  id: msg.id,
-                  content: msg.content,
-                  sender_id: msg.sender_id,
-                  sender_name: msg.sender_name,
-                  chat_room_id: msg.chat_room_id,
-                  message_type: msg.message_type || 'TEXT',
-                  created_at: msg.created_at,
-                  file_url: msg.file_url,
-                  file_name: msg.file_name
-                }
-              });
+        } else if (data.type === 'history') {
+          data.messages?.forEach(msg => {
+            onMessage({
+              type: 'new_message',
+              message: {
+                id: msg.id,
+                content: msg.content,
+                sender_id: msg.sender_id,
+                sender_name: msg.sender_name,
+                chat_room_id: msg.chat_room_id,
+                message_type: msg.message_type || 'TEXT',
+                created_at: msg.created_at,
+                file_url: msg.file_url,
+                file_name: msg.file_name
+              }
             });
-          }
+          });
         } else {
-          // Handle other message types (typing, etc.)
           onMessage(data);
         }
-      } catch (error) {
-        console.error('Error parsing WebSocket message:', error, event.data);
+      } catch (err) {
+        console.error('Error parsing WebSocket message:', err, event.data);
       }
     };
-    
+
     ws.onerror = (error) => {
-      console.error(`WebSocket error for room ${validChatRoomId}:`, error);
-      const chatError: ChatError = {
+      console.error(`WebSocket error:`, error);
+      handleChatError({
         type: 'connection',
         message: 'WebSocket connection error',
         details: String(error)
-      };
-      handleChatError(chatError);
+      });
     };
-    
+
     ws.onclose = (event) => {
-      console.log(`WebSocket connection closed for room ${validChatRoomId}:`, event.code, event.reason);
-      connections.delete(validChatRoomId); // Remove from active connections
+      console.log(`WebSocket closed:`, event.code, event.reason);
+      connections.delete(validChatRoomId);
       updateConnectionState(validChatRoomId, { status: 'disconnected' });
-      
-      // Only attempt reconnection if it wasn't a clean close (1000) and we haven't exceeded max attempts
-      const connectionState = getConnectionState(validChatRoomId);
-      if (event.code !== 1000 && connectionState.reconnectAttempts < connectionState.maxReconnectAttempts) {
-        console.log(`WebSocket closed unexpectedly for room ${validChatRoomId}, attempting to reconnect...`);
+
+      const conn = getConnectionState(validChatRoomId);
+      if (event.code !== 1000 && conn.reconnectAttempts < conn.maxReconnectAttempts) {
         reconnectWebSocket(validChatRoomId, onMessage);
-      } else if (event.code === 1000) {
-        console.log(`WebSocket closed cleanly for room ${validChatRoomId}, no reconnection needed`);
       } else {
-        console.log(`Max reconnection attempts reached for room ${validChatRoomId} or permanent failure`);
         updateConnectionState(validChatRoomId, { status: 'error' });
       }
     };
-    
-    // Store the connection
+
     connections.set(validChatRoomId, ws);
-    
     return ws;
-  } catch (error) {
-    console.error('Failed to connect WebSocket:', error);
-    const chatError: ChatError = {
+
+  } catch (err) {
+    console.error('Failed to connect WebSocket:', err);
+    handleChatError({
       type: 'connection',
       message: 'Failed to establish WebSocket connection',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    };
-    handleChatError(chatError);
+      details: err instanceof Error ? err.message : 'Unknown error'
+    });
     return null;
   }
 };

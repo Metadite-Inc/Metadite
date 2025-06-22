@@ -8,7 +8,6 @@ const API_URL = import.meta.env.VITE_API_BASE_URL;
 
 export interface CartItem {
   id: number;
-  user_id: number;
   doll_id: number;
   quantity: number;
   doll?: {
@@ -34,7 +33,6 @@ class CartApiService extends BaseApiService {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          user_id: user.id,
           doll_id: dollId,
           quantity: quantity
         }),
