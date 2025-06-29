@@ -308,27 +308,6 @@ const StaffOtherTabs = ({ activeTab, user }) => {
         </div>
       );
     }
-
-    if (activeTab === 'schedule') {
-      return (
-        <div className={`glass-card rounded-xl ${theme === 'dark' ? 'bg-gray-800/70' : ''}`}>
-          <div className="p-8 text-center">
-            <h2 className={`text-xl font-semibold mb-4 ${theme === 'dark' ? 'text-white' : ''}`}>
-              Moderation Schedule
-            </h2>
-            <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} mb-6`}>
-              Schedule management is coming soon.
-            </p>
-            <Link 
-              to="/moderator" 
-              className="inline-block bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white px-6 py-3 rounded-md hover:opacity-90 transition-opacity"
-            >
-              Go to Moderator Panel
-            </Link>
-          </div>
-        </div>
-      );
-    }
   }
 
   // Default tab handling for other common tabs

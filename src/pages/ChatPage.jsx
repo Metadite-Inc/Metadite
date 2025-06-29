@@ -786,7 +786,7 @@ const ChatPage = () => {
                           {connectionStatus !== 'connected' && (
                             <div className="mt-2 text-xs text-center text-red-500">
                               {connectionStatus === 'connecting' 
-                                ? 'Connecting to chat server...' 
+                                ? 'Connecting to chat...' 
                                 : 'Connection lost. Trying to reconnect...'}
                             </div>
                           )}
@@ -1101,7 +1101,7 @@ const ChatPage = () => {
                         {connectionStatus !== 'connected' && (
                           <div className="mt-2 text-xs text-center text-red-500">
                             {connectionStatus === 'connecting' 
-                              ? 'Connecting to chat server...' 
+                              ? 'Connecting to chat...' 
                               : 'Connection lost. Trying to reconnect...'}
                           </div>
                         )}

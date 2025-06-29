@@ -68,7 +68,7 @@ const handleChatError = (error: ChatError) => {
       break;
     case 'connection':
       toast.error('Connection error', {
-        description: errorDescription || 'Unable to connect to chat server.',
+        description: errorDescription || 'Unable to connect to chat.',
       });
       break;
     case 'validation':
