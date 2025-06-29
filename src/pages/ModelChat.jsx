@@ -325,6 +325,7 @@ const ModelChat = () => {
               id: Date.now(),
               chat_room_id: chatRoom.id,
               sender_id: user.id,
+              sender_uuid: user.uuid,
               sender_name: 'You',
               content: selectedFile.name,
               file_name: selectedFile.name,
@@ -355,6 +356,7 @@ const ModelChat = () => {
             id: Date.now() + 1,
             chat_room_id: chatRoom.id,
             sender_id: user.id,
+            sender_uuid: user.uuid,
             sender_name: 'You',
             content: newMessage,
             created_at: new Date().toISOString(),
@@ -535,7 +537,7 @@ const ModelChat = () => {
                     <MessageItem
                       key={message.id}
                       message={message}
-                      onDelete={message.sender_id === user?.id ? () => handleDeleteMessage(message.id) : null}
+                      onDelete={message.sender_uuid === user?.uuid || message.sender_id === user?.uuid ? () => handleDeleteMessage(message.id) : null}
                     />
                   ))}
                 </div>

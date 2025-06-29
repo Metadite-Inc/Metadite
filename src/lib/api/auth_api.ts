@@ -1,4 +1,3 @@
-
 import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -26,6 +25,7 @@ interface RegisterRequest {
 
 interface UserResponse {
   id: number;
+  uuid: string;
   email: string;
   full_name: string;
   role: 'admin' | 'moderator' | 'user';
@@ -33,6 +33,7 @@ interface UserResponse {
   region?: string;
   is_active: boolean;
   video_access_count: number;
+  created_at: string;
 }
 
 interface TokenResponse {

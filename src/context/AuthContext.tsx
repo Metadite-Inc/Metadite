@@ -3,6 +3,7 @@ import { authApi } from '../lib/api/auth_api';
 
 interface User {
   id: number;
+  uuid: string;
   email: string;
   full_name: string;
   role: 'admin' | 'moderator' | 'user';
@@ -10,6 +11,7 @@ interface User {
   region?: string;
   is_active: boolean;
   video_access_count: number;
+  created_at: string;
 }
 
 interface AuthContextType {

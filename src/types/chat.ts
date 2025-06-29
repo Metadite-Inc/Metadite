@@ -26,6 +26,7 @@ export interface MessageInDB {
   id: string;
   content: string;
   sender_id: string;
+  sender_uuid?: string; // UUID for proper message ownership comparison
   sender_name?: string;
   receiver_id?: string;
   chat_room_id?: string;

@@ -335,12 +335,13 @@ const ChatPage = () => {
               id: Date.now(),
               chat_room_id: selectedRoom.id,
               sender_id: user.id,
+              sender_uuid: user.uuid,
               sender_name: user.name || 'You',
               content: selectedFile.name,
               file_name: selectedFile.name,
               created_at: new Date().toISOString(),
               flagged: false,
-              message_type: selectedFile.type.startsWith('image/') ? 'IMAGE' : 'FILE',
+              message_type: selectedFile.type.startsWith('IMAGE') ? 'IMAGE' : 'FILE',
               file_url: selectedFile.type.startsWith('image/') ? URL.createObjectURL(selectedFile) : null
             };
             
@@ -362,6 +363,7 @@ const ChatPage = () => {
             id: Date.now() + 1,
             chat_room_id: selectedRoom.id,
             sender_id: user.id,
+            sender_uuid: user.uuid,
             sender_name: user.name || 'You',
             content: newMessage,
             created_at: new Date().toISOString(),
@@ -664,7 +666,7 @@ const ChatPage = () => {
                                 <MessageItem
                                   key={message.id}
                                   message={message}
-                                  onDelete={message.sender_id === user?.id ? () => handleDeleteMessage(message.id) : null}
+                                  onDelete={message.sender_uuid === user?.uuid || message.sender_id === user?.uuid ? () => handleDeleteMessage(message.id) : null}
                                 />
                               ))}
                             </div>
@@ -981,7 +983,7 @@ const ChatPage = () => {
                               <MessageItem
                                 key={message.id}
                                 message={message}
-                                onDelete={message.sender_id === user?.id ? () => handleDeleteMessage(message.id) : null}
+                                onDelete={message.sender_uuid === user?.uuid || message.sender_id === user?.uuid ? () => handleDeleteMessage(message.id) : null}
                               />
                             ))}
                           </div>
