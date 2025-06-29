@@ -89,12 +89,14 @@ const Footer = () => {
             <span className="text-xs mt-1 text-[10px]">Doll</span>
           </Link>
           <Link to="/chat" className="flex flex-col items-center text-gray-700 dark:text-gray-300 hover:text-metadite-primary transition-colors">
-            <MessageCircle className="h-6 w-6" />
-            {unreadData.total_unread > 0 && (
-              <span className="ml-2 bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] h-5 flex items-center justify-center">
-                {unreadData.total_unread}
-              </span>
-            )}
+            <div className="relative">
+              <MessageCircle className="h-6 w-6" />
+              {unreadData.total_unread > 0 && (
+                <span className="absolute -top-1 -right-2 bg-red-500 text-white text-xs rounded-full px-1.5 h-5 min-w-[20px] flex items-center justify-center">
+                  {unreadData.total_unread}
+                </span>
+              )}
+            </div>
             <span className="text-xs mt-1 text-[10px]">Messages</span>
           </Link>
           <Link to="/cart" className="flex flex-col items-center text-gray-700 dark:text-gray-300 hover:text-metadite-primary transition-colors">
