@@ -209,7 +209,7 @@ const useModerator = () => {
         const chatMessages = await getMessages(chatRoomId);
         if (chatMessages) {
           console.log(`Loaded ${chatMessages.length} messages`);
-          setMessages(chatMessages);
+          setMessages(chatMessages.sort((a, b) => a.id - b.id));
           setHasMoreMessages(chatMessages.length === 50);
         }
         
@@ -295,7 +295,11 @@ const useModerator = () => {
       const olderMessages = await getMessages(selectedModel.id, messages.length);
       
       if (olderMessages && olderMessages.length > 0) {
-        setMessages(prev => [...olderMessages, ...prev]);
+        setMessages(prev => {
+          const updated = [...olderMessages, ...prev];
+          updated.sort((a, b) => a.id - b.id);
+          return updated;
+        });
         setHasMoreMessages(olderMessages.length === 50); // Assuming default limit is 50
         
         // Mark messages as read after loading more messages
@@ -318,17 +322,9 @@ const useModerator = () => {
     if (data.type === 'new_message' && data.message) {
       console.log('Adding new message to moderator chat:', data.message);
       setMessages(prev => {
-        // Prevent duplicate messages by checking ID and timestamp
-        const exists = prev.some(msg => 
-          msg.id === data.message.id || 
-          (msg.content === data.message.content && 
-           Math.abs(new Date(msg.created_at) - new Date(data.message.created_at)) < 1000)
-        );
-        if (exists) {
-          console.log('Duplicate message detected, skipping');
-          return prev;
-        }
-        return [...prev, data.message];
+        const updated = [...prev, data.message];
+        updated.sort((a, b) => a.id - b.id);
+        return updated;
       });
       
       // Update the model's last message in the sidebar
@@ -485,7 +481,11 @@ const useModerator = () => {
             file_url: selectedFile.type.startsWith('image/') ? URL.createObjectURL(selectedFile) : null
           };
           
-          setMessages(prev => [...prev, fileMessage]);
+          setMessages(prev => {
+            const updated = [...prev, fileMessage];
+            updated.sort((a, b) => a.id - b.id);
+            return updated;
+          });
           clearSelectedFile();
           
           setAssignedModels(prev => 
@@ -520,7 +520,11 @@ const useModerator = () => {
           message_type: 'TEXT'
         };
         
-        setMessages(prev => [...prev, textMessage]);
+        setMessages(prev => {
+          const updated = [...prev, textMessage];
+          updated.sort((a, b) => a.id - b.id);
+          return updated;
+        });
         
         setAssignedModels(prev => 
           prev.map(model => 
