@@ -32,7 +32,6 @@ const StaffDashboardMenu = ({ activeTab, setActiveTab, logout, user }) => {
         ...commonItems.slice(0, 1), // Overview
         { id: 'moderation-summary', label: 'Moderation Summary', icon: MessageSquare },
         { id: 'chat-activity', label: 'Chat Activity', icon: BarChart3 },
-        { id: 'schedule', label: 'Schedule', icon: Calendar },
         ...commonItems.slice(1) // Notifications, Settings
       ];
     }

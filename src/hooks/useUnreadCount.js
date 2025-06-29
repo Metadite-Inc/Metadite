@@ -54,8 +54,8 @@ const useUnreadCount = () => {
   useEffect(() => {
     fetchUnreadCount();
     
-    // Refresh unread count every 10 seconds
-    const interval = setInterval(fetchUnreadCount, 10000);
+    // Refresh unread count every second
+    const interval = setInterval(fetchUnreadCount, 1000);
     
     return () => clearInterval(interval);
   }, [user, refreshTrigger]);
