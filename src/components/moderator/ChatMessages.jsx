@@ -41,12 +41,8 @@ const ChatMessages = ({
     );
   }
 
-  // Sort messages in chronological order (oldest to newest)
-  const sortedMessages = [...messages].sort((a, b) => {
-    const dateA = new Date(a.created_at || a.timestamp || 0);
-    const dateB = new Date(b.created_at || b.timestamp || 0);
-    return dateA - dateB;
-  });
+  // Sort messages in chronological order (oldest to newest) by id
+  const sortedMessages = [...messages].sort((a, b) => a.id - b.id);
 
   return (
     <div className="space-y-4">

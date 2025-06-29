@@ -263,6 +263,7 @@ export const connectWebSocket = async (
         action: 'identify',
         chat_room_id: validChatRoomId,
         user_id: userId,
+        user_uuid: user.uuid,
         user_role: userRole
       }));
 
@@ -270,7 +271,8 @@ export const connectWebSocket = async (
       ws.send(JSON.stringify({
         action: 'join',
         chat_room_id: validChatRoomId,
-        user_id: userId
+        user_id: userId,
+        user_uuid: user.uuid
       }));
 
       await processMessageQueue(validChatRoomId);
@@ -288,6 +290,7 @@ export const connectWebSocket = async (
               id: data.id,
               content: data.message || data.content,
               sender_id: data.sender_id,
+              sender_uuid: data.sender_uuid,
               sender_name: data.sender_name,
               chat_room_id: data.chat_room_id,
               message_type: data.type || 'TEXT',
@@ -298,7 +301,7 @@ export const connectWebSocket = async (
             }
           };
 
-          if (data.sender_id && data.sender_id.toString() !== userId.toString()) {
+          if (data.sender_uuid && data.sender_uuid !== user.uuid) {
             const senderName = data.sender_name || 'Someone';
             const messageContent = data.message || data.content || 'New message';
             notificationService.notifyNewMessage(senderName, messageContent, validChatRoomId);
@@ -324,6 +327,7 @@ export const connectWebSocket = async (
                 id: msg.id,
                 content: msg.content,
                 sender_id: msg.sender_id,
+                sender_uuid: msg.sender_uuid,
                 sender_name: msg.sender_name,
                 chat_room_id: msg.chat_room_id,
                 message_type: msg.message_type || 'TEXT',
@@ -404,7 +408,8 @@ export const sendMessage = async (content: string, chatRoomId: number, moderator
         message: content,
         chat_room_id: chatRoomId,
         type: "text",
-        sender_id: user.id
+        sender_id: user.id,
+        sender_uuid: user.uuid
       } as any;
       
       if (moderatorId) {

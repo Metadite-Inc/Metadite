@@ -66,6 +66,8 @@ const ChatPage = () => {
         setChatRooms(prev => 
           prev.map(r => r.id === selectedRoom.id ? { ...r, unreadCount: 0 } : r)
         );
+        // Mark messages as read when connection is established
+        markMessagesAsRead(selectedRoom.id);
       }
     });
     
@@ -145,6 +147,9 @@ const ChatPage = () => {
         setMessages([]);
       }
 
+      // Mark messages as read after loading them
+      markMessagesAsRead(room.id);
+
       setConnectionStatus('connecting');
       console.log(`Connecting to WebSocket for chat room ${room.id}`);
       const ws = await connectWebSocket(room.id, handleWebSocketMessage);
@@ -218,6 +223,17 @@ const ChatPage = () => {
     messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Add scroll handler to mark messages as read when user scrolls to bottom
+  const handleScroll = (e) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.target;
+    // If user is within 50px of the bottom, mark messages as read
+    if (scrollHeight - scrollTop - clientHeight < 50) {
+      if (selectedRoom) {
+        markMessagesAsRead(selectedRoom.id);
+      }
+    }
+  };
+
   const loadMoreMessages = async () => {
     if (!selectedRoom || isLoadingMore || !hasMoreMessages) return;
     
@@ -230,6 +246,9 @@ const ChatPage = () => {
         console.log(`Loaded ${olderMessages.length} older messages`);
         setMessages(prev => [...olderMessages, ...prev]);
         setHasMoreMessages(olderMessages.length === 50);
+        
+        // Mark messages as read after loading more messages
+        markMessagesAsRead(selectedRoom.id);
       } else {
         console.log('No more messages to load');
         setHasMoreMessages(false);
@@ -316,12 +335,13 @@ const ChatPage = () => {
               id: Date.now(),
               chat_room_id: selectedRoom.id,
               sender_id: user.id,
+              sender_uuid: user.uuid,
               sender_name: user.name || 'You',
               content: selectedFile.name,
               file_name: selectedFile.name,
               created_at: new Date().toISOString(),
               flagged: false,
-              message_type: selectedFile.type.startsWith('image/') ? 'IMAGE' : 'FILE',
+              message_type: selectedFile.type.startsWith('IMAGE') ? 'IMAGE' : 'FILE',
               file_url: selectedFile.type.startsWith('image/') ? URL.createObjectURL(selectedFile) : null
             };
             
@@ -343,6 +363,7 @@ const ChatPage = () => {
             id: Date.now() + 1,
             chat_room_id: selectedRoom.id,
             sender_id: user.id,
+            sender_uuid: user.uuid,
             sender_name: user.name || 'You',
             content: newMessage,
             created_at: new Date().toISOString(),
@@ -615,7 +636,7 @@ const ChatPage = () => {
                         </div>
 
                         {/* Messages - Mobile */}
-                        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                        <div className="flex-1 overflow-y-auto p-4 space-y-4" onScroll={handleScroll}>
                           {hasMoreMessages && (
                             <div className="text-center my-2">
                               <button
@@ -645,7 +666,7 @@ const ChatPage = () => {
                                 <MessageItem
                                   key={message.id}
                                   message={message}
-                                  onDelete={message.sender_id === user?.id ? () => handleDeleteMessage(message.id) : null}
+                                  onDelete={message.sender_uuid === user?.uuid || message.sender_id === user?.uuid ? () => handleDeleteMessage(message.id) : null}
                                 />
                               ))}
                             </div>
@@ -932,7 +953,7 @@ const ChatPage = () => {
                         </div>
                       </div>
 
-                      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                      <div className="flex-1 overflow-y-auto p-4 space-y-4" onScroll={handleScroll}>
                         {hasMoreMessages && (
                           <div className="text-center my-2">
                             <button
@@ -962,7 +983,7 @@ const ChatPage = () => {
                               <MessageItem
                                 key={message.id}
                                 message={message}
-                                onDelete={message.sender_id === user?.id ? () => handleDeleteMessage(message.id) : null}
+                                onDelete={message.sender_uuid === user?.uuid || message.sender_id === user?.uuid ? () => handleDeleteMessage(message.id) : null}
                               />
                             ))}
                           </div>

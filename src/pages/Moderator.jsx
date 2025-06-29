@@ -36,7 +36,8 @@ const Moderator = () => {
     handleFlagMessage,
     handleDeleteMessage,
     handleTyping,
-    loadMoreMessages
+    loadMoreMessages,
+    handleScroll
   } = useModerator();
 
   return (
@@ -104,6 +105,7 @@ const Moderator = () => {
                 hasMoreMessages={hasMoreMessages}
                 loadMoreMessages={loadMoreMessages}
                 isLoadingMore={isLoadingMore}
+                handleScroll={handleScroll}
               />
             </div>
           </div>

@@ -27,7 +27,8 @@ const ChatContainer = ({
   messageEndRef,
   hasMoreMessages,
   loadMoreMessages,
-  isLoadingMore
+  isLoadingMore,
+  handleScroll
 }) => {
   const { theme } = useTheme();
 
@@ -56,7 +57,7 @@ const ChatContainer = ({
         connectionStatus={connectionStatus}
       />
       
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 overflow-y-auto p-4" onScroll={handleScroll}>
         <ChatMessages 
           messages={messages} 
           loading={loading} 

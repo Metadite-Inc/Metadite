@@ -189,6 +189,11 @@ const useModerator = () => {
     connectionListenerRef.current = addConnectionListener(chatRoomId, (state) => {
       console.log(`Connection state changed for room ${chatRoomId}:`, state.status);
       setConnectionStatus(state.status);
+      
+      if (state.status === 'connected') {
+        // Mark messages as read when connection is established
+        markMessagesAsRead(chatRoomId);
+      }
     });
     
     // Clear messages and reset state when switching rooms
@@ -204,9 +209,12 @@ const useModerator = () => {
         const chatMessages = await getMessages(chatRoomId);
         if (chatMessages) {
           console.log(`Loaded ${chatMessages.length} messages`);
-          setMessages(chatMessages);
+          setMessages(chatMessages.sort((a, b) => a.id - b.id));
           setHasMoreMessages(chatMessages.length === 50);
         }
+        
+        // Mark messages as read after loading them
+        markMessagesAsRead(chatRoomId);
       } catch (error) {
         console.error('Error loading messages:', error);
         toast.error('Failed to load messages');
@@ -267,6 +275,17 @@ const useModerator = () => {
     messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
   
+  // Add scroll handler to mark messages as read when user scrolls to bottom
+  const handleScroll = (e) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.target;
+    // If user is within 50px of the bottom, mark messages as read
+    if (scrollHeight - scrollTop - clientHeight < 50) {
+      if (selectedModel) {
+        markMessagesAsRead(selectedModel.id);
+      }
+    }
+  };
+  
   // Load more messages when scrolling up
   const loadMoreMessages = async () => {
     if (!selectedModel || isLoadingMore || !hasMoreMessages) return;
@@ -276,8 +295,15 @@ const useModerator = () => {
       const olderMessages = await getMessages(selectedModel.id, messages.length);
       
       if (olderMessages && olderMessages.length > 0) {
-        setMessages(prev => [...olderMessages, ...prev]);
+        setMessages(prev => {
+          const updated = [...olderMessages, ...prev];
+          updated.sort((a, b) => a.id - b.id);
+          return updated;
+        });
         setHasMoreMessages(olderMessages.length === 50); // Assuming default limit is 50
+        
+        // Mark messages as read after loading more messages
+        markMessagesAsRead(selectedModel.id);
       } else {
         setHasMoreMessages(false);
       }
@@ -296,17 +322,9 @@ const useModerator = () => {
     if (data.type === 'new_message' && data.message) {
       console.log('Adding new message to moderator chat:', data.message);
       setMessages(prev => {
-        // Prevent duplicate messages by checking ID and timestamp
-        const exists = prev.some(msg => 
-          msg.id === data.message.id || 
-          (msg.content === data.message.content && 
-           Math.abs(new Date(msg.created_at) - new Date(data.message.created_at)) < 1000)
-        );
-        if (exists) {
-          console.log('Duplicate message detected, skipping');
-          return prev;
-        }
-        return [...prev, data.message];
+        const updated = [...prev, data.message];
+        updated.sort((a, b) => a.id - b.id);
+        return updated;
       });
       
       // Update the model's last message in the sidebar
@@ -453,6 +471,7 @@ const useModerator = () => {
             id: `temp-${Date.now()}`,
             chat_room_id: selectedModel.id,
             sender_id: user.id,
+            sender_uuid: user.uuid,
             sender_name: 'You',
             content: selectedFile.name,
             file_name: selectedFile.name,
@@ -462,7 +481,11 @@ const useModerator = () => {
             file_url: selectedFile.type.startsWith('image/') ? URL.createObjectURL(selectedFile) : null
           };
           
-          setMessages(prev => [...prev, fileMessage]);
+          setMessages(prev => {
+            const updated = [...prev, fileMessage];
+            updated.sort((a, b) => a.id - b.id);
+            return updated;
+          });
           clearSelectedFile();
           
           setAssignedModels(prev => 
@@ -489,6 +512,7 @@ const useModerator = () => {
           id: `temp-${Date.now()}-text`,
           chat_room_id: selectedModel.id,
           sender_id: user.id,
+          sender_uuid: user.uuid,
           sender_name: 'You',
           content: newMessage,
           created_at: new Date().toISOString(),
@@ -496,7 +520,11 @@ const useModerator = () => {
           message_type: 'TEXT'
         };
         
-        setMessages(prev => [...prev, textMessage]);
+        setMessages(prev => {
+          const updated = [...prev, textMessage];
+          updated.sort((a, b) => a.id - b.id);
+          return updated;
+        });
         
         setAssignedModels(prev => 
           prev.map(model => 
@@ -591,6 +619,7 @@ const useModerator = () => {
     handleDeleteMessage,
     handleTyping,
     loadMoreMessages,
+    handleScroll,
     refreshModels: loadAssignedModels
   };
 };

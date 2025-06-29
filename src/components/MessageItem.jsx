@@ -10,7 +10,8 @@ const MessageItem = ({ message, onDelete }) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [imageError, setImageError] = useState(false);
 
-  const isOwnMessage = message.sender_id === user?.id;
+  // Use UUID for message ownership comparison to avoid conflicts between user and moderator IDs
+  const isOwnMessage = message.sender_uuid === user?.uuid || message.sender_id === user?.uuid;
 
   const formatTime = (timestamp) => {
     try {

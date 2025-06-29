@@ -57,6 +57,11 @@ const ModelChat = () => {
     const unsubscribe = addConnectionListener(chatRoom.id, (state) => {
       console.log(`Connection state changed for room ${chatRoom.id}:`, state.status);
       setConnectionStatus(state.status);
+      
+      if (state.status === 'connected') {
+        // Mark messages as read when connection is established
+        markMessagesAsRead(chatRoom.id);
+      }
     });
     
     return unsubscribe;
@@ -115,6 +120,9 @@ const ModelChat = () => {
           console.log('No existing messages found');
           setMessages([]);
         }
+        
+        // Mark messages as read after loading them
+        markMessagesAsRead(chatRoomData.id);
         
         setIsLoaded(true);
       } catch (error) {
@@ -194,6 +202,17 @@ const ModelChat = () => {
     messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Add scroll handler to mark messages as read when user scrolls to bottom
+  const handleScroll = (e) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.target;
+    // If user is within 50px of the bottom, mark messages as read
+    if (scrollHeight - scrollTop - clientHeight < 50) {
+      if (chatRoom) {
+        markMessagesAsRead(chatRoom.id);
+      }
+    }
+  };
+
   const loadMoreMessages = async () => {
     if (!chatRoom || isLoadingMore || !hasMoreMessages) return;
     
@@ -206,6 +225,9 @@ const ModelChat = () => {
         console.log(`Loaded ${olderMessages.length} older messages`);
         setMessages(prev => [...olderMessages, ...prev]);
         setHasMoreMessages(olderMessages.length === 50);
+        
+        // Mark messages as read after loading more messages
+        markMessagesAsRead(chatRoom.id);
       } else {
         console.log('No more messages to load');
         setHasMoreMessages(false);
@@ -303,6 +325,7 @@ const ModelChat = () => {
               id: Date.now(),
               chat_room_id: chatRoom.id,
               sender_id: user.id,
+              sender_uuid: user.uuid,
               sender_name: 'You',
               content: selectedFile.name,
               file_name: selectedFile.name,
@@ -333,6 +356,7 @@ const ModelChat = () => {
             id: Date.now() + 1,
             chat_room_id: chatRoom.id,
             sender_id: user.id,
+            sender_uuid: user.uuid,
             sender_name: 'You',
             content: newMessage,
             created_at: new Date().toISOString(),
@@ -483,7 +507,7 @@ const ModelChat = () => {
             
             {renderConnectionStatus()}
             
-            <div className="overflow-y-auto p-4 flex-grow space-y-4">
+            <div className="overflow-y-auto p-4 flex-grow space-y-4" onScroll={handleScroll}>
               {hasMoreMessages && (
                 <div className="text-center my-2">
                   <button
@@ -513,7 +537,7 @@ const ModelChat = () => {
                     <MessageItem
                       key={message.id}
                       message={message}
-                      onDelete={message.sender_id === user?.id ? () => handleDeleteMessage(message.id) : null}
+                      onDelete={message.sender_uuid === user?.uuid || message.sender_id === user?.uuid ? () => handleDeleteMessage(message.id) : null}
                     />
                   ))}
                 </div>
