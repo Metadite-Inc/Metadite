@@ -189,6 +189,11 @@ const useModerator = () => {
     connectionListenerRef.current = addConnectionListener(chatRoomId, (state) => {
       console.log(`Connection state changed for room ${chatRoomId}:`, state.status);
       setConnectionStatus(state.status);
+      
+      if (state.status === 'connected') {
+        // Mark messages as read when connection is established
+        markMessagesAsRead(chatRoomId);
+      }
     });
     
     // Clear messages and reset state when switching rooms
@@ -207,6 +212,9 @@ const useModerator = () => {
           setMessages(chatMessages);
           setHasMoreMessages(chatMessages.length === 50);
         }
+        
+        // Mark messages as read after loading them
+        markMessagesAsRead(chatRoomId);
       } catch (error) {
         console.error('Error loading messages:', error);
         toast.error('Failed to load messages');
@@ -267,6 +275,17 @@ const useModerator = () => {
     messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
   
+  // Add scroll handler to mark messages as read when user scrolls to bottom
+  const handleScroll = (e) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.target;
+    // If user is within 50px of the bottom, mark messages as read
+    if (scrollHeight - scrollTop - clientHeight < 50) {
+      if (selectedModel) {
+        markMessagesAsRead(selectedModel.id);
+      }
+    }
+  };
+  
   // Load more messages when scrolling up
   const loadMoreMessages = async () => {
     if (!selectedModel || isLoadingMore || !hasMoreMessages) return;
@@ -278,6 +297,9 @@ const useModerator = () => {
       if (olderMessages && olderMessages.length > 0) {
         setMessages(prev => [...olderMessages, ...prev]);
         setHasMoreMessages(olderMessages.length === 50); // Assuming default limit is 50
+        
+        // Mark messages as read after loading more messages
+        markMessagesAsRead(selectedModel.id);
       } else {
         setHasMoreMessages(false);
       }
@@ -591,6 +613,7 @@ const useModerator = () => {
     handleDeleteMessage,
     handleTyping,
     loadMoreMessages,
+    handleScroll,
     refreshModels: loadAssignedModels
   };
 };
