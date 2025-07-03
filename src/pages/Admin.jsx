@@ -22,8 +22,7 @@ import SettingsTab from '../components/admin/SettingsTab';
 import VideosTab from '../components/admin/VideosTab'; // Import the new VideosTab component
 import SlideshowTab from '../components/admin/SlideshowTab';
 
-// Mock data for flagged messages count
-const flaggedMessagesCount = 2;
+// Removed mock data - AdminSidebar now fetches real data
 
 const Admin = () => {
   const { user, loading } = useAuth();
@@ -100,7 +99,6 @@ const Admin = () => {
             <AdminSidebar 
               activeTab={activeTab} 
               setActiveTab={setActiveTab} 
-              flaggedMessagesCount={flaggedMessagesCount} 
             />
             
             <div className="lg:col-span-3">

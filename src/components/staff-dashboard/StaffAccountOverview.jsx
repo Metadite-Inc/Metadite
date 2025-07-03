@@ -30,12 +30,7 @@ const StaffAccountOverview = ({ user, isLoaded }) => {
     if (user?.role === 'admin') {
       return {
         title: 'Admin Account Overview',
-        stats: [
-          { label: 'Total Users', value: '1,234', icon: Users, color: 'blue' },
-          { label: 'Active Models', value: '45', icon: MessageSquare, color: 'green' },
-          { label: 'System Health', value: '99.8%', icon: Shield, color: 'emerald' },
-          { label: 'Flagged Messages', value: '3', icon: AlertTriangle, color: 'red' }
-        ]
+        stats: []
       };
     }
 
@@ -127,27 +122,28 @@ const StaffAccountOverview = ({ user, isLoaded }) => {
         {/* Account Details Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-4">
-            <div className="flex items-center">
-              <Mail className="h-5 w-5 text-metadite-primary mr-3" />
-              <div>
-                <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Email</p>
-                <p className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                  {user?.email || 'N/A'}
-                </p>
+            <div className="flex flex-row items-center justify-between gap-12">
+              <div className="flex items-center">
+                <Mail className="h-5 w-5 text-metadite-primary mr-3" />
+                <div>
+                  <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Email</p>
+                  <p className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                    {user?.email || 'N/A'}
+                  </p>
+                </div>
               </div>
-            </div>
-            
-            <div className="flex items-center">
-              <Shield className="h-5 w-5 text-metadite-primary mr-3" />
-              <div>
-                <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Role</p>
-                <p className={`font-medium capitalize ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                  {user?.role || 'N/A'}
-                </p>
+              <div className="flex items-center">
+                <Shield className="h-5 w-5 text-metadite-primary mr-3" />
+                <div>
+                  <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Role</p>
+                  <p className={`font-medium capitalize ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                    {user?.role || 'N/A'}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
-
+{/*
           <div className="space-y-4">
             <div className="flex items-center">
               <Calendar className="h-5 w-5 text-metadite-primary mr-3" />
@@ -169,6 +165,7 @@ const StaffAccountOverview = ({ user, isLoaded }) => {
               </div>
             </div>
           </div>
+          */}
         </div>
       </div>
 
