@@ -1,15 +1,35 @@
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Users, MessageSquare, ShieldCheck, TrendingUp, 
   DollarSign, AlertTriangle, Server, Activity
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext';
+import { adminApiService } from '../../lib/api/admin_api';
 
 const AdminSummaryTab = () => {
   const { theme } = useTheme();
   const navigate = useNavigate();
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      setLoading(true);
+      try {
+        console.log('Fetching dashboard stats for staff dashboard...');
+        const data = await adminApiService.getDashboardStats();
+        console.log('Dashboard stats received:', data);
+        setStats(data);
+      } catch (error) {
+        console.error('Error fetching dashboard stats:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
 
   const summaryData = [
     {
@@ -17,32 +37,28 @@ const AdminSummaryTab = () => {
       stats: [
         { 
           label: 'Total Users', 
-          value: '1,234', 
-          change: '+12%', 
+          value: loading ? 'Loading...' : (stats?.total_users?.toLocaleString() ?? '--'), 
+          change: loading ? '' : (stats?.users_change ? `${stats.users_change} from last month` : ''), 
           icon: Users, 
           color: 'blue',
           action: () => navigate('/admin?tab=admins')
         },
         { 
           label: 'Active Models', 
-          value: '45', 
-          change: '+5%', 
+          value: loading ? 'Loading...' : (stats?.active_models?.toString() ?? '--'), 
+          change: loading ? '' : (stats?.models_change ? `${stats.models_change} from last month` : ''), 
           icon: MessageSquare, 
           color: 'green',
           action: () => navigate('/admin?tab=models')
         },
         { 
-          label: 'System Uptime', 
-          value: '99.8%', 
-          change: '+0.1%', 
-          icon: ShieldCheck, 
-          color: 'emerald',
-          action: () => navigate('/staff-dashboard?tab=system-health')
-        },
-        { 
           label: 'Revenue (MTD)', 
-          value: '$24,389', 
-          change: '+15%', 
+          value: loading
+            ? 'Loading...'
+            : stats?.monthly_revenue !== undefined && stats?.monthly_revenue !== null
+              ? `$${stats.monthly_revenue.toLocaleString()}`
+              : '--',
+          change: loading ? '' : (stats?.revenue_change ? `${stats.revenue_change} from last month` : ''), 
           icon: DollarSign, 
           color: 'purple',
           action: () => navigate('/admin?tab=payments')
@@ -54,35 +70,19 @@ const AdminSummaryTab = () => {
       stats: [
         { 
           label: 'Flagged Messages', 
-          value: '3', 
-          change: '-2', 
+          value: loading ? 'Loading...' : (stats?.flagged_messages?.toString() ?? '--'), 
+          change: loading ? '' : (stats?.flagged_change ? `${stats.flagged_change} from last month` : ''), 
           icon: AlertTriangle, 
           color: 'red',
           action: () => navigate('/admin?tab=flagged')
         },
         { 
           label: 'Active Moderators', 
-          value: '8', 
-          change: '+1', 
+          value: loading ? 'Loading...' : (stats?.active_moderators?.toString() ?? '--'), 
+          change: loading ? '' : (stats?.moderators_change ? `${stats.moderators_change} from last month` : ''), 
           icon: Users, 
           color: 'orange',
           action: () => navigate('/admin?tab=moderators')
-        },
-        { 
-          label: 'Server Health', 
-          value: '98%', 
-          change: '+1%', 
-          icon: Server, 
-          color: 'cyan',
-          action: () => navigate('/staff-dashboard?tab=system-health')
-        },
-        { 
-          label: 'API Requests', 
-          value: '45.2K', 
-          change: '+8%', 
-          icon: Activity, 
-          color: 'indigo',
-          action: () => navigate('/staff-dashboard?tab=system-health')
         }
       ]
     }
@@ -102,36 +102,37 @@ const AdminSummaryTab = () => {
     return colorMap[color] || 'bg-gray-500';
   };
 
-  const recentActivities = [
-    {
-      type: 'user_signup',
-      message: 'New user registration: john.doe@example.com',
-      time: '5 minutes ago',
-      icon: Users,
-      color: 'green'
-    },
-    {
-      type: 'payment',
-      message: 'VIP subscription purchased by emma@example.com',
-      time: '12 minutes ago',
-      icon: DollarSign,
-      color: 'purple'
-    },
-    {
-      type: 'alert',
-      message: 'Message flagged for review in #general',
-      time: '23 minutes ago',
-      icon: AlertTriangle,
-      color: 'red'
-    },
-    {
-      type: 'system',
-      message: 'Database backup completed successfully',
-      time: '1 hour ago',
-      icon: Server,
-      color: 'blue'
-    }
-  ];
+  // const recentActivities = [
+  //   {
+  //     type: 'user_signup',
+  //     message: 'New user registration: john.doe@example.com',
+  //     time: '5 minutes ago',
+  //     icon: Users,
+  //     color: 'green'
+  //   },
+  //   {
+  //     type: 'payment',
+  //     message: 'VIP subscription purchased by emma@example.com',
+  //     time: '12 minutes ago',
+  //     icon: DollarSign,
+  //     color: 'purple'
+  //   },
+  //   {
+  //     type: 'alert',
+  //     message: 'Message flagged for review in #general',
+  //     time: '23 minutes ago',
+  //     icon: AlertTriangle,
+  //     color: 'red'
+  //   },
+  //   {
+  //     type: 'system',
+  //     message: 'Database backup completed successfully',
+  //     time: '1 hour ago',
+  //     icon: Server,
+  //     color: 'blue'
+  //   }
+  // ];
+
 
   return (
     <div className="space-y-6">
@@ -181,6 +182,7 @@ const AdminSummaryTab = () => {
       ))}
 
       {/* Recent Activity */}
+      {/* 
       <div className={`glass-card rounded-xl p-6 ${theme === 'dark' ? 'bg-gray-800/70' : ''}`}>
         <div className="flex justify-between items-center mb-6">
           <h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
@@ -215,6 +217,7 @@ const AdminSummaryTab = () => {
           })}
         </div>
       </div>
+      */}
     </div>
   );
 };

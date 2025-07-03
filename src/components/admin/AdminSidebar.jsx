@@ -1,13 +1,38 @@
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Settings, Users, ShoppingBag, CreditCard, AlertTriangle,
   PackagePlus, UserCog, FileVideo
 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
+import { adminApiService } from '../../lib/api/admin_api';
 
-const AdminSidebar = ({ activeTab, setActiveTab, flaggedMessagesCount }) => {
+const AdminSidebar = ({ activeTab, setActiveTab }) => {
   const { theme } = useTheme();
+  const [flaggedMessagesCount, setFlaggedMessagesCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+  
+  const fetchFlaggedMessagesCount = async () => {
+    try {
+      const count = await adminApiService.getFlaggedMessagesCount();
+      setFlaggedMessagesCount(count);
+    } catch (error) {
+      console.error('Error fetching flagged messages count:', error);
+      setFlaggedMessagesCount(0);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // Initial fetch
+    fetchFlaggedMessagesCount();
+    
+    // Set up interval to refresh every 10 minutes (600,000 ms)
+    const interval = setInterval(fetchFlaggedMessagesCount, 600000);
+    
+    // Cleanup interval on component unmount
+    return () => clearInterval(interval);
+  }, []);
   
   return (
     <div className="lg:col-span-1">
@@ -150,9 +175,11 @@ const AdminSidebar = ({ activeTab, setActiveTab, flaggedMessagesCount }) => {
             >
               <AlertTriangle className="h-5 w-5 mr-3" />
               <span>Flagged Messages</span>
-              <span className="ml-auto bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                {flaggedMessagesCount}
-              </span>
+              {flaggedMessagesCount > 0 && (
+                <span className="ml-auto bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  {loading ? '...' : flaggedMessagesCount}
+                </span>
+              )}
             </button>
           </li>
           <li>
