@@ -120,7 +120,11 @@ const DashboardTab = ({ isLoaded }) => {
             <div>
               <p className="text-gray-500 text-sm">Monthly Revenue</p>
               <h3 className="text-2xl font-bold">
-                {statsLoading ? <span className="text-gray-400">Loading...</span> : stats?.monthly_revenue ? `$${stats.monthly_revenue.toLocaleString()}` : '--'}
+                {statsLoading
+                  ? <span className="text-gray-400">Loading...</span>
+                  : stats?.monthly_revenue !== undefined && stats?.monthly_revenue !== null
+                    ? `$${stats.monthly_revenue.toLocaleString()}`
+                    : '--'}
               </h3>
             </div>
           </div>

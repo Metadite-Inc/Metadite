@@ -53,7 +53,11 @@ const AdminSummaryTab = () => {
         },
         { 
           label: 'Revenue (MTD)', 
-          value: loading ? 'Loading...' : (stats?.monthly_revenue ? `$${stats.monthly_revenue.toLocaleString()}` : '--'), 
+          value: loading
+            ? 'Loading...'
+            : stats?.monthly_revenue !== undefined && stats?.monthly_revenue !== null
+              ? `$${stats.monthly_revenue.toLocaleString()}`
+              : '--',
           change: loading ? '' : (stats?.revenue_change ? `${stats.revenue_change} from last month` : ''), 
           icon: DollarSign, 
           color: 'purple',
