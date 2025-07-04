@@ -112,23 +112,6 @@ const ModerationSummaryTab = () => {
   const moderationStats = getModerationStats();
   const weeklyActivity = getWeeklyActivity();
 
-  const recentActions = [
-    {
-      action: 'Message approved',
-      user: 'user123@example.com',
-      model: dashboardData?.metrics?.top_dolls?.[0]?.name || 'Model',
-      time: '2 minutes ago',
-      status: 'approved'
-    },
-    {
-      action: 'Message flagged',
-      user: 'john.doe@example.com',
-      model: dashboardData?.metrics?.top_dolls?.[1]?.name || 'Model',
-      time: '8 minutes ago',
-      status: 'flagged'
-    }
-  ];
-
   const getColorClasses = (color) => {
     const colorMap = {
       blue: 'bg-blue-500',
@@ -241,45 +224,6 @@ const ModerationSummaryTab = () => {
             <div className="w-3 h-3 bg-green-500 rounded mr-2"></div>
             <span className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Resolved</span>
           </div>
-        </div>
-      </div>
-
-      {/* Recent Actions */}
-      <div className={`glass-card rounded-xl p-6 ${theme === 'dark' ? 'bg-gray-800/70' : ''}`}>
-        <div className="flex justify-between items-center mb-6">
-          <h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-            Recent Actions
-          </h3>
-          <button className="text-sm text-metadite-primary hover:text-metadite-secondary transition-colors">
-            View All
-          </button>
-        </div>
-        
-        <div className="space-y-4">
-          {recentActions.map((action, index) => (
-            <div key={index} className={`p-4 rounded-lg border ${
-              theme === 'dark' ? 'border-gray-600 bg-gray-700/30' : 'border-gray-200 bg-gray-50'
-            }`}>
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2 mb-1">
-                    <span className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                      {action.action}
-                    </span>
-                    <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(action.status)}`}>
-                      {action.status}
-                    </span>
-                  </div>
-                  <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                    User: {action.user} • Model: {action.model}
-                  </p>
-                </div>
-                <span className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                  {action.time}
-                </span>
-              </div>
-            </div>
-          ))}
         </div>
       </div>
     </div>

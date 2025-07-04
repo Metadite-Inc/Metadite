@@ -326,7 +326,7 @@ const ChatActivityTab = () => {
         </div>
       </div>
 
-      {/* Recent Activity */}
+      {/* Recent Activity
       <div className={`glass-card rounded-xl p-6 ${theme === 'dark' ? 'bg-gray-800/70' : ''}`}>
         <div className="flex justify-between items-center mb-6">
           <h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
@@ -372,6 +372,7 @@ const ChatActivityTab = () => {
           })}
         </div>
       </div>
+      */}
     </div>
   );
 };
