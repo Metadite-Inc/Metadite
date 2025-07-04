@@ -158,17 +158,12 @@ class NotificationService {
   }
 
   public playNotificationSound() {
-    console.log('🔊 Attempting to play notification sound...');
-    console.log('Sound enabled:', this.soundEnabled);
-    console.log('Notification sound object:', !!this.notificationSound);
     
     try {
       if (this.soundEnabled && this.notificationSound) {
         // Ensure audio context is initialized and resumed
         this.initializeAudioContext();
-        console.log('🎵 Playing notification sound...');
         this.notificationSound.play();
-        console.log('✅ Notification sound played successfully');
       } else {
         console.log('❌ Sound not played - disabled or no sound object');
       }
@@ -179,7 +174,6 @@ class NotificationService {
 
   public notifyNewMessage(senderName: string, message: string, chatRoomId?: number) {
     console.log('📢 notifyNewMessage called:', { senderName, message, chatRoomId });
-    console.log('Notifications enabled:', this.isEnabled);
     
     if (!this.isEnabled) {
       console.log('❌ Notifications not enabled, returning');
@@ -187,11 +181,9 @@ class NotificationService {
     }
 
     // Play sound
-    console.log('🔊 Calling playNotificationSound...');
     this.playNotificationSound();
 
     // Show notification
-    console.log('📱 Showing notification...');
     this.showNotification(`New message from ${senderName}`, {
       body: message.length > 50 ? message.substring(0, 50) + '...' : message,
       icon: '/logo.png',
