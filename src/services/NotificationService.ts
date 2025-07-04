@@ -1,14 +1,16 @@
-
 import { toast } from 'sonner';
 
 class NotificationService {
   private static instance: NotificationService;
   private notificationSound: HTMLAudioElement | null = null;
   private isEnabled: boolean = false;
+  private soundEnabled: boolean = true;
+  private audioContext: AudioContext | null = null;
 
   private constructor() {
     this.initializeSound();
     this.checkPermissionStatus();
+    this.loadSoundPreference();
   }
 
   public static getInstance(): NotificationService {
@@ -29,24 +31,35 @@ class NotificationService {
 
   private createNotificationSound() {
     // Create a simple beep sound using Web Audio API
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    
     const createBeep = () => {
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-      
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      
-      oscillator.frequency.value = 800;
-      oscillator.type = 'sine';
-      
-      gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-      gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.01);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-      
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.3);
+      try {
+        // Use the stored audio context or create a new one
+        const audioContext = this.audioContext || new (window.AudioContext || (window as any).webkitAudioContext)();
+        this.audioContext = audioContext;
+        
+        // Resume audio context if it's suspended (required by modern browsers)
+        if (audioContext.state === 'suspended') {
+          audioContext.resume();
+        }
+        
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.value = 800;
+        oscillator.type = 'sine';
+        
+        gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.01);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.3);
+      } catch (error) {
+        console.warn('Could not play notification sound:', error);
+      }
     };
 
     this.notificationSound = { play: createBeep } as any;
@@ -55,6 +68,38 @@ class NotificationService {
   private checkPermissionStatus() {
     if ('Notification' in window) {
       this.isEnabled = Notification.permission === 'granted';
+    }
+  }
+
+  public loadSoundPreference() {
+    try {
+      const soundEnabled = localStorage.getItem('notificationSoundEnabled');
+      this.soundEnabled = soundEnabled === null ? true : soundEnabled === 'true';
+    } catch (error) {
+      console.warn('Could not load sound preference:', error);
+      this.soundEnabled = true;
+    }
+  }
+
+  public initializeAudioContext() {
+    try {
+      if (!this.audioContext) {
+        this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+      // Resume audio context if it's suspended
+      if (this.audioContext.state === 'suspended') {
+        this.audioContext.resume();
+      }
+    } catch (error) {
+      console.warn('Could not initialize audio context:', error);
+    }
+  }
+
+  public checkNotificationDisplay() {
+    // This method can be used to test notification display
+    // It's called during initialization to ensure notifications work
+    if (this.isEnabled) {
+      console.log('Notification system is ready');
     }
   }
 
@@ -113,17 +158,27 @@ class NotificationService {
   }
 
   public playNotificationSound() {
+    
     try {
-      if (this.notificationSound) {
+      if (this.soundEnabled && this.notificationSound) {
+        // Ensure audio context is initialized and resumed
+        this.initializeAudioContext();
         this.notificationSound.play();
+      } else {
+        console.log('❌ Sound not played - disabled or no sound object');
       }
     } catch (error) {
-      console.warn('Could not play notification sound:', error);
+      console.error('❌ Could not play notification sound:', error);
     }
   }
 
   public notifyNewMessage(senderName: string, message: string, chatRoomId?: number) {
-    if (!this.isEnabled) return;
+    console.log('📢 notifyNewMessage called:', { senderName, message, chatRoomId });
+    
+    if (!this.isEnabled) {
+      console.log('❌ Notifications not enabled, returning');
+      return;
+    }
 
     // Play sound
     this.playNotificationSound();
@@ -151,12 +206,67 @@ class NotificationService {
     });
   }
 
+  public notifyUnreadCountIncrease(totalUnread: number, unreadPerRoom: Record<string, number>, receivedMessage?: string) {
+    
+    this.playNotificationSound();
+    
+    // Determine the message to show
+    let message = receivedMessage;
+    if (!message) {
+      if (totalUnread === 1) {
+        message = 'You have 1 new message';
+      } else {
+        message = `You have ${totalUnread} new messages`;
+      }
+    }
+
+    // Show toast notification
+    toast.info(message, {
+      duration: 4000,
+      position: 'top-right',
+      style: {
+        background: '#3b82f6',
+        color: 'white',
+        border: 'none',
+        borderRadius: '8px',
+        fontSize: '14px',
+        fontWeight: '500'
+      }
+    });
+  }
+
   public getPermissionStatus(): NotificationPermission {
     return Notification.permission;
   }
 
   public isNotificationEnabled(): boolean {
     return this.isEnabled;
+  }
+
+  public isSoundEnabled(): boolean {
+    return this.soundEnabled;
+  }
+
+  public setSoundEnabled(enabled: boolean) {
+    this.soundEnabled = enabled;
+    try {
+      localStorage.setItem('notificationSoundEnabled', enabled.toString());
+    } catch (error) {
+      console.warn('Could not save sound preference:', error);
+    }
+  }
+
+  public testNotificationSound() {
+    if (this.soundEnabled) {
+      this.playNotificationSound();
+      return true;
+    }
+    return false;
+  }
+
+  public testUnreadCountNotification() {
+    console.log('🧪 Testing unread count notification...');
+    this.notifyUnreadCountIncrease(5, { "1": 3, "2": 2 }, "You have 5 new messages!");
   }
 }
 

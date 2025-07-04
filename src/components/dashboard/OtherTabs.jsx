@@ -22,7 +22,9 @@ const OtherTabs = ({ activeTab }) => {
     if ('Notification' in window) {
       setNotificationPermission(Notification.permission);
     }
-  }, []);
+    // Load sound preference from NotificationService
+    setSoundEnabled(notificationService.isSoundEnabled());
+  }, [notificationService]);
 
   const requestNotificationPermission = async () => {
     setIsRequesting(true);
@@ -127,9 +129,20 @@ const OtherTabs = ({ activeTab }) => {
                     </Button>
                   )}
                   {notificationPermission === 'granted' && (
-                    <Button variant="outline" onClick={testNotification}>
-                      Test Notification
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button variant="outline" onClick={testNotification}>
+                        Test Notification
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => {
+                          notificationService.testUnreadCountNotification();
+                          toast.success('Unread count notification test sent!');
+                        }}
+                      >
+                        Test Unread Toast
+                      </Button>
+                    </div>
                   )}
                   {notificationPermission === 'denied' && (
                     <Button variant="outline" onClick={() => {
@@ -186,8 +199,10 @@ const OtherTabs = ({ activeTab }) => {
                 <Button 
                   variant="outline" 
                   onClick={() => {
-                    setSoundEnabled(!soundEnabled);
-                    toast.success(`Notification sounds ${!soundEnabled ? 'enabled' : 'disabled'}`);
+                    const newSoundEnabled = !soundEnabled;
+                    setSoundEnabled(newSoundEnabled);
+                    notificationService.setSoundEnabled(newSoundEnabled);
+                    toast.success(`Notification sounds ${newSoundEnabled ? 'enabled' : 'disabled'}`);
                   }}
                 >
                   {soundEnabled ? 'Disable' : 'Enable'} Sounds
@@ -247,6 +262,8 @@ const OtherTabs = ({ activeTab }) => {
               </div>
             </CardContent>
           </Card>
+
+
         </div>
       </div>
     );
