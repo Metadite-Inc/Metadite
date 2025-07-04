@@ -88,35 +88,8 @@ const ChatActivityTab = () => {
     }));
   };
 
-  // Generate hourly activity from messages_per_day
-  const getHourlyActivity = () => {
-    if (!dashboardData?.metrics?.messages_per_day) {
-      return [
-        { hour: '08:00', messages: 0 },
-        { hour: '09:00', messages: 0 },
-        { hour: '10:00', messages: 0 },
-        { hour: '11:00', messages: 0 },
-        { hour: '12:00', messages: 0 },
-        { hour: '13:00', messages: 0 },
-        { hour: '14:00', messages: 0 },
-        { hour: '15:00', messages: 0 }
-      ];
-    }
-
-    const today = new Date().toISOString().split('T')[0];
-    const todayMessages = dashboardData.metrics.messages_per_day[today] || 0;
-    
-    // Distribute today's messages across hours (simulation)
-    const hours = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00'];
-    return hours.map(hour => ({
-      hour,
-      messages: Math.floor(todayMessages / 8) + Math.floor(Math.random() * 10)
-    }));
-  };
-
   const activityStats = getActivityStats();
   const topModels = getTopModels();
-  const hourlyActivity = getHourlyActivity();
 
   const recentActivity = [
     {
@@ -250,7 +223,7 @@ const ChatActivityTab = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
         {/* Top Models */}
         <div className={`glass-card rounded-xl p-6 ${theme === 'dark' ? 'bg-gray-800/70' : ''}`}>
           <h3 className={`text-lg font-semibold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
@@ -300,28 +273,6 @@ const ChatActivityTab = () => {
                 No active models found
               </p>
             )}
-          </div>
-        </div>
-
-        {/* Hourly Activity Chart */}
-        <div className={`glass-card rounded-xl p-6 ${theme === 'dark' ? 'bg-gray-800/70' : ''}`}>
-          <h3 className={`text-lg font-semibold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-            Hourly Message Activity
-          </h3>
-          
-          <div className="flex items-end justify-between h-40 space-x-2">
-            {hourlyActivity.map((hour, index) => (
-              <div key={index} className="flex flex-col items-center flex-1">
-                <div 
-                  className="w-full bg-metadite-primary rounded-t"
-                  style={{ height: `${(hour.messages / 250) * 100}%` }}
-                  title={`${hour.messages} messages at ${hour.hour}`}
-                ></div>
-                <p className={`text-xs mt-2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                  {hour.hour}
-                </p>
-              </div>
-            ))}
           </div>
         </div>
       </div>
