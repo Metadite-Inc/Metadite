@@ -149,7 +149,7 @@ const useUnreadCount = () => {
     document.addEventListener('keydown', handleUserInteraction);
     document.addEventListener('touchstart', handleUserInteraction);
 
-    let testTimeout: NodeJS.Timeout | null = null;
+    let testTimeout: ReturnType<typeof setTimeout> | null = null;
     if (user && notificationService.isNotificationEnabled()) {
       const hasTested = sessionStorage.getItem('notificationTested');
       if (!hasTested) {
