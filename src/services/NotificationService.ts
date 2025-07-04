@@ -214,6 +214,35 @@ class NotificationService {
     });
   }
 
+  public notifyUnreadCountIncrease(totalUnread: number, unreadPerRoom: Record<string, number>, receivedMessage?: string) {
+    
+    this.playNotificationSound();
+    
+    // Determine the message to show
+    let message = receivedMessage;
+    if (!message) {
+      if (totalUnread === 1) {
+        message = 'You have 1 new message';
+      } else {
+        message = `You have ${totalUnread} new messages`;
+      }
+    }
+
+    // Show toast notification
+    toast.info(message, {
+      duration: 4000,
+      position: 'top-right',
+      style: {
+        background: '#3b82f6',
+        color: 'white',
+        border: 'none',
+        borderRadius: '8px',
+        fontSize: '14px',
+        fontWeight: '500'
+      }
+    });
+  }
+
   public getPermissionStatus(): NotificationPermission {
     return Notification.permission;
   }
@@ -241,6 +270,11 @@ class NotificationService {
       return true;
     }
     return false;
+  }
+
+  public testUnreadCountNotification() {
+    console.log('🧪 Testing unread count notification...');
+    this.notifyUnreadCountIncrease(5, { "1": 3, "2": 2 }, "You have 5 new messages!");
   }
 }
 

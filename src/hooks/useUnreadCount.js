@@ -44,8 +44,8 @@ const useUnreadCount = () => {
         const newMessages = newTotalUnread - previousCount;
         const message = data.received_message || `You have ${newMessages} new message${newMessages > 1 ? 's' : ''}`;
         
-        console.log(`🔔 Notifying unread messages: ${message}`);
-        notificationService.notifyNewMessage('New Messages', message);
+        console.log(`🔔 Notifying unread count increase: ${message}`);
+        notificationService.notifyUnreadCountIncrease(newTotalUnread, data.unread_per_room || {}, message);
       } else {
         console.log('❌ No notification triggered:', {
           previousCount,

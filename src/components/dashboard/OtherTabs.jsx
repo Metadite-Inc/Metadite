@@ -129,9 +129,20 @@ const OtherTabs = ({ activeTab }) => {
                     </Button>
                   )}
                   {notificationPermission === 'granted' && (
-                    <Button variant="outline" onClick={testNotification}>
-                      Test Notification
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button variant="outline" onClick={testNotification}>
+                        Test Notification
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => {
+                          notificationService.testUnreadCountNotification();
+                          toast.success('Unread count notification test sent!');
+                        }}
+                      >
+                        Test Unread Toast
+                      </Button>
+                    </div>
                   )}
                   {notificationPermission === 'denied' && (
                     <Button variant="outline" onClick={() => {

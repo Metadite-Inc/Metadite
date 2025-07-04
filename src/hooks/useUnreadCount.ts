@@ -96,15 +96,9 @@ const useUnreadCount = () => {
 
         const message = data.received_message || DEFAULT_MESSAGE(newTotalUnread - previousCount);
 
-        if (roomsWithNewMessages.length > 0) {
-          const firstRoom = roomsWithNewMessages[0];
-          const senderName = `Chat Room ${firstRoom.roomId}`;
-          console.log(`🔔 Notifying room ${firstRoom.roomId}: ${message}`);
-          notificationService.notifyNewMessage(senderName, message, firstRoom.roomId);
-        } else {
-          console.log(`🔔 Notifying general: ${message}`);
-          notificationService.notifyNewMessage('New Messages', message);
-        }
+        // Show toast notification for unread count increase
+        console.log(`🔔 Notifying unread count increase: ${message}`);
+        notificationService.notifyUnreadCountIncrease(newTotalUnread, newUnreadPerRoom, message);
       } else {
         console.log('❌ No notification triggered:', {
           previousCount,
