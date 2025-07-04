@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getUnreadCount } from '../services/ChatService';
 import NotificationService from '../services/NotificationService';
@@ -11,11 +11,15 @@ const useUnreadCount = () => {
     unread_per_room: {}
   });
   const [loading, setLoading] = useState(true);
-  const [previousUnreadCount, setPreviousUnreadCount] = useState(0);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const notificationService = NotificationService.getInstance();
+  
+  // Use ref to persist previous count between renders
+  const previousUnreadCountRef = useRef(0);
 
   const fetchUnreadCount = async () => {
+    console.log('🔄 useUnreadCount.js: fetchUnreadCount called');
+    
     if (!user) {
       setUnreadData({ total_unread: 0, unread_per_room: {} });
       setLoading(false);
@@ -27,17 +31,31 @@ const useUnreadCount = () => {
       
       // Check if unread count increased
       const newTotalUnread = data.total_unread || 0;
-      const previousCount = previousUnreadCount;
+      const previousCount = previousUnreadCountRef.current;
       
       setUnreadData(data);
       
       // Trigger notification if unread count increased
       if (newTotalUnread > previousCount && previousCount > 0) {
+        console.log('🎵 UNREAD COUNT INCREASED - TRIGGERING NOTIFICATION SOUND');
+        console.log('Sound enabled:', notificationService.isSoundEnabled());
+        console.log('Notification enabled:', notificationService.isNotificationEnabled());
+        
         const newMessages = newTotalUnread - previousCount;
-        notificationService.notifyUnreadMessages(newMessages);
+        const message = data.received_message || `You have ${newMessages} new message${newMessages > 1 ? 's' : ''}`;
+        
+        console.log(`🔔 Notifying unread messages: ${message}`);
+        notificationService.notifyNewMessage('New Messages', message);
+      } else {
+        console.log('❌ No notification triggered:', {
+          previousCount,
+          newTotalUnread,
+          condition: newTotalUnread > previousCount && previousCount > 0
+        });
       }
       
-      setPreviousUnreadCount(newTotalUnread);
+      // Update the ref with the new count for next comparison
+      previousUnreadCountRef.current = newTotalUnread;
     } catch (error) {
       console.error('Error fetching unread count:', error);
       setUnreadData({ total_unread: 0, unread_per_room: {} });

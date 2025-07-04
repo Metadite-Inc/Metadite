@@ -24,7 +24,9 @@ const StaffOtherTabs = ({ activeTab, user }) => {
     if ('Notification' in window) {
       setNotificationPermission(Notification.permission);
     }
-  }, []);
+    // Load sound preference from NotificationService
+    setSoundEnabled(notificationService.isSoundEnabled());
+  }, [notificationService]);
 
   const requestNotificationPermission = async () => {
     setIsRequesting(true);
@@ -172,8 +174,10 @@ const StaffOtherTabs = ({ activeTab, user }) => {
                 <Button 
                   variant="outline" 
                   onClick={() => {
-                    setSoundEnabled(!soundEnabled);
-                    toast.success(`Notification sounds ${!soundEnabled ? 'enabled' : 'disabled'}`);
+                    const newSoundEnabled = !soundEnabled;
+                    setSoundEnabled(newSoundEnabled);
+                    notificationService.setSoundEnabled(newSoundEnabled);
+                    toast.success(`Notification sounds ${newSoundEnabled ? 'enabled' : 'disabled'}`);
                   }}
                 >
                   {soundEnabled ? 'Disable' : 'Enable'} Sounds
