@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   MessageSquare, Clock, CheckCircle, AlertTriangle, 
-  TrendingUp, Users, Calendar, BarChart3
+  TrendingUp, Users, Calendar, BarChart3, Crown
 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { moderatorApiService } from '../../lib/api/moderator_api';
@@ -109,25 +109,17 @@ const ModerationSummaryTab = () => {
     return weeklyData;
   };
 
+  // Get top dolls data
+  const getTopDolls = () => {
+    if (!dashboardData?.metrics?.top_dolls) {
+      return [];
+    }
+    return dashboardData.metrics.top_dolls;
+  };
+
   const moderationStats = getModerationStats();
   const weeklyActivity = getWeeklyActivity();
-
-  const recentActions = [
-    {
-      action: 'Message approved',
-      user: 'user123@example.com',
-      model: dashboardData?.metrics?.top_dolls?.[0]?.name || 'Model',
-      time: '2 minutes ago',
-      status: 'approved'
-    },
-    {
-      action: 'Message flagged',
-      user: 'john.doe@example.com',
-      model: dashboardData?.metrics?.top_dolls?.[1]?.name || 'Model',
-      time: '8 minutes ago',
-      status: 'flagged'
-    }
-  ];
+  const topDolls = getTopDolls();
 
   const getColorClasses = (color) => {
     const colorMap = {
@@ -204,7 +196,7 @@ const ModerationSummaryTab = () => {
         </div>
       </div>
 
-      {/* Weekly Activity Chart */}
+      {/* Weekly Activity Chart
       <div className={`glass-card rounded-xl p-6 ${theme === 'dark' ? 'bg-gray-800/70' : ''}`}>
         <h3 className={`text-lg font-semibold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
           Weekly Activity
@@ -243,45 +235,56 @@ const ModerationSummaryTab = () => {
           </div>
         </div>
       </div>
+      */}
 
-      {/* Recent Actions */}
-      <div className={`glass-card rounded-xl p-6 ${theme === 'dark' ? 'bg-gray-800/70' : ''}`}>
-        <div className="flex justify-between items-center mb-6">
-          <h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-            Recent Actions
+      {/* Top Performing Models */}
+      {topDolls.length > 0 && (
+        <div className={`glass-card rounded-xl p-6 ${theme === 'dark' ? 'bg-gray-800/70' : ''}`}>
+          <h3 className={`text-lg font-semibold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+            Top Performing Models
           </h3>
-          <button className="text-sm text-metadite-primary hover:text-metadite-secondary transition-colors">
-            View All
-          </button>
-        </div>
-        
-        <div className="space-y-4">
-          {recentActions.map((action, index) => (
-            <div key={index} className={`p-4 rounded-lg border ${
-              theme === 'dark' ? 'border-gray-600 bg-gray-700/30' : 'border-gray-200 bg-gray-50'
-            }`}>
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2 mb-1">
-                    <span className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                      {action.action}
-                    </span>
-                    <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(action.status)}`}>
-                      {action.status}
-                    </span>
+          
+          <div className="space-y-3">
+            {topDolls.map((doll, index) => (
+              <div
+                key={doll.id}
+                className={`flex items-center justify-between p-4 rounded-lg border ${
+                  theme === 'dark' 
+                    ? 'bg-gray-700/50 border-gray-600' 
+                    : 'bg-white border-gray-200'
+                }`}
+              >
+                <div className="flex items-center space-x-3">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                    index === 0 ? 'bg-yellow-500' : 
+                    index === 1 ? 'bg-gray-400' : 
+                    index === 2 ? 'bg-orange-500' : 'bg-gray-500'
+                  }`}>
+                    {index === 0 && <Crown className="h-4 w-4 text-white" />}
+                    {index > 0 && <span className="text-white text-sm font-bold">{index + 1}</span>}
                   </div>
-                  <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                    User: {action.user} • Model: {action.model}
+                  <div>
+                    <p className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                      {doll.name}
+                    </p>
+                    <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                      ID: {doll.id}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                    {doll.message_count}
+                  </p>
+                  <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                    messages
                   </p>
                 </div>
-                <span className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                  {action.time}
-                </span>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
