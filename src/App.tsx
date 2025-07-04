@@ -37,6 +37,7 @@ import ChatPage from "./pages/ChatPage";
 import Terms from "./pages/Terms";
 import OrderDetail from "./pages/OrderDetail";
 import ProtectedRoute from "./components/ProtectedRoute";
+import ModeratorChatActivity from './pages/ModeratorChatActivity';
 
 // Create a client
 const queryClient = new QueryClient();
@@ -169,6 +170,14 @@ const App = () => {
                           <ModeratorAssignments />
                         </ProtectedRoute>
                       } 
+                    />
+                    <Route
+                      path="/moderator-chat-activity/:moderatorId"
+                      element={
+                        <ProtectedRoute allowedRoles={['admin']}>
+                          <ModeratorChatActivity />
+                        </ProtectedRoute>
+                      }
                     />
                     <Route path="/models" element={<Models />} />
                     <Route path="/model/:id" element={<ModelDetail />} />

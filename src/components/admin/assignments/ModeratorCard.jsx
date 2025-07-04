@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Bot, UserCheck, Trash2, Edit } from 'lucide-react';
 
 const ModeratorCard = ({ 
@@ -8,6 +9,12 @@ const ModeratorCard = ({
   onUnassignModel,
   onEditModerator
 }) => {
+  const navigate = useNavigate();
+
+  const handleModeratorClick = () => {
+    navigate(`/moderator-chat-activity/${moderator.id}`);
+  };
+
   return (
     <div
       className={`glass-card rounded-xl overflow-hidden transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1 ${
@@ -17,17 +24,20 @@ const ModeratorCard = ({
       {/* Moderator Header */}
       <div className="p-6 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center">
+          <div 
+            className="flex items-center cursor-pointer hover:opacity-80 transition-opacity"
+            onClick={handleModeratorClick}
+          >
             <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
               moderator.is_active ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600'
             }`}>
               <UserCheck className="h-6 w-6" />
             </div>
             <div className="ml-3">
-              <h3 className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+              <h3 className={`font-semibold hover:text-metadite-primary transition-colors ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                 {moderator.full_name}
               </h3>
-              <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+              <p className={`text-sm hover:text-metadite-primary transition-colors ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                 {moderator.email}
               </p>
             </div>
