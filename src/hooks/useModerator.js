@@ -322,6 +322,16 @@ const useModerator = () => {
     if (data.type === 'new_message' && data.message) {
       console.log('Adding new message to moderator chat:', data.message);
       setMessages(prev => {
+        // Prevent duplicate messages
+        const exists = prev.some(msg => 
+          msg.id === data.message.id ||
+          (msg.content === data.message.content && 
+           Math.abs(new Date(msg.created_at) - new Date(data.message.created_at)) < 1000)
+        );
+        if (exists) {
+          console.log('Duplicate message detected, skipping');
+          return prev;
+        }
         const updated = [...prev, data.message];
         updated.sort((a, b) => a.id - b.id);
         return updated;
@@ -347,7 +357,7 @@ const useModerator = () => {
       // If message is for a different room than currently selected, refresh the models list
       if (chatRoomId && chatRoomId !== selectedModel?.id) {
         console.log('Message received for different room, refreshing models list');
-        setRefreshModelsCounter(prev => prev + 1);
+        // Note: Could implement a refresh mechanism here if needed
       }
     } else if (data.type === 'typing' && data.user_id) {
       setTypingUsers(prev => {
