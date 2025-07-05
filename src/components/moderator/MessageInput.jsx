@@ -72,14 +72,6 @@ const MessageInput = ({
           )}
         </button>
       </form>
-      
-      {!isConnectionActive && (
-        <div className="mt-2 text-xs text-center text-red-500">
-          {connectionStatus === 'connecting' 
-            ? 'Connecting to chat...' 
-            : 'Connection lost. Trying to reconnect...'}
-        </div>
-      )}
     </div>
   );
 };
