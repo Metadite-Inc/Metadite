@@ -18,7 +18,6 @@ import ModeratorsTab from '../components/admin/ModeratorsTab';
 import SubscriptionsTab from '../components/admin/SubscriptionsTab';
 import PaymentsTab from '../components/admin/PaymentsTab';
 import FlaggedMessagesTab from '../components/admin/FlaggedMessagesTab';
-import SettingsTab from '../components/admin/SettingsTab';
 import VideosTab from '../components/admin/VideosTab'; // Import the new VideosTab component
 import SlideshowTab from '../components/admin/SlideshowTab';
 
@@ -128,8 +127,6 @@ const Admin = () => {
               
               {/* Slideshow Management */}
               {activeTab === 'slideshow' && <SlideshowTab isLoaded={isLoaded} />}
-              {/* Settings *
-              {activeTab === 'settings' && <SettingsTab isLoaded={isLoaded} /> */}
             </div>
           </div>
         </div>

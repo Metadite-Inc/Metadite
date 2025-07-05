@@ -182,21 +182,6 @@ const AdminSidebar = ({ activeTab, setActiveTab }) => {
               )}
             </button>
           </li>
-          <li>
-            <button 
-              onClick={() => setActiveTab('settings')}
-              className={`flex items-center w-full px-4 py-3 rounded-lg transition-colors ${
-                activeTab === 'settings' 
-                ? 'bg-metadite-primary/10 text-metadite-primary' 
-                : theme === 'dark' 
-                  ? 'text-gray-300 hover:bg-gray-700/50' 
-                  : 'text-gray-700 hover:bg-gray-100'
-            }`}
-            >
-              <Settings className="h-5 w-5 mr-3" />
-              <span>Settings</span>
-            </button>
-          </li>
         </ul>
       </div>
     </div>
