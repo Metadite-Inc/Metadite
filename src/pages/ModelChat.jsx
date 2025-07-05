@@ -600,7 +600,7 @@ const ModelChat = () => {
                   <Textarea
                     placeholder={connectionStatus === 'connected' 
                       ? `Send a message to ${model.name}...` 
-                      : 'Reconnecting to chat...'}
+                      : '...'}
                     value={newMessage}
                     onChange={(e) => {
                       setNewMessage(e.target.value);
@@ -656,14 +656,6 @@ const ModelChat = () => {
                   )}
                 </button>
               </form>
-              
-              {connectionStatus !== 'connected' && (
-                <div className="mt-2 text-xs text-center text-red-500">
-                  {connectionStatus === 'connecting' 
-                    ? 'Connecting to chat...' 
-                    : 'Connection lost. Trying to reconnect...'}
-                </div>
-              )}
             </div>
           </div>
         </div>
