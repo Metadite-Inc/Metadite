@@ -128,8 +128,8 @@ const Admin = () => {
               
               {/* Slideshow Management */}
               {activeTab === 'slideshow' && <SlideshowTab isLoaded={isLoaded} />}
-              {/* Settings */}
-              {activeTab === 'settings' && <SettingsTab isLoaded={isLoaded} />}
+              {/* Settings *
+              {activeTab === 'settings' && <SettingsTab isLoaded={isLoaded} /> */}
             </div>
           </div>
         </div>
