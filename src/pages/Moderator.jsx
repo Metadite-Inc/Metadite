@@ -44,7 +44,7 @@ const Moderator = () => {
     <div className="min-h-screen flex flex-col">
       <StaffNavbar />
       
-      <div className={`flex-1 pt-20 pb-12 px-4 ${
+      <div className={`flex-1 pt-20 pb-12 ${
         theme === 'dark' 
           ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-200' 
           : 'bg-gradient-to-br from-white via-metadite-light to-white'

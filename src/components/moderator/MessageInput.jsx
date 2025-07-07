@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Send, Paperclip } from 'lucide-react';
+import { Send } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 
 const MessageInput = ({ 
@@ -9,9 +9,7 @@ const MessageInput = ({
   handleSendMessage, 
   handleTyping,
   selectedModel, 
-  promptFileSelection, 
   isUploading, 
-  selectedFile,
   connectionStatus
 }) => {
   const { theme } = useTheme();
@@ -47,22 +45,11 @@ const MessageInput = ({
           ></textarea>
         </div>
         
-        <button 
-          type="button"
-          onClick={promptFileSelection}
-          disabled={!isConnectionActive}
-          className={`flex-shrink-0 p-3 rounded-md ${
-            theme === 'dark' 
-              ? 'bg-gray-700 hover:bg-gray-600' 
-              : 'bg-gray-100 hover:bg-gray-200'
-          } ${!isConnectionActive ? 'opacity-50 cursor-not-allowed' : ''}`}
-        >
-          <Paperclip className={`h-5 w-5 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`} />
-        </button>
+
         
         <button 
           type="submit"
-          disabled={(!newMessage.trim() && !selectedFile) || isUploading || !isConnectionActive}
+          disabled={!newMessage.trim() || isUploading || !isConnectionActive}
           className="flex-shrink-0 bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white p-3 rounded-md hover:opacity-90 transition-opacity disabled:opacity-50"
         >
           {isUploading ? (
