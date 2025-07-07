@@ -5,7 +5,7 @@ import ChatHeader from './ChatHeader';
 import ChatMessages from './ChatMessages';
 import MessageInput from './MessageInput';
 
-const ChatContainer = ({
+const ChatContainer = React.memo(({
   selectedModel,
   messages,
   loading,
@@ -44,7 +44,7 @@ const ChatContainer = ({
   }
 
   return (
-    <div className={`glass-card rounded-xl overflow-hidden h-[600px] flex flex-col transition-opacity duration-300 ${
+    <div className={`glass-card rounded-xl overflow-hidden h-[600px] flex flex-col chat-container transition-opacity duration-300 ${
       theme === 'dark' ? 'bg-gray-800/70 border-gray-700' : ''
     } ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>
       <ChatHeader 
@@ -52,7 +52,7 @@ const ChatContainer = ({
         connectionStatus={connectionStatus}
       />
       
-      <div className="flex-1 overflow-y-auto p-2 sm:p-4" onScroll={handleScroll}>
+      <div className="flex-1 overflow-y-auto p-2 sm:p-4 chat-messages-container" onScroll={handleScroll}>
         <ChatMessages 
           messages={messages} 
           loading={loading} 
@@ -77,6 +77,8 @@ const ChatContainer = ({
       />
     </div>
   );
-};
+});
+
+ChatContainer.displayName = 'ChatContainer';
 
 export default ChatContainer;

@@ -28,6 +28,9 @@ const Moderator = () => {
     messageEndRef,
     hasMoreMessages,
     isLoadingMore,
+    chatRooms,
+    animatingRooms,
+    lastMessageUpdates,
     handleSelectModel,
     handleFileSelect,
     clearSelectedFile,
@@ -79,6 +82,8 @@ const Moderator = () => {
                 selectedModel={selectedModel}
                 onSelectModel={handleSelectModel}
                 loading={loading}
+                lastMessageUpdates={lastMessageUpdates}
+                animatingRooms={animatingRooms}
               />
             </div>
             
