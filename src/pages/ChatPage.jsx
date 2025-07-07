@@ -402,7 +402,7 @@ const ChatPage = () => {
           ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' 
           : 'bg-gradient-to-br from-white via-metadite-light to-white'
       }`}>
-        <div className="container mx-auto max-w-7xl h-[calc(100vh-120px)]">
+        <div className="mx-auto max-w-7xl h-[calc(100vh-120px)]">
           <div className={`glass-card rounded-xl overflow-hidden h-full flex ${
             theme === 'dark' ? 'bg-gray-800/50 border-gray-700' : 'bg-white/50'
           }`}>
@@ -413,7 +413,7 @@ const ChatPage = () => {
                 {showChatList ? (
                   /* Chat Rooms List - Mobile */
                   <div className="w-full flex flex-col">
-                    <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                    <div className="p-2 sm:p-4 border-b border-gray-200 dark:border-gray-700">
                       <div className="flex items-center justify-between mb-4">
                         <h1 className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                           Chats
@@ -435,7 +435,7 @@ const ChatPage = () => {
                           placeholder="Search conversations..."
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
-                          className={`w-full pl-9 pr-4 py-2 rounded-lg border ${
+                          className={`w-full pl-6 pr-2 sm:pl-9 sm:pr-4 py-2 rounded-lg border ${
                             theme === 'dark' 
                               ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
                               : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
@@ -446,7 +446,7 @@ const ChatPage = () => {
 
                     <div className="flex-1 overflow-y-auto">
                       {loadingRooms ? (
-                        <div className="p-8 text-center">
+                        <div className="p-4 sm:p-8 text-center">
                           <div className="inline-block h-6 w-6 rounded-full border-4 border-metadite-primary border-r-transparent animate-spin"></div>
                           <p className={`mt-4 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
                             Loading conversations...
@@ -458,7 +458,7 @@ const ChatPage = () => {
                             <div
                               key={room.id}
                               onClick={() => handleRoomSelect(room)}
-                              className={`p-4 cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/50 ${
+                              className={`p-2 sm:p-4 cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/50 ${
                                 room.unreadCount > 0 ? 'bg-blue-50 dark:bg-blue-900/20' : ''
                               }`}
                             >
@@ -504,7 +504,7 @@ const ChatPage = () => {
                           ))}
                         </div>
                       ) : (
-                        <div className="p-8 text-center">
+                        <div className="p-4 sm:p-8 text-center">
                           <MessageSquare className="h-12 w-12 mx-auto mb-4 text-metadite-primary opacity-50" />
                           <h3 className="text-lg font-medium mb-2">No conversations yet</h3>
                           <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
@@ -519,7 +519,7 @@ const ChatPage = () => {
                   <div className="flex-1 flex flex-col">
                     {selectedRoom && (
                       <>
-                        <div className={`p-4 border-b flex items-center justify-between ${
+                        <div className={`p-2 sm:p-4 border-b flex items-center justify-between ${
                           theme === 'dark' ? 'border-gray-700' : 'border-gray-100'
                         }`}>
                           <div className="flex items-center">
@@ -568,7 +568,7 @@ const ChatPage = () => {
                         </div>
 
                         {/* Messages - Mobile */}
-                        <div className="flex-1 overflow-y-auto p-4 space-y-4" onScroll={handleScroll}>
+                        <div className="flex-1 overflow-y-auto p-2 sm:p-4 space-y-3" onScroll={handleScroll}>
                           {hasMoreMessages && (
                             <div className="text-center my-2">
                               <button
@@ -593,7 +593,7 @@ const ChatPage = () => {
                           )}
                           
                           {messages.length > 0 ? (
-                            <div className="space-y-4">
+                            <div className="space-y-3">
                               {messages.map((message) => (
                                 <MessageItem
                                   key={message.id}
@@ -630,7 +630,7 @@ const ChatPage = () => {
                         
 
                         {/* Message Input - Mobile */}
-                        <div className={`p-4 border-t ${theme === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
+                        <div className={`p-2 sm:p-4 border-t ${theme === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
                           <form onSubmit={handleSendMessage} className="flex space-x-2">
                             <div className="relative flex-1">
                               <Textarea
@@ -685,7 +685,7 @@ const ChatPage = () => {
                 <div className={`w-1/3 border-r flex flex-col ${
                   theme === 'dark' ? 'border-gray-700' : 'border-gray-200'
                 }`}>
-                  <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                  <div className="p-2 sm:p-4 border-b border-gray-200 dark:border-gray-700">
                     <div className="flex items-center justify-between mb-4">
                       <h1 className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                         Chats
@@ -707,7 +707,7 @@ const ChatPage = () => {
                         placeholder="Search conversations..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className={`w-full pl-9 pr-4 py-2 rounded-lg border ${
+                        className={`w-full pl-6 pr-2 sm:pl-9 sm:pr-4 py-2 rounded-lg border ${
                           theme === 'dark' 
                             ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
                             : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
@@ -718,7 +718,7 @@ const ChatPage = () => {
 
                   <div className="flex-1 overflow-y-auto">
                     {loadingRooms ? (
-                      <div className="p-8 text-center">
+                      <div className="p-4 sm:p-8 text-center">
                         <div className="inline-block h-6 w-6 rounded-full border-4 border-metadite-primary border-r-transparent animate-spin"></div>
                         <p className={`mt-4 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
                           Loading conversations...
@@ -730,7 +730,7 @@ const ChatPage = () => {
                           <div
                             key={room.id}
                             onClick={() => handleRoomSelect(room)}
-                            className={`p-4 cursor-pointer transition-colors ${
+                            className={`p-2 sm:p-4 cursor-pointer transition-colors ${
                               selectedRoom?.id === room.id
                                 ? 'bg-metadite-primary/10 border-r-2 border-metadite-primary'
                                 : `hover:bg-gray-50 dark:hover:bg-gray-700/50 ${
@@ -780,7 +780,7 @@ const ChatPage = () => {
                         ))}
                       </div>
                     ) : (
-                      <div className="p-8 text-center">
+                      <div className="p-4 sm:p-8 text-center">
                         <MessageSquare className="h-12 w-12 mx-auto mb-4 text-metadite-primary opacity-50" />
                         <h3 className="text-lg font-medium mb-2">No conversations yet</h3>
                         <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
@@ -795,7 +795,7 @@ const ChatPage = () => {
                 <div className="flex-1 flex flex-col">
                   {selectedRoom ? (
                     <>
-                      <div className={`p-4 border-b flex items-center justify-between ${
+                      <div className={`p-2 sm:p-4 border-b flex items-center justify-between ${
                         theme === 'dark' ? 'border-gray-700' : 'border-gray-100'
                       }`}>
                         <div className="flex items-center">
@@ -835,7 +835,7 @@ const ChatPage = () => {
                         </div>
                       </div>
 
-                      <div className="flex-1 overflow-y-auto p-4 space-y-4" onScroll={handleScroll}>
+                      <div className="flex-1 overflow-y-auto p-2 sm:p-4 space-y-3" onScroll={handleScroll}>
                         {hasMoreMessages && (
                           <div className="text-center my-2">
                             <button
@@ -860,7 +860,7 @@ const ChatPage = () => {
                         )}
                         
                         {messages.length > 0 ? (
-                          <div className="space-y-4">
+                          <div className="space-y-3">
                             {messages.map((message) => (
                               <MessageItem
                                 key={message.id}
@@ -895,7 +895,7 @@ const ChatPage = () => {
 
                       
 
-                      <div className={`p-4 border-t ${theme === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
+                      <div className={`p-2 sm:p-4 border-t ${theme === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
                         <form onSubmit={handleSendMessage} className="flex space-x-2">
                           <div className="relative flex-1">
                             <Textarea

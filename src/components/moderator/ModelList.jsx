@@ -34,10 +34,10 @@ const ModelList = ({ models, searchTerm, setSearchTerm, selectedModel, onSelectM
 
   return (
     <div className={`glass-card rounded-xl overflow-hidden ${theme === 'dark' ? 'bg-gray-800/70 border-gray-700' : ''}`}>
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+      <div className="p-2 sm:p-4 border-b border-gray-200 dark:border-gray-700">
         <h2 className={`font-medium mb-4 ${theme === 'dark' ? 'text-white' : ''}`}>Model Chats</h2>
         
-        <div className={`flex items-center rounded-md border px-3 py-2 ${
+        <div className={`flex items-center rounded-md border px-2 py-1 ${
           theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'
         }`}>
           <Search className={`h-4 w-4 mr-2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`} />
@@ -70,7 +70,7 @@ const ModelList = ({ models, searchTerm, setSearchTerm, selectedModel, onSelectM
                     : `hover:bg-gray-100 ${theme === 'dark' ? 'hover:bg-gray-700 text-gray-200' : ''}`
                 }`}
               >
-                <div className="flex items-center p-3">
+                <div className="flex items-center p-2 sm:p-3">
                   <div className="relative mr-3 flex-shrink-0">
                     <div className="w-12 h-12 rounded-full overflow-hidden">
                       <img
@@ -107,7 +107,7 @@ const ModelList = ({ models, searchTerm, setSearchTerm, selectedModel, onSelectM
             ))}
           </ul>
         ) : (
-          <div className="flex flex-col items-center justify-center h-32 px-4 text-center">
+          <div className="flex flex-col items-center justify-center h-32 px-2 sm:px-4 text-center">
             <MessageSquare className={`h-8 w-8 mb-2 ${theme === 'dark' ? 'text-gray-600' : 'text-gray-300'}`} />
             <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
               {searchTerm ? 'No models match your search' : 'No models assigned yet'}
