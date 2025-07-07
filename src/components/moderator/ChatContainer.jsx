@@ -3,7 +3,6 @@ import { MessageSquare } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import ChatHeader from './ChatHeader';
 import ChatMessages from './ChatMessages';
-import FilePreview from './FilePreview';
 import MessageInput from './MessageInput';
 
 const ChatContainer = ({
@@ -16,11 +15,7 @@ const ChatContainer = ({
   setNewMessage,
   handleSendMessage,
   handleTyping,
-  promptFileSelection,
   isUploading,
-  selectedFile,
-  previewUrl,
-  clearSelectedFile,
   isLoaded,
   typingUsers,
   connectionStatus,
@@ -71,21 +66,13 @@ const ChatContainer = ({
         />
       </div>
       
-      <FilePreview 
-        selectedFile={selectedFile} 
-        previewUrl={previewUrl} 
-        clearSelectedFile={clearSelectedFile} 
-      />
-      
       <MessageInput 
         newMessage={newMessage}
         setNewMessage={setNewMessage}
         handleSendMessage={handleSendMessage}
         handleTyping={handleTyping}
         selectedModel={selectedModel}
-        promptFileSelection={promptFileSelection}
         isUploading={isUploading}
-        selectedFile={selectedFile}
         connectionStatus={connectionStatus}
       />
     </div>

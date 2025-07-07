@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Plus, X, Image as ImageIcon, Paperclip, Download } from 'lucide-react';
+import { Send, Plus, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -16,8 +16,6 @@ interface Message {
   content: string;
   sender: 'user' | 'ai';
   timestamp: Date;
-  files?: File[];
-  imageUrls?: string[];
 }
 
 interface ChatProps {
@@ -39,10 +37,7 @@ const Chat: React.FC<ChatProps> = ({
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState(initialMessage || '');
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Message limits based on membership level
@@ -90,47 +85,10 @@ const Chat: React.FC<ChatProps> = ({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []);
-    const maxFiles = 5;
-    const maxSize = 10 * 1024 * 1024; // 10MB
 
-    if (selectedFiles.length + files.length > maxFiles) {
-      toast.error(`You can only select up to ${maxFiles} files.`);
-      return;
-    }
-
-    const validFiles = files.filter(file => {
-      if (file.size > maxSize) {
-        toast.error(`File ${file.name} is too large. Maximum size is 10MB.`);
-        return false;
-      }
-      return true;
-    });
-
-    setSelectedFiles(prev => [...prev, ...validFiles]);
-
-    // Create preview URLs for images
-    validFiles.forEach(file => {
-      if (file.type.startsWith('image/')) {
-        const url = URL.createObjectURL(file);
-        setPreviewUrls(prev => [...prev, url]);
-      }
-    });
-  };
-
-  const removeFile = (index: number) => {
-    const file = selectedFiles[index];
-    if (file && file.type.startsWith('image/')) {
-      const previewIndex = selectedFiles.slice(0, index).filter(f => f.type.startsWith('image/')).length;
-      URL.revokeObjectURL(previewUrls[previewIndex]);
-      setPreviewUrls(prev => prev.filter((_, i) => i !== previewIndex));
-    }
-    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
-  };
 
   const handleSendMessage = async () => {
-    if (!inputValue.trim() && selectedFiles.length === 0) return;
+    if (!inputValue.trim()) return;
     
     // Check message limit
     if (messageLimit !== Infinity && userMessageCount >= messageLimit) {
@@ -143,25 +101,17 @@ const Chat: React.FC<ChatProps> = ({
       content: inputValue.trim(),
       sender: 'user',
       timestamp: new Date(),
-      files: selectedFiles.length > 0 ? [...selectedFiles] : undefined,
-      imageUrls: previewUrls.length > 0 ? [...previewUrls] : undefined,
     };
 
     setMessages(prev => [...prev, newMessage]);
     setInputValue('');
-    setSelectedFiles([]);
-    setPreviewUrls([]);
     setIsLoading(true);
 
     // Simulate AI response
     setTimeout(() => {
       const aiResponse: Message = {
         id: (Date.now() + 1).toString(),
-        content: `Thank you for your message! As ${modelName}, I'm here to help you. ${
-          newMessage.files && newMessage.files.length > 0 
-            ? `I can see you've shared ${newMessage.files.length} file(s) with me.` 
-            : ''
-        }`,
+        content: `Thank you for your message! As ${modelName}, I'm here to help you.`,
         sender: 'ai',
         timestamp: new Date(),
       };
@@ -240,44 +190,6 @@ const Chat: React.FC<ChatProps> = ({
                 <p className="whitespace-pre-wrap break-words">{message.content}</p>
               )}
               
-              {message.imageUrls && message.imageUrls.length > 0 && (
-                <div className="grid grid-cols-2 gap-2 mt-2">
-                  {message.imageUrls.map((url, index) => (
-                    <img
-                      key={index}
-                      src={url}
-                      alt={`Uploaded image ${index + 1}`}
-                      className="rounded-lg max-w-full h-auto max-h-40 object-cover"
-                    />
-                  ))}
-                </div>
-              )}
-              
-              {message.files && message.files.length > 0 && (
-                <div className="mt-2 space-y-1">
-                  {message.files.filter(file => !file.type.startsWith('image/')).map((file, index) => (
-                    <div key={index} className="flex items-center space-x-2 text-sm">
-                      <Paperclip className="h-4 w-4" />
-                      <span className="truncate">{file.name}</span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          const url = URL.createObjectURL(file);
-                          const a = document.createElement('a');
-                          a.href = url;
-                          a.download = file.name;
-                          a.click();
-                          URL.revokeObjectURL(url);
-                        }}
-                      >
-                        <Download className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-              
               <div className={`text-xs mt-1 ${
                 message.sender === 'user' ? 'text-white/70' : 'text-gray-500 dark:text-gray-400'
               }`}>
@@ -302,47 +214,7 @@ const Chat: React.FC<ChatProps> = ({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* File Preview */}
-      {selectedFiles.length > 0 && (
-        <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-          <div className="flex flex-wrap gap-2">
-            {selectedFiles.map((file, index) => (
-              <div key={index} className="relative">
-                {file.type.startsWith('image/') ? (
-                  <div className="relative">
-                    <img
-                      src={previewUrls[selectedFiles.slice(0, index).filter(f => f.type.startsWith('image/')).length]}
-                      alt={`Preview ${index}`}
-                      className="w-16 h-16 object-cover rounded"
-                    />
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      className="absolute -top-1 -right-1 w-5 h-5 rounded-full p-0"
-                      onClick={() => removeFile(index)}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="flex items-center space-x-2 bg-gray-100 dark:bg-gray-800 rounded p-2">
-                    <Paperclip className="h-4 w-4" />
-                    <span className="text-sm truncate max-w-20">{file.name}</span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="w-5 h-5 p-0"
-                      onClick={() => removeFile(index)}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+
 
       <Separator />
 
@@ -367,28 +239,11 @@ const Chat: React.FC<ChatProps> = ({
           </div>
           
           <div className="flex space-x-1">
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              accept="image/*,.pdf,.doc,.docx,.txt"
-              onChange={handleFileSelect}
-              className="hidden"
-            />
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={!canSendMessage() || selectedFiles.length >= 5}
-              title="Attach files (max 5)"
-            >
-              <Paperclip className="h-4 w-4" />
-            </Button>
+
             
             <Button
               onClick={handleSendMessage}
-              disabled={(!inputValue.trim() && selectedFiles.length === 0) || !canSendMessage() || isLoading}
+              disabled={!inputValue.trim() || !canSendMessage() || isLoading}
               className="bg-metadite-primary hover:bg-metadite-secondary text-white"
             >
               <Send className="h-4 w-4" />

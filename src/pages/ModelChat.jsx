@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
-import { ChevronLeft, MessageSquare, Send, Paperclip, FileImage, X, File } from 'lucide-react';
+import { ChevronLeft, MessageSquare, Send, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -11,7 +11,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { apiService } from '../lib/api';
 import { 
   sendMessage, 
-  sendFileMessage, 
   getMessages, 
   connectWebSocket,
   getChatRoomById,
@@ -34,11 +33,8 @@ const ModelChat = () => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const messageEndRef = useRef(null);
-  const fileInputRef = useRef(null);
   const [fetchError, setFetchError] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(null);
   const wsRef = useRef(null);
   const [typingUsers, setTypingUsers] = useState(new Set());
   const typingTimeoutRef = useRef(null);
@@ -240,45 +236,7 @@ const ModelChat = () => {
     }
   };
 
-  // Handle file selection
-  const handleFileSelect = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    // Check file size (limit to 10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("File too large", {
-        description: "Maximum file size is 10MB"
-      });
-      return;
-    }
-    
-    setSelectedFile(file);
-    
-    // Create preview for images
-    if (file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewUrl(reader.result);
-      };
-      reader.readAsDataURL(file);
-    } else {
-      // For non-image files, just show the file name
-      setPreviewUrl(null);
-    }
-  };
-  
-  const clearSelectedFile = () => {
-    setSelectedFile(null);
-    setPreviewUrl(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
-  
-  const promptFileSelection = () => {
-    fileInputRef.current?.click();
-  };
+
   
   // Handle typing indicator
   const handleTyping = () => {
@@ -301,7 +259,7 @@ const ModelChat = () => {
   const handleSendMessage = async (e) => {
     e.preventDefault();
     
-    if ((!newMessage.trim() && !selectedFile) || !model || !chatRoom) return;
+    if (!newMessage.trim() || !model || !chatRoom) return;
     
     if (!user) {
       toast.error("Please login to send messages");
@@ -313,38 +271,6 @@ const ModelChat = () => {
       
       // Get the moderator ID for this chat room
       const moderatorId = chatRoom.moderator_id || null;
-      
-      // Handle file upload
-      if (selectedFile) {
-        try {
-          const fileMessageResponse = await sendFileMessage(selectedFile, chatRoom.id);
-          
-          if (fileMessageResponse) {
-            // Add message to local state for immediate feedback
-            const fileMessage = {
-              id: Date.now(),
-              chat_room_id: chatRoom.id,
-              sender_id: user.id,
-              sender_uuid: user.uuid,
-              sender_name: 'You',
-              content: selectedFile.name,
-              file_name: selectedFile.name,
-              created_at: new Date().toISOString(),
-              flagged: false,
-              message_type: selectedFile.type.startsWith('image/') ? 'IMAGE' : 'FILE',
-              file_url: selectedFile.type.startsWith('image/') ? URL.createObjectURL(selectedFile) : null
-            };
-            
-            setMessages(prev => [...prev, fileMessage]);
-          }
-          
-          // Clear file selection
-          clearSelectedFile();
-        } catch (error) {
-          console.error("Failed to upload file:", error);
-          toast.error("Failed to upload file");
-        }
-      }
       
       // Handle text message
       if (newMessage.trim()) {
@@ -566,33 +492,7 @@ const ModelChat = () => {
               <div ref={messageEndRef} />
             </div>
             
-            {/* File preview area */}
-            {selectedFile && (
-              <div className={`p-2 border-t ${theme === 'dark' ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-100'}`}>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    {previewUrl ? (
-                      <div className="h-16 w-16 overflow-hidden rounded-md">
-                        <img src={previewUrl} alt="Preview" className="h-full w-full object-cover" />
-                      </div>
-                    ) : (
-                      <div className={`h-12 w-12 flex items-center justify-center rounded-md ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'}`}>
-                        <File className={`h-6 w-6 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`} />
-                      </div>
-                    )}
-                    <span className={`text-sm truncate max-w-[150px] ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                      {selectedFile.name}
-                    </span>
-                  </div>
-                  <button 
-                    onClick={clearSelectedFile}
-                    className={`p-1 rounded-full ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'}`}
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-            )}
+
             
             <div className={`p-4 border-t ${theme === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
               <form onSubmit={handleSendMessage} className="flex space-x-2">
@@ -623,30 +523,11 @@ const ModelChat = () => {
                   />
                 </div>
                 
-                {/* File upload button */}
-                <button 
-                  type="button"
-                  onClick={promptFileSelection}
-                  disabled={connectionStatus !== 'connected'}
-                  className={`flex-shrink-0 p-3 rounded-md ${
-                    theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'
-                  } ${connectionStatus !== 'connected' ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                  <Paperclip className={`h-5 w-5 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`} />
-                </button>
-                
-                {/* Hidden file input */}
-                <input 
-                  ref={fileInputRef}
-                  type="file" 
-                  onChange={handleFileSelect}
-                  className="hidden"
-                  accept="image/*,.pdf,.doc,.docx"
-                />
+
                 
                 <button 
                   type="submit"
-                  disabled={(!newMessage.trim() && !selectedFile) || isUploading || connectionStatus !== 'connected'}
+                  disabled={!newMessage.trim() || isUploading || connectionStatus !== 'connected'}
                   className="flex-shrink-0 bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white p-3 rounded-md hover:opacity-90 transition-opacity disabled:opacity-50"
                 >
                   {isUploading ? (
