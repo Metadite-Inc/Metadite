@@ -44,9 +44,49 @@ const useModerator = () => {
   const wsRef = useRef(null);
   const connectionListenerRef = useRef(null);
   
+  // NEW: Optimized state management for chat rooms
+  const [chatRooms, setChatRooms] = useState(new Map()); // Store by room ID for efficient updates
+  const [animatingRooms, setAnimatingRooms] = useState(new Set()); // Track rooms with new messages
+  const [lastMessageUpdates, setLastMessageUpdates] = useState(new Map()); // Track last message updates
+  
   // Add unread count tracking to trigger model refresh
   const { unreadData } = useUnreadCount();
   const previousUnreadCountRef = useRef(0);
+  
+  // NEW: Optimized chat room update function
+  const updateChatRoom = useCallback((roomId, updates) => {
+    setChatRooms(prev => {
+      const newMap = new Map(prev);
+      const existing = newMap.get(roomId) || {};
+      newMap.set(roomId, { ...existing, ...updates });
+      return newMap;
+    });
+  }, []);
+
+  // NEW: Animate new message arrival
+  const animateNewMessage = useCallback((roomId) => {
+    setAnimatingRooms(prev => new Set([...prev, roomId]));
+    setTimeout(() => {
+      setAnimatingRooms(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(roomId);
+        return newSet;
+      });
+    }, 1000);
+  }, []);
+
+  // NEW: Update last message without full re-render
+  const updateLastMessage = useCallback((roomId, message) => {
+    setLastMessageUpdates(prev => {
+      const newMap = new Map(prev);
+      newMap.set(roomId, {
+        content: message.content || 'New message',
+        timestamp: message.created_at || new Date().toISOString(),
+        unreadCount: roomId === selectedModel?.id ? 0 : 1
+      });
+      return newMap;
+    });
+  }, [selectedModel?.id]);
   
   // Server-side role validation for moderator access
   useEffect(() => {
@@ -116,6 +156,13 @@ const useModerator = () => {
 
       console.log('Loaded models:', models.length);
       setAssignedModels(models);
+      
+      // NEW: Initialize chat rooms map
+      const roomsMap = new Map();
+      models.forEach(model => {
+        roomsMap.set(model.id, model);
+      });
+      setChatRooms(roomsMap);
     } catch (error) {
       console.error('Error loading assigned models:', error);
       toast.error('Failed to load assigned models');
@@ -315,12 +362,14 @@ const useModerator = () => {
     }
   };
   
-  // Handle incoming WebSocket messages
+  // OPTIMIZED: Handle incoming WebSocket messages with minimal re-renders
   const handleWebSocketMessage = useCallback((data) => {
     console.log('Moderator received WebSocket message:', data);
     
     if (data.type === 'new_message' && data.message) {
       console.log('Adding new message to moderator chat:', data.message);
+      
+      // Update messages for current chat room only
       setMessages(prev => {
         // Prevent duplicate messages
         const exists = prev.some(msg => 
@@ -337,27 +386,16 @@ const useModerator = () => {
         return updated;
       });
       
-      // Update the model's last message in the sidebar
+      // NEW: Optimized update for model list - only update specific room
       const chatRoomId = data.message.chat_room_id || selectedModel?.id;
       if (chatRoomId) {
-        setAssignedModels(prev => 
-          prev.map(model => 
-            model.id.toString() === chatRoomId.toString()
-              ? {
-                  ...model,
-                  lastMessage: data.message.content || 'New message',
-                  lastMessageTime: data.message.created_at || new Date().toISOString(),
-                  unreadCount: model.id === selectedModel?.id ? model.unreadCount : (model.unreadCount || 0) + 1
-                }
-              : model
-          )
-        );
-      }
-
-      // If message is for a different room than currently selected, refresh the models list
-      if (chatRoomId && chatRoomId !== selectedModel?.id) {
-        console.log('Message received for different room, refreshing models list');
-        // Note: Could implement a refresh mechanism here if needed
+        // Update last message without full re-render
+        updateLastMessage(chatRoomId, data.message);
+        
+        // Animate the room that received the message
+        if (chatRoomId !== selectedModel?.id) {
+          animateNewMessage(chatRoomId);
+        }
       }
     } else if (data.type === 'typing' && data.user_id) {
       setTypingUsers(prev => {
@@ -378,7 +416,7 @@ const useModerator = () => {
         )
       );
     }
-  }, [selectedModel?.id, messages]);
+  }, [selectedModel?.id, updateLastMessage, animateNewMessage]);
   
   // Handle file selection
   const handleFileSelect = (e) => {
@@ -498,17 +536,11 @@ const useModerator = () => {
           });
           clearSelectedFile();
           
-          setAssignedModels(prev => 
-            prev.map(model => 
-              model.id === selectedModel.id 
-                ? {
-                    ...model,
-                    lastMessage: 'File: ' + selectedFile.name,
-                    lastMessageTime: new Date().toISOString()
-                  }
-                : model
-            )
-          );
+          // NEW: Optimized update for current room
+          updateLastMessage(selectedModel.id, {
+            content: 'File: ' + selectedFile.name,
+            created_at: new Date().toISOString()
+          });
         }
       }
       
@@ -536,17 +568,11 @@ const useModerator = () => {
           return updated;
         });
         
-        setAssignedModels(prev => 
-          prev.map(model => 
-            model.id === selectedModel.id 
-              ? {
-                  ...model,
-                  lastMessage: newMessage,
-                  lastMessageTime: new Date().toISOString()
-                }
-              : model
-          )
-        );
+        // NEW: Optimized update for current room
+        updateLastMessage(selectedModel.id, {
+          content: newMessage,
+          created_at: new Date().toISOString()
+        });
         
         setNewMessage('');
         sendTypingIndicator(selectedModel.id, false);
@@ -620,6 +646,10 @@ const useModerator = () => {
     messageEndRef,
     hasMoreMessages,
     isLoadingMore,
+    // NEW: Optimized state
+    chatRooms,
+    animatingRooms,
+    lastMessageUpdates,
     handleSelectModel,
     handleFileSelect,
     clearSelectedFile,

@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { MessageSquare } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import MessageItem from '../MessageItem';
 
-const ChatMessages = ({ 
+const ChatMessages = React.memo(({ 
   messages, 
   loading, 
   handleFlagMessage, 
@@ -15,6 +15,11 @@ const ChatMessages = ({
   typingUsers
 }) => {
   const { theme } = useTheme();
+
+  // NEW: Memoized sorted messages to prevent unnecessary re-sorting
+  const sortedMessages = useMemo(() => {
+    return [...messages].sort((a, b) => a.id - b.id);
+  }, [messages]);
 
   if (loading) {
     return (
@@ -40,9 +45,6 @@ const ChatMessages = ({
       </div>
     );
   }
-
-  // Sort messages in chronological order (oldest to newest) by id
-  const sortedMessages = [...messages].sort((a, b) => a.id - b.id);
 
   return (
     <div className="space-y-4">
@@ -73,18 +75,19 @@ const ChatMessages = ({
       {/* Messages */}
       <div className="space-y-6">
         {sortedMessages.map((message) => (
-          <MessageItem 
-            key={`${message.id}-${message.created_at}`}
-            message={message} 
-            onFlag={handleFlagMessage ? () => handleFlagMessage(message.id) : null}
-            onDelete={handleDeleteMessage ? () => handleDeleteMessage(message.id) : null}
-          />
+          <div key={`${message.id}-${message.created_at}`} className="message-item">
+            <MessageItem 
+              message={message} 
+              onFlag={handleFlagMessage ? () => handleFlagMessage(message.id) : null}
+              onDelete={handleDeleteMessage ? () => handleDeleteMessage(message.id) : null}
+            />
+          </div>
         ))}
       </div>
       
       {/* Typing indicator */}
       {typingUsers && typingUsers.size > 0 && (
-        <div className={`px-4 py-2 rounded-lg w-auto inline-block ${
+        <div className={`px-4 py-2 rounded-lg w-auto inline-block transition-all duration-300 typing-indicator ${
           theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-700'
         }`}>
           <div className="flex items-center space-x-2">
@@ -103,6 +106,8 @@ const ChatMessages = ({
       <div ref={messageEndRef} />
     </div>
   );
-};
+});
+
+ChatMessages.displayName = 'ChatMessages';
 
 export default ChatMessages;

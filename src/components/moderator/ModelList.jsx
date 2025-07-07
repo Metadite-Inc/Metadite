@@ -1,17 +1,41 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Search, MessageSquare } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { User } from 'lucide-react';
 
-const ModelList = ({ models, searchTerm, setSearchTerm, selectedModel, onSelectModel, loading }) => {
+const ModelList = ({ 
+  models, 
+  searchTerm, 
+  setSearchTerm, 
+  selectedModel, 
+  onSelectModel, 
+  loading,
+  lastMessageUpdates,
+  animatingRooms
+}) => {
   const { theme } = useTheme();
 
-  // Filter models based on search term
-  const filteredModels = models.filter(model =>
-    model.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredModels = useMemo(() => {
+    return models.filter(model =>
+      model.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [models, searchTerm]);
 
-  // Format last message time
+  const enhancedModels = useMemo(() => {
+    return filteredModels.map(model => {
+      const lastUpdate = lastMessageUpdates?.get(model.id);
+      const isAnimating = animatingRooms?.has(model.id);
+      
+      return {
+        ...model,
+        lastMessage: lastUpdate?.content || model.lastMessage,
+        lastMessageTime: lastUpdate?.timestamp || model.lastMessageTime,
+        unreadCount: lastUpdate?.unreadCount || model.unreadCount,
+        isAnimating
+      };
+    });
+  }, [filteredModels, lastMessageUpdates, animatingRooms]);
+
   const formatLastMessageTime = (dateString) => {
     if (!dateString) return '';
     try {
@@ -53,22 +77,22 @@ const ModelList = ({ models, searchTerm, setSearchTerm, selectedModel, onSelectM
         </div>
       </div>
       
-      <div className="h-[500px] overflow-y-auto">
+      <div className="h-[500px] overflow-y-auto chat-messages-container">
         {loading ? (
           <div className="flex justify-center items-center h-32">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-metadite-primary"></div>
           </div>
-        ) : filteredModels.length > 0 ? (
+        ) : enhancedModels.length > 0 ? (
           <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-            {filteredModels.map((model) => (
+            {enhancedModels.map((model) => (
               <li 
                 key={model.id}
                 onClick={() => onSelectModel(model)}
-                className={`cursor-pointer transition-colors ${
+                className={`cursor-pointer model-list-item transition-all duration-300 ${
                   selectedModel?.id === model.id
                     ? `bg-gradient-to-r from-metadite-primary/20 to-metadite-secondary/20 ${theme === 'dark' ? 'text-white' : ''}`
                     : `hover:bg-gray-100 ${theme === 'dark' ? 'hover:bg-gray-700 text-gray-200' : ''}`
-                }`}
+                } ${model.isAnimating ? 'room-item-new-message' : ''}`}
               >
                 <div className="flex items-center p-2 sm:p-3">
                   <div className="relative mr-3 flex-shrink-0">
@@ -84,7 +108,9 @@ const ModelList = ({ models, searchTerm, setSearchTerm, selectedModel, onSelectM
                       />
                     </div>
                     {model.unreadCount > 0 && (
-                      <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center z-10 border-2 border-white">
+                      <div className={`absolute -top-1 -right-1 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center z-10 border-2 border-white ${
+                        model.isAnimating ? 'bg-red-500 unread-badge-animate' : 'bg-red-500'
+                      }`}>
                         {model.unreadCount > 9 ? '9+' : model.unreadCount}
                       </div>
                     )}
@@ -93,12 +119,20 @@ const ModelList = ({ models, searchTerm, setSearchTerm, selectedModel, onSelectM
                     <p className={`text-sm font-medium truncate ${selectedModel?.id === model.id ? 'text-metadite-primary' : ''}`}>
                       {model.name} • {model.receiverName?.split(' ')[0] || model.receiverName}
                     </p>
-                    <p className="text-xs truncate text-gray-500 dark:text-gray-400 mt-1">
+                    <p className={`text-xs truncate mt-1 transition-colors duration-200 ${
+                      model.isAnimating 
+                        ? 'text-metadite-primary font-medium' 
+                        : 'text-gray-500 dark:text-gray-400'
+                    }`}>
                       {model.lastMessage || 'No messages yet'}
                     </p>
                   </div>
                   {model.lastMessageTime && (
-                    <div className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap ml-2">
+                    <div className={`text-xs whitespace-nowrap ml-2 transition-colors duration-200 ${
+                      model.isAnimating 
+                        ? 'text-metadite-primary font-medium' 
+                        : 'text-gray-500 dark:text-gray-400'
+                    }`}>
                       {formatLastMessageTime(model.lastMessageTime)}
                     </div>
                   )}
@@ -119,4 +153,4 @@ const ModelList = ({ models, searchTerm, setSearchTerm, selectedModel, onSelectM
   );
 };
 
-export default ModelList;
+export default React.memo(ModelList);

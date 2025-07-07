@@ -1,161 +1,53 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import Navbar from '../components/Navbar';
 import { useTheme } from '../context/ThemeContext';
-import { useAuth } from '../context/AuthContext';
-import { MessageSquare, Users, Clock, ArrowRight, Search, Send, X, ArrowLeft } from 'lucide-react';
-import { toast } from 'sonner';
-import { Textarea } from "@/components/ui/textarea";
+import { MessageSquare } from 'lucide-react';
 import { useIsMobile } from '../hooks/use-mobile';
-import MessageItem from '../components/MessageItem';
-import { apiService } from '../lib/api';
-import { 
-  getUserChatRooms,
-  getMessages,
-  sendMessage,
-  connectWebSocket,
-  deleteMessage,
-  sendTypingIndicator,
-  markMessagesAsRead,
-  addConnectionListener,
-  cleanup
-} from '../services/ChatService';
+import useChatPage from '../hooks/useChatPage';
+import ChatRoomList from '../components/chat/ChatRoomList';
+import ChatInterface from '../components/chat/ChatInterface';
 
 const ChatPage = () => {
   const { theme } = useTheme();
-  const { user, loading } = useAuth();
   const isMobile = useIsMobile();
   const [showChatList, setShowChatList] = useState(true); // For mobile navigation
   
-  const [chatRooms, setChatRooms] = useState([]);
-  const [loadingRooms, setLoadingRooms] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedRoom, setSelectedRoom] = useState(null);
-  const [messages, setMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState('');
-  const [isUploading, setIsUploading] = useState(false);
-  const [typingUsers, setTypingUsers] = useState(new Set());
-  const [connectionStatus, setConnectionStatus] = useState('disconnected');
-  const [hasMoreMessages, setHasMoreMessages] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  
-  const messageEndRef = useRef(null);
-  const wsRef = useRef(null);
-  const typingTimeoutRef = useRef(null);
+  const {
+    user,
+    loading,
+    chatRooms,
+    loadingRooms,
+    searchTerm,
+    setSearchTerm,
+    selectedRoom,
+    messages,
+    newMessage,
+    setNewMessage,
+    isUploading,
+    typingUsers,
+    connectionStatus,
+    hasMoreMessages,
+    isLoadingMore,
+    messageEndRef,
+    // NEW: Optimized state
+    chatRoomsMap,
+    animatingRooms,
+    lastMessageUpdates,
+    handleRoomSelect,
+    handleScroll,
+    loadMoreMessages,
+    handleTyping,
+    handleSendMessage,
+    handleDeleteMessage
+  } = useChatPage();
 
-  useEffect(() => {
-    if (user && !loading) {
-      loadUserChatRooms();
-    } else if (!loading && !user) {
-      setLoadingRooms(false);
-    }
-  }, [user, loading]);
-
-  useEffect(() => {
-    if (!selectedRoom) return;
-    
-    console.log(`Setting up connection listener for room ${selectedRoom.id}`);
-    const unsubscribe = addConnectionListener(selectedRoom.id, (state) => {
-      console.log(`Connection state changed for room ${selectedRoom.id}:`, state.status);
-      setConnectionStatus(state.status);
-      
-      if (state.status === 'connected') {
-        setChatRooms(prev => 
-          prev.map(r => r.id === selectedRoom.id ? { ...r, unreadCount: 0 } : r)
-        );
-        // Mark messages as read when connection is established
-        markMessagesAsRead(selectedRoom.id);
-      }
-    });
-    
-    return unsubscribe;
-  }, [selectedRoom?.id]);
-
-  const loadUserChatRooms = async () => {
-    try {
-      setLoadingRooms(true);
-      console.log('Loading chat rooms for user:', user?.id);
-      
-      const rooms = await getUserChatRooms();
-
-      if (rooms && Array.isArray(rooms)) {
-        // Fetch model details for all rooms in parallel
-        const modelDetails = await Promise.all(
-          rooms.map(room => apiService.getModelDetails(room.doll_id))
-        );
-
-        const userRooms = rooms.map((room, index) => {
-          const model = modelDetails[index];
-          return {
-            id: room.id,
-            modelId: room.doll_id,
-            modelName: model?.name || "Unknown",
-            modelImage: model?.image || null,
-            lastMessage: room.latest_message || 'Check for messages',
-            lastMessageTime: room.last_message?.created_at,
-            unreadCount: room.unread_count || 0,
-            createdAt: room.created_at,
-            moderatorId: room.moderator_id
-          };
-        });
-
-        setChatRooms(userRooms);
-        console.log('Loaded chat rooms:', userRooms);
-      } else {
-        console.log('No chat rooms found or invalid response');
-        setChatRooms([]);
-      }
-    } catch (error) {
-      console.error('Error loading chat rooms:', error);
-      toast.error('Failed to load chat rooms');
-      setChatRooms([]);
-    } finally {
-      setLoadingRooms(false);
-    }
-  };
-
-  // Handle room selection - updated for mobile navigation
-  const handleRoomSelect = async (room) => {
-    if (selectedRoom) {
-      console.log(`Cleaning up previous room ${selectedRoom.id}`);
-      cleanup(selectedRoom.id);
-    }
-
-    setSelectedRoom(room);
-    setMessages([]);
-    setNewMessage('');
-    setTypingUsers(new Set());
+  // Handle room selection with mobile navigation
+  const handleRoomSelectWithMobile = (room) => {
+    handleRoomSelect(room);
     
     // On mobile, switch to chat view
     if (isMobile) {
       setShowChatList(false);
-    }
-    
-    try {
-      console.log(`Loading messages for chat room ${room.id}`);
-      const chatMessages = await getMessages(room.id);
-      if (chatMessages && chatMessages.length) {
-        console.log(`Loaded ${chatMessages.length} messages`);
-        setMessages(chatMessages);
-        setHasMoreMessages(chatMessages.length === 50);
-      } else {
-        console.log('No existing messages found');
-        setMessages([]);
-      }
-
-      // Mark messages as read after loading them
-      markMessagesAsRead(room.id);
-
-      setConnectionStatus('connecting');
-      console.log(`Connecting to WebSocket for chat room ${room.id}`);
-      const ws = await connectWebSocket(room.id, handleWebSocketMessage);
-      
-      if (ws) {
-        wsRef.current = ws;
-        console.log(`WebSocket connection established for room ${room.id}`);
-      }
-    } catch (error) {
-      console.error('Error loading room:', error);
-      toast.error('Failed to load chat room');
     }
   };
 
@@ -163,192 +55,8 @@ const ChatPage = () => {
   const handleBackToChatList = () => {
     if (isMobile) {
       setShowChatList(true);
-      setSelectedRoom(null);
-      if (selectedRoom) {
-        cleanup(selectedRoom.id);
-      }
     }
   };
-
-  const handleWebSocketMessage = (data) => {
-    console.log("WebSocket message received:", data);
-    
-    if (data.type === 'new_message' && data.message) {
-      setMessages(prev => {
-        const exists = prev.some(msg => 
-          msg.id === data.message.id ||
-          (msg.content === data.message.content && 
-           Math.abs(new Date(msg.created_at) - new Date(data.message.created_at)) < 1000)
-        );
-        if (exists) {
-          console.log('Duplicate message detected, skipping');
-          return prev;
-        }
-        console.log('Adding new message:', data.message);
-        return [...prev, data.message];
-      });
-      
-      setChatRooms(prev => 
-        prev.map(room => 
-          room.id === data.message.chat_room_id 
-            ? { 
-                ...room, 
-                lastMessage: data.message.content, 
-                lastMessageTime: data.message.created_at 
-              } 
-            : room
-        )
-      );
-    } else if (data.type === 'typing' && data.user_id) {
-      setTypingUsers(prev => {
-        const newSet = new Set(prev);
-        if (data.is_typing) {
-          newSet.add(data.user_id);
-        } else {
-          newSet.delete(data.user_id);
-        }
-        return newSet;
-      });
-    } else if (data.type === 'message_deleted' && data.message_id) {
-      setMessages(prev => prev.filter(msg => msg.id !== data.message_id));
-    }
-  };
-
-  useEffect(() => {
-    messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
-  // Add scroll handler to mark messages as read when user scrolls to bottom
-  const handleScroll = (e) => {
-    const { scrollTop, scrollHeight, clientHeight } = e.target;
-    // If user is within 50px of the bottom, mark messages as read
-    if (scrollHeight - scrollTop - clientHeight < 50) {
-      if (selectedRoom) {
-        markMessagesAsRead(selectedRoom.id);
-      }
-    }
-  };
-
-  const loadMoreMessages = async () => {
-    if (!selectedRoom || isLoadingMore || !hasMoreMessages) return;
-    
-    setIsLoadingMore(true);
-    try {
-      console.log(`Loading more messages from offset ${messages.length}`);
-      const olderMessages = await getMessages(selectedRoom.id, messages.length);
-      
-      if (olderMessages.length > 0) {
-        console.log(`Loaded ${olderMessages.length} older messages`);
-        setMessages(prev => [...olderMessages, ...prev]);
-        setHasMoreMessages(olderMessages.length === 50);
-        
-        // Mark messages as read after loading more messages
-        markMessagesAsRead(selectedRoom.id);
-      } else {
-        console.log('No more messages to load');
-        setHasMoreMessages(false);
-      }
-    } catch (error) {
-      console.error('Error loading more messages:', error);
-      toast.error('Failed to load more messages');
-    } finally {
-      setIsLoadingMore(false);
-    }
-  };
-
-
-  
-  const handleTyping = () => {
-    if (selectedRoom) {
-      sendTypingIndicator(selectedRoom.id, true);
-      
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current);
-      }
-      
-      typingTimeoutRef.current = setTimeout(() => {
-        sendTypingIndicator(selectedRoom.id, false);
-      }, 3000);
-    }
-  };
-  
-  const handleSendMessage = async (e) => {
-    e.preventDefault();
-    
-    if (!newMessage.trim() || !selectedRoom) return;
-    
-    if (!user) {
-      toast.error("Please login to send messages");
-      return;
-    }
-    
-    try {
-      setIsUploading(true);
-      
-      const moderatorId = selectedRoom.moderatorId || null;
-      
-      if (newMessage.trim()) {
-        try {
-          await sendMessage(newMessage.trim(), selectedRoom.id, moderatorId);
-          
-          const textMessage = {
-            id: Date.now() + 1,
-            chat_room_id: selectedRoom.id,
-            sender_id: user.id,
-            sender_uuid: user.uuid,
-            sender_name: user.name || 'You',
-            content: newMessage,
-            created_at: new Date().toISOString(),
-            flagged: false,
-            message_type: 'TEXT'
-          };
-          
-          setMessages(prev => [...prev, textMessage]);
-          setNewMessage('');
-          
-          sendTypingIndicator(selectedRoom.id, false);
-        } catch (error) {
-          console.error("Failed to send message:", error);
-          toast.error("Failed to send message");
-        }
-      }
-    } catch (error) {
-      console.error("Error sending message:", error);
-      toast.error("Failed to send message");
-    } finally {
-      setIsUploading(false);
-    }
-  };
-  
-  const handleDeleteMessage = async (messageId) => {
-    try {
-      await deleteMessage(messageId);
-      setMessages(prev => prev.filter(msg => msg.id !== messageId));
-      toast.success("Message deleted");
-    } catch (error) {
-      console.error("Error deleting message:", error);
-      toast.error("Failed to delete message");
-    }
-  };
-
-  const formatTime = (timestamp) => {
-    if (!timestamp) return '';
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffInHours = (now - date) / (1000 * 60 * 60);
-    
-    if (diffInHours < 24) {
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    } else if (diffInHours < 168) {
-      return date.toLocaleDateString([], { weekday: 'short' });
-    }
-    return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
-  };
-
-  const filteredChatRooms = chatRooms.filter(room =>
-    room.modelName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    room.lastMessage.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   if (loading) {
     return (
@@ -412,270 +120,38 @@ const ChatPage = () => {
               <>
                 {showChatList ? (
                   /* Chat Rooms List - Mobile */
-                  <div className="w-full flex flex-col">
-                    <div className="p-2 sm:p-4 border-b border-gray-200 dark:border-gray-700">
-                      <div className="flex items-center justify-between mb-4">
-                        <h1 className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                          Chats
-                        </h1>
-                        <div className="flex items-center space-x-2">
-                          <Users className="h-4 w-4 text-metadite-primary" />
-                          <span className="bg-metadite-primary/20 text-metadite-primary px-2 py-1 rounded-full text-xs font-medium">
-                            {chatRooms.length}
-                          </span>
-                        </div>
-                      </div>
-                      
-                      <div className="relative">
-                        <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 ${
-                          theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
-                        }`} />
-                        <input
-                          type="text"
-                          placeholder="Search conversations..."
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          className={`w-full pl-6 pr-2 sm:pl-9 sm:pr-4 py-2 rounded-lg border ${
-                            theme === 'dark' 
-                              ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                              : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                          } focus:outline-none focus:ring-2 focus:ring-metadite-primary`}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex-1 overflow-y-auto">
-                      {loadingRooms ? (
-                        <div className="p-4 sm:p-8 text-center">
-                          <div className="inline-block h-6 w-6 rounded-full border-4 border-metadite-primary border-r-transparent animate-spin"></div>
-                          <p className={`mt-4 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
-                            Loading conversations...
-                          </p>
-                        </div>
-                      ) : filteredChatRooms.length > 0 ? (
-                        <div className="divide-y divide-gray-200 dark:divide-gray-700">
-                          {filteredChatRooms.map((room) => (
-                            <div
-                              key={room.id}
-                              onClick={() => handleRoomSelect(room)}
-                              className={`p-2 sm:p-4 cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/50 ${
-                                room.unreadCount > 0 ? 'bg-blue-50 dark:bg-blue-900/20' : ''
-                              }`}
-                            >
-                              <div className="flex items-center space-x-3">
-                                <div className="relative">
-                                  <img
-                                    src={room.modelImage}
-                                    alt={room.modelName}
-                                    className="w-12 h-12 rounded-full object-cover"
-                                    onError={(e) => {
-                                      e.target.onerror = null;
-                                      e.target.src = 'https://placehold.co/200?text=Model';
-                                    }}
-                                  />
-                                  {room.unreadCount > 0 && (
-                                    <div className="absolute -top-1 -right-1 bg-metadite-primary text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                                      {room.unreadCount > 9 ? '9+' : room.unreadCount}
-                                    </div>
-                                  )}
-                                </div>
-                                
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center justify-between">
-                                    <h3 className={`font-medium truncate ${
-                                      theme === 'dark' ? 'text-white' : 'text-gray-900'
-                                    }`}>
-                                      {room.modelName}
-                                    </h3>
-                                    <span className={`text-xs ${
-                                      theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
-                                    }`}>
-                                      {formatTime(room.lastMessageTime)}
-                                    </span>
-                                  </div>
-                                  <p className={`text-sm truncate mt-1 ${
-                                    theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
-                                  }`}>
-                                    {room.lastMessage}
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="p-4 sm:p-8 text-center">
-                          <MessageSquare className="h-12 w-12 mx-auto mb-4 text-metadite-primary opacity-50" />
-                          <h3 className="text-lg font-medium mb-2">No conversations yet</h3>
-                          <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
-                            Start chatting with models to see your conversations here
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                  <ChatRoomList 
+                    chatRooms={chatRooms}
+                    searchTerm={searchTerm}
+                    setSearchTerm={setSearchTerm}
+                    selectedRoom={selectedRoom}
+                    onSelectRoom={handleRoomSelectWithMobile}
+                    loadingRooms={loadingRooms}
+                    // NEW: Optimized props
+                    lastMessageUpdates={lastMessageUpdates}
+                    animatingRooms={animatingRooms}
+                  />
                 ) : (
                   /* Chat Interface - Mobile */
-                  <div className="flex-1 flex flex-col">
-                    {selectedRoom && (
-                      <>
-                        <div className={`p-2 sm:p-4 border-b flex items-center justify-between ${
-                          theme === 'dark' ? 'border-gray-700' : 'border-gray-100'
-                        }`}>
-                          <div className="flex items-center">
-                            <button
-                              onClick={handleBackToChatList}
-                              className={`mr-3 p-1 rounded-full ${
-                                theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
-                              }`}
-                            >
-                              <ArrowLeft className="h-5 w-5" />
-                            </button>
-                            <div className="w-10 h-10 rounded-full overflow-hidden mr-3">
-                              <img
-                                src={selectedRoom.modelImage}
-                                alt={selectedRoom.modelName}
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  e.target.onerror = null;
-                                  e.target.src = 'https://placehold.co/200?text=Model';
-                                }}
-                              />
-                            </div>
-                            <div>
-                              <h2 className={`font-medium ${theme === 'dark' ? 'text-white' : ''}`}>
-                                {selectedRoom.modelName}
-                              </h2>
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-center">
-                            <div className={`relative w-3 h-3 rounded-full mr-2 ${
-                              connectionStatus === 'connected' ? 'bg-green-500' :
-                              connectionStatus === 'connecting' ? 'bg-yellow-500' :
-                              'bg-red-500'
-                            }`}>
-                              {connectionStatus === 'connecting' && (
-                                <span className="absolute inset-0 rounded-full bg-yellow-500 animate-ping opacity-75"></span>
-                              )}
-                            </div>
-                            <span className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                              {connectionStatus === 'connected' ? 'Online' : 
-                               connectionStatus === 'connecting' ? 'Connecting...' :
-                               connectionStatus === 'error' ? 'Error' : 'Offline'}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Messages - Mobile */}
-                        <div className="flex-1 overflow-y-auto p-2 sm:p-4 space-y-3" onScroll={handleScroll}>
-                          {hasMoreMessages && (
-                            <div className="text-center my-2">
-                              <button
-                                onClick={loadMoreMessages}
-                                disabled={isLoadingMore}
-                                className={`px-4 py-1 text-xs rounded-full ${
-                                  theme === 'dark' 
-                                    ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' 
-                                    : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
-                                }`}
-                              >
-                                {isLoadingMore ? (
-                                  <>
-                                    <span className="inline-block h-3 w-3 rounded-full border-2 border-current border-r-transparent animate-spin mr-1"></span>
-                                    Loading...
-                                  </>
-                                ) : (
-                                  'Load older messages'
-                                )}
-                              </button>
-                            </div>
-                          )}
-                          
-                          {messages.length > 0 ? (
-                            <div className="space-y-3">
-                              {messages.map((message) => (
-                                <MessageItem
-                                  key={message.id}
-                                  message={message}
-                                  onDelete={message.sender_uuid === user?.uuid || message.sender_id === user?.uuid ? () => handleDeleteMessage(message.id) : null}
-                                />
-                              ))}
-                            </div>
-                          ) : (
-                            <div className="flex items-center justify-center h-full text-gray-500">
-                              No messages yet. Start the conversation!
-                            </div>
-                          )}
-                          
-                          {typingUsers && typingUsers.size > 0 && (
-                            <div className={`px-4 py-2 rounded-lg w-auto inline-block ${
-                              theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-700'
-                            }`}>
-                              <div className="flex items-center space-x-2">
-                                <div className="flex space-x-1">
-                                  <span className="w-2 h-2 rounded-full bg-current animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                                  <span className="w-2 h-2 rounded-full bg-current animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                                  <span className="w-2 h-2 rounded-full bg-current animate-bounce" style={{ animationDelay: '300ms' }}></span>
-                                </div>
-                                <span className="text-xs">Someone is typing...</span>
-                              </div>
-                            </div>
-                          )}
-                          
-                          <div ref={messageEndRef} />
-                        </div>
-
-                        {/* File preview area - Mobile */}
-                        
-
-                        {/* Message Input - Mobile */}
-                        <div className={`p-2 sm:p-4 border-t ${theme === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
-                          <form onSubmit={handleSendMessage} className="flex space-x-2">
-                            <div className="relative flex-1">
-                              <Textarea
-                                placeholder={connectionStatus === 'connected' 
-                                  ? `Send a message about ${selectedRoom.modelName}...` 
-                                  : '...'}
-                                value={newMessage}
-                                onChange={(e) => {
-                                  setNewMessage(e.target.value);
-                                  handleTyping();
-                                }}
-                                disabled={connectionStatus !== 'connected'}
-                                className={`min-h-[48px] max-h-[120px] resize-none ${
-                                  theme === 'dark' 
-                                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                                    : 'border-gray-300 text-gray-900'
-                                } ${connectionStatus !== 'connected' ? 'opacity-70' : ''}`}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter' && !e.shiftKey) {
-                                    e.preventDefault();
-                                    const syntheticEvent = { preventDefault: () => {} };
-                                    handleSendMessage(syntheticEvent);
-                                  }
-                                }}
-                              />
-                            </div>
-                            
-
-                            
-                                                      <button 
-                            type="submit"
-                            disabled={!newMessage.trim() || isUploading || connectionStatus !== 'connected'}
-                            className="flex-shrink-0 bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white p-3 rounded-md hover:opacity-90 transition-opacity disabled:opacity-50"
-                          >
-                              {isUploading ? (
-                                <span className="inline-block h-5 w-5 rounded-full border-2 border-white border-r-transparent animate-spin"></span>
-                              ) : (
-                                <Send className="h-5 w-5" />
-                              )}
-                            </button>
-                          </form>
-                        </div>
-                      </>
-                    )}
-                  </div>
+                  <ChatInterface
+                    selectedRoom={selectedRoom}
+                    messages={messages}
+                    newMessage={newMessage}
+                    setNewMessage={setNewMessage}
+                    handleSendMessage={handleSendMessage}
+                    handleTyping={handleTyping}
+                    handleDeleteMessage={handleDeleteMessage}
+                    handleScroll={handleScroll}
+                    loadMoreMessages={loadMoreMessages}
+                    hasMoreMessages={hasMoreMessages}
+                    isLoadingMore={isLoadingMore}
+                    typingUsers={typingUsers}
+                    connectionStatus={connectionStatus}
+                    isUploading={isUploading}
+                    messageEndRef={messageEndRef}
+                    onBackToChatList={handleBackToChatList}
+                    isMobile={true}
+                  />
                 )}
               </>
             ) : (
@@ -685,274 +161,38 @@ const ChatPage = () => {
                 <div className={`w-1/3 border-r flex flex-col ${
                   theme === 'dark' ? 'border-gray-700' : 'border-gray-200'
                 }`}>
-                  <div className="p-2 sm:p-4 border-b border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center justify-between mb-4">
-                      <h1 className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                        Chats
-                      </h1>
-                      <div className="flex items-center space-x-2">
-                        <Users className="h-4 w-4 text-metadite-primary" />
-                        <span className="bg-metadite-primary/20 text-metadite-primary px-2 py-1 rounded-full text-xs font-medium">
-                          {chatRooms.length}
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <div className="relative">
-                      <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 ${
-                        theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
-                      }`} />
-                      <input
-                        type="text"
-                        placeholder="Search conversations..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className={`w-full pl-6 pr-2 sm:pl-9 sm:pr-4 py-2 rounded-lg border ${
-                          theme === 'dark' 
-                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                        } focus:outline-none focus:ring-2 focus:ring-metadite-primary`}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex-1 overflow-y-auto">
-                    {loadingRooms ? (
-                      <div className="p-4 sm:p-8 text-center">
-                        <div className="inline-block h-6 w-6 rounded-full border-4 border-metadite-primary border-r-transparent animate-spin"></div>
-                        <p className={`mt-4 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
-                          Loading conversations...
-                        </p>
-                      </div>
-                    ) : filteredChatRooms.length > 0 ? (
-                      <div className="divide-y divide-gray-200 dark:divide-gray-700">
-                        {filteredChatRooms.map((room) => (
-                          <div
-                            key={room.id}
-                            onClick={() => handleRoomSelect(room)}
-                            className={`p-2 sm:p-4 cursor-pointer transition-colors ${
-                              selectedRoom?.id === room.id
-                                ? 'bg-metadite-primary/10 border-r-2 border-metadite-primary'
-                                : `hover:bg-gray-50 dark:hover:bg-gray-700/50 ${
-                                    room.unreadCount > 0 ? 'bg-blue-50 dark:bg-blue-900/20' : ''
-                                  }`
-                            }`}
-                          >
-                            <div className="flex items-center space-x-3">
-                              <div className="relative">
-                                <img
-                                  src={room.modelImage}
-                                  alt={room.modelName}
-                                  className="w-12 h-12 rounded-full object-cover"
-                                  onError={(e) => {
-                                    e.target.onerror = null;
-                                    e.target.src = 'https://placehold.co/200?text=Model';
-                                  }}
-                                />
-                                {room.unreadCount > 0 && (
-                                  <div className="absolute -top-1 -right-1 bg-metadite-primary text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                                    {room.unreadCount > 9 ? '9+' : room.unreadCount}
-                                  </div>
-                                )}
-                              </div>
-                              
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between">
-                                  <h3 className={`font-medium truncate ${
-                                    theme === 'dark' ? 'text-white' : 'text-gray-900'
-                                  }`}>
-                                    {room.modelName}
-                                  </h3>
-                                  <span className={`text-xs ${
-                                    theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
-                                  }`}>
-                                    {formatTime(room.lastMessageTime)}
-                                  </span>
-                                </div>
-                                <p className={`text-sm truncate mt-1 ${
-                                  theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
-                                }`}>
-                                  {room.lastMessage}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="p-4 sm:p-8 text-center">
-                        <MessageSquare className="h-12 w-12 mx-auto mb-4 text-metadite-primary opacity-50" />
-                        <h3 className="text-lg font-medium mb-2">No conversations yet</h3>
-                        <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
-                          Start chatting with models to see your conversations here
-                        </p>
-                      </div>
-                    )}
-                  </div>
+                  <ChatRoomList 
+                    chatRooms={chatRooms}
+                    searchTerm={searchTerm}
+                    setSearchTerm={setSearchTerm}
+                    selectedRoom={selectedRoom}
+                    onSelectRoom={handleRoomSelect}
+                    loadingRooms={loadingRooms}
+                    // NEW: Optimized props
+                    lastMessageUpdates={lastMessageUpdates}
+                    animatingRooms={animatingRooms}
+                  />
                 </div>
 
                 {/* Right Side - Chat Interface (Desktop) */}
-                <div className="flex-1 flex flex-col">
-                  {selectedRoom ? (
-                    <>
-                      <div className={`p-2 sm:p-4 border-b flex items-center justify-between ${
-                        theme === 'dark' ? 'border-gray-700' : 'border-gray-100'
-                      }`}>
-                        <div className="flex items-center">
-                          <div className="w-10 h-10 rounded-full overflow-hidden mr-3">
-                            <img
-                              src={selectedRoom.modelImage}
-                              alt={selectedRoom.modelName}
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                e.target.onerror = null;
-                                e.target.src = 'https://placehold.co/200?text=Model';
-                              }}
-                            />
-                          </div>
-                          <div>
-                            <h2 className={`font-medium ${theme === 'dark' ? 'text-white' : ''}`}>
-                              {selectedRoom.modelName}
-                            </h2>
-                          </div>
-                        </div>
-                        
-                        <div className="flex items-center">
-                          <div className={`relative w-3 h-3 rounded-full mr-2 ${
-                            connectionStatus === 'connected' ? 'bg-green-500' :
-                            connectionStatus === 'connecting' ? 'bg-yellow-500' :
-                            'bg-red-500'
-                          }`}>
-                            {connectionStatus === 'connecting' && (
-                              <span className="absolute inset-0 rounded-full bg-yellow-500 animate-ping opacity-75"></span>
-                            )}
-                          </div>
-                          <span className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                            {connectionStatus === 'connected' ? 'Online' : 
-                             connectionStatus === 'connecting' ? 'Connecting...' :
-                             connectionStatus === 'error' ? 'Error' : 'Offline'}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="flex-1 overflow-y-auto p-2 sm:p-4 space-y-3" onScroll={handleScroll}>
-                        {hasMoreMessages && (
-                          <div className="text-center my-2">
-                            <button
-                              onClick={loadMoreMessages}
-                              disabled={isLoadingMore}
-                              className={`px-4 py-1 text-xs rounded-full ${
-                                theme === 'dark' 
-                                  ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' 
-                                  : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
-                              }`}
-                            >
-                              {isLoadingMore ? (
-                                <>
-                                  <span className="inline-block h-3 w-3 rounded-full border-2 border-current border-r-transparent animate-spin mr-1"></span>
-                                  Loading...
-                                </>
-                              ) : (
-                                'Load older messages'
-                              )}
-                            </button>
-                          </div>
-                        )}
-                        
-                        {messages.length > 0 ? (
-                          <div className="space-y-3">
-                            {messages.map((message) => (
-                              <MessageItem
-                                key={message.id}
-                                message={message}
-                                onDelete={message.sender_uuid === user?.uuid || message.sender_id === user?.uuid ? () => handleDeleteMessage(message.id) : null}
-                              />
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="flex items-center justify-center h-full text-gray-500">
-                            No messages yet. Start the conversation!
-                          </div>
-                        )}
-                        
-                        {typingUsers && typingUsers.size > 0 && (
-                          <div className={`px-4 py-2 rounded-lg w-auto inline-block ${
-                            theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-700'
-                          }`}>
-                            <div className="flex items-center space-x-2">
-                              <div className="flex space-x-1">
-                                <span className="w-2 h-2 rounded-full bg-current animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                                <span className="w-2 h-2 rounded-full bg-current animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                                <span className="w-2 h-2 rounded-full bg-current animate-bounce" style={{ animationDelay: '300ms' }}></span>
-                              </div>
-                              <span className="text-xs">Someone is typing...</span>
-                            </div>
-                          </div>
-                        )}
-                        
-                        <div ref={messageEndRef} />
-                      </div>
-
-                      
-
-                      <div className={`p-2 sm:p-4 border-t ${theme === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
-                        <form onSubmit={handleSendMessage} className="flex space-x-2">
-                          <div className="relative flex-1">
-                            <Textarea
-                              placeholder={connectionStatus === 'connected' 
-                                ? `Send a message about ${selectedRoom.modelName}...` 
-                                : '...'}
-                              value={newMessage}
-                              onChange={(e) => {
-                                setNewMessage(e.target.value);
-                                handleTyping();
-                              }}
-                              disabled={connectionStatus !== 'connected'}
-                              className={`min-h-[48px] max-h-[120px] resize-none ${
-                                theme === 'dark' 
-                                  ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                                  : 'border-gray-300 text-gray-900'
-                              } ${connectionStatus !== 'connected' ? 'opacity-70' : ''}`}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter' && !e.shiftKey) {
-                                  e.preventDefault();
-                                  const syntheticEvent = { preventDefault: () => {} };
-                                  handleSendMessage(syntheticEvent);
-                                }
-                              }}
-                            />
-                          </div>
-                          
-
-                          
-                                                      <button 
-                              type="submit"
-                              disabled={!newMessage.trim() || isUploading || connectionStatus !== 'connected'}
-                              className="flex-shrink-0 bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white p-3 rounded-md hover:opacity-90 transition-opacity disabled:opacity-50"
-                            >
-                            {isUploading ? (
-                              <span className="inline-block h-5 w-5 rounded-full border-2 border-white border-r-transparent animate-spin"></span>
-                            ) : (
-                              <Send className="h-5 w-5" />
-                            )}
-                          </button>
-                        </form>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="flex-1 flex items-center justify-center">
-                      <div className="text-center">
-                        <MessageSquare className={`h-16 w-16 mx-auto mb-4 ${theme === 'dark' ? 'text-gray-600' : 'text-gray-300'}`} />
-                        <h2 className={`text-2xl font-medium mb-2 ${theme === 'dark' ? 'text-white' : ''}`}>
-                          Select a conversation
-                        </h2>
-                        <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                          Choose a conversation from the sidebar to start chatting
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <ChatInterface
+                  selectedRoom={selectedRoom}
+                  messages={messages}
+                  newMessage={newMessage}
+                  setNewMessage={setNewMessage}
+                  handleSendMessage={handleSendMessage}
+                  handleTyping={handleTyping}
+                  handleDeleteMessage={handleDeleteMessage}
+                  handleScroll={handleScroll}
+                  loadMoreMessages={loadMoreMessages}
+                  hasMoreMessages={hasMoreMessages}
+                  isLoadingMore={isLoadingMore}
+                  typingUsers={typingUsers}
+                  connectionStatus={connectionStatus}
+                  isUploading={isUploading}
+                  messageEndRef={messageEndRef}
+                  isMobile={false}
+                />
               </>
             )}
           </div>
