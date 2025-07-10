@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import StaffNavbar from '../components/StaffNavbar';
@@ -8,6 +7,8 @@ import { authApi } from '../lib/api/auth_api';
 import { toast } from 'sonner';
 import { Settings } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { Routes, Route } from 'react-router-dom';
+import ImageUploader from '../components/admin/images/ImageUploader';
 
 // Import admin components
 import AdminSidebar from '../components/admin/AdminSidebar';
@@ -20,6 +21,7 @@ import PaymentsTab from '../components/admin/PaymentsTab';
 import FlaggedMessagesTab from '../components/admin/FlaggedMessagesTab';
 import VideosTab from '../components/admin/VideosTab'; // Import the new VideosTab component
 import SlideshowTab from '../components/admin/SlideshowTab';
+import ImagesTab from '../components/admin/images/ImagesTab';
 
 // Removed mock data - AdminSidebar now fetches real data
 
@@ -109,6 +111,8 @@ const Admin = () => {
               
               {/* Videos Management */}
               {activeTab === 'videos' && <VideosTab isLoaded={isLoaded} />}
+              {/* Images Management */}
+              {activeTab === 'images' && <ImagesTab isLoaded={isLoaded} />}
               
               {/* Admins Management */}
               {activeTab === 'admins' && <AdminsTab isLoaded={isLoaded} />}
@@ -134,6 +138,14 @@ const Admin = () => {
 
       <StaffFooter />
     </div>
+  );
+};
+
+const AdminRoutes = () => {
+  return (
+    <Routes>
+      <Route path="images" element={<ImageUploader />} />
+    </Routes>
   );
 };
 

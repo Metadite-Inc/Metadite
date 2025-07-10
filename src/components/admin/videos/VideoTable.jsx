@@ -11,6 +11,16 @@ import {
   TableCell 
 } from '@/components/ui/table';
 
+const backendUrl = import.meta.env.VITE_API_BASE_URL;
+
+const getFullImageUrl = (url) => {
+  if (!url) return '';
+  // If already absolute (starts with http), return as is
+  if (url.startsWith('http')) return url;
+  // Otherwise, prepend backendUrl
+  return `${backendUrl}${url}`;
+};
+
 const VideoTable = ({ 
   videos, 
   searchTerm, 
@@ -52,6 +62,13 @@ const VideoTable = ({
     );
   }
 
+  // Debug: Log the first video to see the structure
+  if (videos.length > 0) {
+    console.log('First video data:', videos[0]);
+    console.log('Video URL:', videos[0].url);
+    console.log('Full video URL:', getFullImageUrl(videos[0].url));
+  }
+
   // Filter videos by search term
   const filteredVideos = videos.filter(video => 
     video.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -71,7 +88,7 @@ const VideoTable = ({
       <Table>
         <TableHeader>
           <TableRow className={theme === 'dark' ? 'bg-gray-800' : 'bg-gray-50'}>
-            <TableHead>Thumbnail</TableHead>
+            <TableHead>Preview</TableHead>
             <TableHead>Title</TableHead>
             <TableHead>Doll Model</TableHead>
             <TableHead>Featured</TableHead>
@@ -85,11 +102,24 @@ const VideoTable = ({
               ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}
             >
               <TableCell>
-                <img 
-                  src={video.thumbnail_url || 'https://via.placeholder.com/150'} 
-                  alt={video.title} 
+                <video 
+                  src={getFullImageUrl(video.url)} 
                   className="w-16 h-9 object-cover rounded-md"
+                  muted
+                  autoPlay
+                  loop
+                  preload="metadata"
+                  onError={e => { 
+                    e.target.style.display = 'none';
+                    e.target.nextSibling.style.display = 'block';
+                  }}
                 />
+                <div 
+                  className="w-16 h-9 bg-gray-200 rounded-md flex items-center justify-center text-xs text-gray-500"
+                  style={{ display: 'none' }}
+                >
+                  No Preview
+                </div>
               </TableCell>
               <TableCell className="font-medium">{video.title}</TableCell>
               <TableCell>{getModelNameById(video.model_id)}</TableCell>

@@ -15,6 +15,7 @@ const ModeratorsTab = ({ isLoaded }) => {
   const [modelsLoading, setModelsLoading] = useState(true);
   const [selectedModels, setSelectedModels] = useState([]);
   const [passwordError, setPasswordError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [newModeratorData, setNewModeratorData] = useState({
     name: '',
     email: '',
@@ -22,14 +23,16 @@ const ModeratorsTab = ({ isLoaded }) => {
   });
   
   const [assignedDolls, setAssignedDolls] = useState({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
   
   // Fetch moderators and models on component mount
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch moderators - limit to first 5
+        // Fetch all moderators (no .slice(0, 5))
         const moderatorsData = await adminApiService.getModerators();
-        setModerators((moderatorsData || []).slice(0, 5));
+        setModerators(moderatorsData || []);
         setLoading(false);
         
         // Fetch models for assignment
@@ -37,11 +40,11 @@ const ModeratorsTab = ({ isLoaded }) => {
         setModels(modelsData || []);
         setModelsLoading(false);
 
-        // Fetch assigned dolls for each moderator (only for first 5)
+        // Fetch assigned dolls for each moderator (only for first 5 for performance)
         if (moderatorsData && moderatorsData.length > 0) {
           const dollsMap = {};
           await Promise.all(
-            moderatorsData.slice(0, 5).map(async (mod) => {
+            moderatorsData.map(async (mod) => {
               try {
                 const dolls = await moderatorApiService.getDollsAssignedToModerator(mod.id);
                 dollsMap[mod.id] = dolls || [];
@@ -86,12 +89,10 @@ const ModeratorsTab = ({ isLoaded }) => {
   
   const handleAddModerator = async (e) => {
     e.preventDefault();
-    
     // Validate password
     if (!validatePassword(newModeratorData.password)) {
       return;
     }
-    
     try {
       await adminApiService.createModerator({
         email: newModeratorData.email,
@@ -104,11 +105,11 @@ const ModeratorsTab = ({ isLoaded }) => {
         assigned_dolls: selectedModels,
         password: newModeratorData.password
       });
-      
       // Refresh moderators list after adding
       const updatedModerators = await adminApiService.getModerators();
-      setModerators((updatedModerators || []).slice(0, 5));
-      
+      setModerators(updatedModerators || []);
+      // Go to last page
+      setCurrentPage(Math.ceil((updatedModerators?.length || 1) / itemsPerPage));
       // Reset form
       setNewModeratorData({
         name: '',
@@ -137,6 +138,14 @@ const ModeratorsTab = ({ isLoaded }) => {
       }
     }
   };
+
+  // Calculate paginated moderators
+  const filteredModerators = moderators.filter(mod => 
+    mod.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    mod.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  const totalPages = Math.ceil(filteredModerators.length / itemsPerPage);
+  const paginatedModerators = filteredModerators.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <div className={`space-y-6 transition-opacity duration-300 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>
@@ -175,32 +184,41 @@ const ModeratorsTab = ({ isLoaded }) => {
                 />
               </div>
               <div>
-                <label className={`block text-sm font-medium mb-1 
+              <label className={`block text-sm font-medium mb-1 
                   ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
                   Password
                 </label>
-                <input
-                  type="password"
-                  value={newModeratorData.password}
-                  onChange={(e) => {
-                    setNewModeratorData({...newModeratorData, password: e.target.value});
-                    if (e.target.value.length > 0) {
-                      validatePassword(e.target.value);
-                    } else {
-                      setPasswordError('');
-                    }
-                  }}
-                  className={`block w-full px-3 py-2 border ${passwordError ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary`}
-                  required
-                />
-                {passwordError && (
-                  <p className="mt-1 text-sm text-red-500 flex items-center">
-                    <AlertTriangle className="h-4 w-4 mr-1" />
-                    {passwordError}
-                  </p>
-                )}
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={newModeratorData.password}
+                    onChange={(e) => {
+                      setNewModeratorData({...newModeratorData, password: e.target.value});
+                      if (e.target.value.length > 0) {
+                        validatePassword(e.target.value);
+                      } else {
+                        setPasswordError('');
+                      }
+                    }}
+                    className={`block w-full px-3 py-2 border ${passwordError ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary pr-10`}
+                    required
+                  />
+                  <button
+                    type="button"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute inset-y-0 right-0 flex items-center px-3 focus:outline-none"
+                    tabIndex={0}
+                  >
+                    {showPassword ? (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-5.523 0-10-4.477-10-10 0-1.657.336-3.236.938-4.675M15 12a3 3 0 11-6 0 3 3 0 016 0zm7.062-2.675A9.956 9.956 0 0122 9c0 5.523-4.477 10-10 10a9.956 9.956 0 01-4.675-.938" /></svg>
+                    ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0zm2.828-2.828a9.956 9.956 0 00-1.414-1.414m-9.9 9.9A9.956 9.956 0 012 9c0-5.523 4.477-10 10-10 1.657 0 3.236.336 4.675.938M21.707 20.293a1 1 0 01-1.414 0l-16-16a1 1 0 011.414-1.414l16 16a1 1 0 010 1.414z" /></svg>
+                    )}
+                  </button>
+                </div>
               </div>
-              <div>
+                <div>
                 <label className={`block text-sm font-medium mb-1 
                   ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
                   Assign Models
@@ -293,12 +311,7 @@ const ModeratorsTab = ({ isLoaded }) => {
                 </tr>
               </thead>
               <tbody>
-                {moderators
-                  .filter(mod => 
-                    mod.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    mod.email?.toLowerCase().includes(searchTerm.toLowerCase())
-                  )
-                  .map((mod) => (
+                {paginatedModerators.map((mod) => (
                   <tr key={mod.id} className={`border-t border-gray-100 transition-colors 
                     ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}
                     >
@@ -343,6 +356,27 @@ const ModeratorsTab = ({ isLoaded }) => {
               <Users className="h-4 w-4 mr-2" />
               View All Moderator Assignments
             </Link>
+          </div>
+        )}
+
+        {/* Pagination Controls */}
+        {!loading && totalPages > 1 && (
+          <div className="flex justify-center items-center gap-4 my-4">
+            <button
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50"
+            >
+              Previous
+            </button>
+            <span>Page {currentPage} of {totalPages}</span>
+            <button
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50"
+            >
+              Next
+            </button>
           </div>
         )}
       </div>

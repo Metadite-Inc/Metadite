@@ -91,12 +91,27 @@ class ApiService {
       const dolls = await this.request<any[]>(`/api/dolls?${queryParams}`);
       const backendUrl = import.meta.env.VITE_API_BASE_URL;
 
+      // Debug: Log the first doll to see the structure
+      if (dolls.length > 0) {
+        console.log('First doll data:', dolls[0]);
+        console.log('First doll images:', dolls[0].images);
+      }
+
       // Transform the API response to match our ModelBasic interface
       const transformedData = dolls.map(doll => {
         let mainImage = '';
-        if (Array.isArray(doll.images)) {
+        if (Array.isArray(doll.images) && doll.images.length > 0) {
+          // First try to find primary image
           const primary = doll.images.find((img: any) => img.is_primary);
-          mainImage = primary ? `${backendUrl}${primary.image_url}` : '';
+          if (primary && primary.image_url) {
+            mainImage = `${backendUrl}${primary.image_url}`;
+          } else {
+            // Fallback to first image if no primary found
+            const firstImage = doll.images[0];
+            if (firstImage && firstImage.image_url) {
+              mainImage = `${backendUrl}${firstImage.image_url}`;
+            }
+          }
         }
         return {
           id: doll.id,
@@ -137,9 +152,18 @@ class ApiService {
       // Transform the API response to match our ModelBasic interface
       const transformedData = dolls.map(doll => {
         let mainImage = '';
-        if (Array.isArray(doll.images)) {
+        if (Array.isArray(doll.images) && doll.images.length > 0) {
+          // First try to find primary image
           const primary = doll.images.find((img: any) => img.is_primary);
-          mainImage = primary ? `${backendUrl}${primary.image_url}` : '';
+          if (primary && primary.image_url) {
+            mainImage = `${backendUrl}${primary.image_url}`;
+          } else {
+            // Fallback to first image if no primary found
+            const firstImage = doll.images[0];
+            if (firstImage && firstImage.image_url) {
+              mainImage = `${backendUrl}${firstImage.image_url}`;
+            }
+          }
         }
         return {
           id: doll.id,
@@ -209,7 +233,7 @@ class ApiService {
   }
 
   // Upload an image for a model
-  async uploadModelImage(dollId: number, imageFile: File, caption: string = '', isPrimary: boolean = true): Promise<boolean> {
+  async uploadModelImage(dollId: number, imageFile: File, title: string, description: string): Promise<boolean> {
     try {
       // Get auth token from localStorage
       const token = localStorage.getItem('access_token');
@@ -223,15 +247,16 @@ class ApiService {
       const formData = new FormData();
       formData.append('file', imageFile);
       formData.append('doll_id', dollId.toString());
-      formData.append('caption', caption);
-      formData.append('is_primary', isPrimary.toString());
+      formData.append('title', title);
+      formData.append('description', description);
+      // Do not send caption or is_primary
 
       const response = await fetch(`${API_URL}/api/images/upload`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
         },
-        body: formData
+        body: formData,
       });
 
       if (!response.ok) {
@@ -264,8 +289,8 @@ class ApiService {
         formData.append('files', file);
       });
       
-      // These images are additional images, not primary ones
-      formData.append('is_primary', 'false');
+      // Remove is_primary field - backend doesn't expect it
+      // formData.append('is_primary', 'false');
 
       const response = await fetch(`${API_URL}/api/images/${dollId}/images/bulk`, {
         method: 'POST',

@@ -115,7 +115,7 @@ const ModelsTab = ({ isLoaded }) => {
 
     try {
       // First upload the primary image
-      const primarySuccess = await apiService.uploadModelImage(createdModelId, primaryImageFile, '', true);
+      const primarySuccess = await apiService.uploadModelImage(createdModelId, primaryImageFile, newModelData.name, newModelData.description);
       
       if (!primarySuccess) {
         throw new Error("Failed to upload primary image");
@@ -651,6 +651,9 @@ const ModelsTab = ({ isLoaded }) => {
                         src={model.image || 'https://via.placeholder.com/150'} 
                         alt={model.name} 
                         className="w-12 h-12 object-cover rounded-md"
+                        onError={(e) => {
+                          e.target.src = 'https://via.placeholder.com/150';
+                        }}
                       />
                     </td>
                     <td className="px-6 py-4 font-medium">{model.name}</td>

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Facebook, Twitter, Instagram, Mail, ShoppingCart, Heart, User, Home, MessageCircle } from 'lucide-react';
+import { Facebook, Twitter, Instagram, Mail, ShoppingCart, Heart, User, Home, MessageCircle, Baby } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import useUnreadCount from '../hooks/useUnreadCount';
@@ -85,8 +85,8 @@ const Footer = () => {
       {(!user || (user && user.role === 'user')) && (
         <div className="md:hidden fixed bottom-0 left-0 w-full bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex justify-around items-center py-2 z-50">
           <Link to="/models" className="flex flex-col items-center text-gray-700 dark:text-gray-300 hover:text-metadite-primary transition-colors">
-            <Home className="h-6 w-6" />
-            <span className="text-xs mt-1 text-[10px]">Doll</span>
+            <Baby className="h-6 w-6" />
+            <span className="text-xs mt-1 text-[10px]">Dolls</span>
           </Link>
           <Link to="/chat" className="flex flex-col items-center text-gray-700 dark:text-gray-300 hover:text-metadite-primary transition-colors">
             <div className="relative">

@@ -115,7 +115,7 @@ const ModelEdit = () => {
       
       // If there are new images to upload
       if (primaryImageFile) {
-        await apiService.uploadModelImage(parseInt(id), primaryImageFile, '', true);
+        await apiService.uploadModelImage(parseInt(id), primaryImageFile, formData.name, formData.description);
       }
       
       if (additionalImages.length > 0) {

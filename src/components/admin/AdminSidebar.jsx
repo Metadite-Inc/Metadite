@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Settings, Users, ShoppingBag, CreditCard, AlertTriangle,
-  PackagePlus, UserCog, FileVideo
+  PackagePlus, UserCog, FileVideo, Image
 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { adminApiService } from '../../lib/api/admin_api';
+import { NavLink } from 'react-router-dom';
 
 const AdminSidebar = ({ activeTab, setActiveTab }) => {
   const { theme } = useTheme();
@@ -85,6 +86,21 @@ const AdminSidebar = ({ activeTab, setActiveTab }) => {
             >
               <FileVideo className="h-5 w-5 mr-3" />
               <span>Videos</span>
+            </button>
+          </li>
+          <li>
+            <button 
+              onClick={() => setActiveTab('images')}
+              className={`flex items-center w-full px-4 py-3 rounded-lg transition-colors ${
+                activeTab === 'images' 
+                ? 'bg-metadite-primary/10 text-metadite-primary' 
+                : theme === 'dark' 
+                  ? 'text-gray-300 hover:bg-gray-700/50' 
+                  : 'text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              <Image className="h-5 w-5 mr-3" />
+              <span>Image Upload</span>
             </button>
           </li>
           <li>
