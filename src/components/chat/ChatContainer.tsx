@@ -107,7 +107,7 @@ const MessageInput = memo(({
             ref={textareaRef}
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
-            onKeyPress={handleKeyPress}
+            onKeyDown={handleKeyDown}
             placeholder={placeholder}
             disabled={disabled}
             className="min-h-[60px] max-h-32 resize-none"
