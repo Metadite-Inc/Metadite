@@ -230,7 +230,7 @@ export const useScrollOptimization = () => {
 // Optimized message rendering
 export const useMessageRendering = (messages: any[]) => {
   const { visibleItems, totalHeight, containerRef, handleScroll } = useVirtualScrolling(messages);
-  const { groupedMessages } = useMessageGrouping(messages);
+  const groupedMessages = useMessageGrouping(messages);
 
   const renderMessage = useCallback((message: any, index: number) => {
     // Memoize individual message rendering
