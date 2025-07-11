@@ -11,7 +11,8 @@ export enum MessageType {
 export enum MessageStatus {
   SENT = "SENT",
   DELIVERED = "DELIVERED",
-  READ = "READ"
+  READ = "READ",
+  SENDING = "SENDING"
 }
 
 export interface MessageCreate {
