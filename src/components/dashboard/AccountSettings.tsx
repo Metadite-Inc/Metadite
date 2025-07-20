@@ -159,8 +159,8 @@ const AccountSettings: React.FC = () => {
           </div>
           
           <Separator />
-          
-          <div className="flex justify-between items-center">
+{/*}
+         <div className="flex justify-between items-center">
             <div>
               <h3 className="text-lg font-medium">Membership Level</h3>
               <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -179,7 +179,7 @@ const AccountSettings: React.FC = () => {
                 <a href="/upgrade">Upgrade Plan</a>
               </Button>
             )}
-          </div>
+          </div>*/}
           
           <div className="flex justify-end">
             <Button onClick={handleSaveChanges} disabled={isLoading}>

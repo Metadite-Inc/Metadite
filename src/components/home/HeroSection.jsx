@@ -74,7 +74,7 @@ const HeroSection = ({ isLoaded, user, hasVipAccess, theme }) => {
               >
                 Browse Models
               </Link>
-              {!user && (
+             {/* {!user && (
                 <Link 
                   to="/login"
                   className="border-2 border-metadite-primary text-metadite-primary px-6 py-3 rounded-lg hover:bg-metadite-primary/5 transition-colors font-medium"
@@ -89,7 +89,7 @@ const HeroSection = ({ isLoaded, user, hasVipAccess, theme }) => {
                 >
                   Upgrade to VIP
                 </Link>
-              )}
+              )}*/}
             </div>
           </div>
           
