@@ -52,9 +52,9 @@ const ModelFilters = ({
                 onChange={(e) => setPriceFilter(e.target.value)}
               >
                 <option value="all">All Prices</option>
-                <option value="under200">Under $200</option>
-                <option value="200to550">$200 - $550</option>
-                <option value="over550">Over $550</option>
+                <option value="under1000">Under $1000</option>
+                <option value="1000to1500">$1000 - $1500</option>
+                <option value="over1500">Over $1500</option>
               </select>
             </div>
 
@@ -108,11 +108,11 @@ const ModelFilters = ({
             {priceFilter !== 'all' && (
               <span className="inline-flex items-center bg-metadite-primary/10 text-metadite-primary text-xs px-2 py-1 rounded-full">
                 Price:{' '}
-                {priceFilter === 'under200'
-                  ? 'Under $200'
-                  : priceFilter === '200to550'
-                  ? '$200 - $550'
-                  : 'Over $550'}
+                {priceFilter === 'under1000'
+                  ? 'Under $1000'
+                  : priceFilter === '1000to1500'
+                  ? '$1000- $1500'
+                  : 'Over $1500'}
                 <button
                   onClick={() => setPriceFilter('all')}
                   className="ml-1 hover:text-metadite-secondary"

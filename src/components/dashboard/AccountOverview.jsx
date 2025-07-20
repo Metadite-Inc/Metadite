@@ -50,13 +50,13 @@ const AccountOverview = ({ user, isLoaded }) => {
               </p>
             </div>
           </div>
-          <div className={`flex items-center p-3 ${theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-lg`}>
+          {/*<div className={`flex items-center p-3 ${theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-lg`}>
             <CreditCard className={`h-5 w-5 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'} mr-3`} />
             <div>
               <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Subscription</p>
               <p className={`font-medium ${theme === 'dark' ? 'text-white' : ''}`}>{user?.vip ? 'VIP Member' : 'Basic'}</p>
             </div>
-          </div>
+          </div>*/}
         </div>
       </div>
       

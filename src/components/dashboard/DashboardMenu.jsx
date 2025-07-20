@@ -85,7 +85,7 @@ const DashboardMenu = ({ activeTab, setActiveTab, logout, userVip, user }) => {
           </li>
         )}
         <li>
-          <button 
+          {/*<button 
             onClick={() => setActiveTab('notifications')}
             className={`flex items-center w-full px-4 py-3 rounded-lg transition-colors ${
               activeTab === 'notifications' 
@@ -97,7 +97,7 @@ const DashboardMenu = ({ activeTab, setActiveTab, logout, userVip, user }) => {
           >
             <Bell className="h-5 w-5 mr-3" />
             <span>Notifications</span>
-          </button>
+          </button>*/}
         </li>
         <li>
           <button 

@@ -147,7 +147,7 @@ const Dashboard = () => {
                 </div>
               </div>
               
-              <div className="flex space-x-3">
+              {/*<div className="flex space-x-3">
                 {hasVipAccess ? (
                   <span className="bg-white/20 px-3 py-1 rounded-full font-medium animate-pulse-soft">
                     {getMembershipDisplayName(user?.membership_level)} Member
@@ -157,7 +157,7 @@ const Dashboard = () => {
                     Upgrade to VIP
                   </Link>
                 ) : null}
-              </div>
+              </div>*/}
             </div>
           </div>
           

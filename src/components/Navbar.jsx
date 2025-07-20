@@ -40,8 +40,8 @@ const Navbar = () => {
     { to: '/', label: 'Home' },
     { to: '/models', label: 'Models' },
     // Show Pricing link for non-logged-in users
-    ...(!user ? [{ to: '/upgrade', label: 'Pricing' }] : []),
-    ...(user && user.membership_level !== 'free' ? [{ to: '/vip-content', label: 'VIP Content' }] : [])
+    //...(!user ? [{ to: '/upgrade', label: 'Pricing' }] : []),
+    //...(user && user.membership_level !== 'free' ? [{ to: '/vip-content', label: 'VIP Content' }] : [])
   ];
 
   return (

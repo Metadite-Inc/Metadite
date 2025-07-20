@@ -75,14 +75,14 @@ const UserMenu = () => {
           </Link>
         </DropdownMenuItem>
         
-        {isRegularUser && !hasVipAccess && (
+        {/*{isRegularUser && !hasVipAccess && (
           <DropdownMenuItem className={theme === 'dark' ? 'hover:bg-gray-700 focus:bg-gray-700' : ''}>
             <Link to="/upgrade" className="flex items-center w-full">
               <Crown className="mr-2 h-4 w-4" />
               Upgrade to VIP
             </Link>
           </DropdownMenuItem>
-        )}
+        )}*/}
         
         <DropdownMenuSeparator className={theme === 'dark' ? 'bg-gray-700' : ''} />
         

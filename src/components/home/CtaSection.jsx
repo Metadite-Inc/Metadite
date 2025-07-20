@@ -19,10 +19,10 @@ const CtaSection = ({ user, hasVipAccess }) => {
             </Link>
           ) : !hasVipAccess ? (
             <Link 
-              to="/upgrade"
+              to="/login"
               className="bg-white text-metadite-primary px-8 py-3 rounded-lg hover:bg-opacity-90 transition-opacity shadow-lg font-medium"
             >
-              Upgrade to VIP
+              Go
             </Link>
           ) : null}
           <Link 
