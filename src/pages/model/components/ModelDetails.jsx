@@ -100,14 +100,14 @@ const ModelDetails = ({
         <div className="flex items-center space-x-3">
           <button 
             onClick={() => setQuantity(Math.max(1, quantity - 1))}
-            className={`w-8 h-8 flex items-center justify-center rounded-full ${isDark ? 'border-gray-600 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-100'} border`}
+            className={`w-10 h-10 flex items-center justify-center rounded-full ${isDark ? 'border-gray-100 hover:bg-gray-700' : 'border-gray-900 hover:bg-gray-100'} border`}
           >
             -
           </button>
-          <span className="w-8 text-center">{quantity}</span>
+          <span className="w-10 text-center">{quantity}</span>
           <button 
             onClick={() => setQuantity(quantity + 1)}
-            className={`w-8 h-8 flex items-center justify-center rounded-full ${isDark ? 'border-gray-600 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-100'} border`}
+            className={`w-10 h-10 flex items-center justify-center rounded-full ${isDark ? 'border-gray-100 hover:bg-gray-700' : 'border-gray-900 hover:bg-gray-100'} border`}
           >
             +
           </button>
@@ -142,7 +142,7 @@ const ModelDetails = ({
         </a>
       </div>
 
-      <div className="mt-6">
+      {/*<div className="mt-6">
         <Button 
           variant="outline" 
           className={`w-full flex items-center justify-center ${isDark ? 'bg-gray-700 border-gray-600 hover:bg-gray-600' : ''}`}
@@ -153,7 +153,7 @@ const ModelDetails = ({
           </svg>
           {user?.membership_level === 'free' ? 'Upgrade to Chat' : 'Chat'}
         </Button>
-      </div>
+      </div>*/}
     </div>
   );
 };
