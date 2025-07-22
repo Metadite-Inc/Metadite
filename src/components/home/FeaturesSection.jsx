@@ -1,5 +1,5 @@
 
-import { Video, ScanEye, Users } from 'lucide-react';
+import { Video, ScanEye, Users, CloverIcon, HandHeart, GemIcon, ShipWheel } from 'lucide-react';
 import React, { useEffect, useRef } from 'react';
 
 const FeaturesSection = ({ theme }) => {
@@ -9,30 +9,30 @@ const FeaturesSection = ({ theme }) => {
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold mb-4">Why Choose Metadite?</h2>
           <p className="text-gray-600 max-w-2xl mx-auto">
-            We offer premium quality and exclusive content for model enthusiasts and collectors.
+            Because you’re not just buying a doll - you’re investing in pleasure, connection, and control on your own terms.
           </p>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <FeatureCard 
-            icon={<ScanEye className="h-8 w-8 text-white" />} 
-            title="Premium Visual Experience" 
-            description="Every model is captured in stunning, high-definition detail to deliver a captivating and sensual viewing experience."
+            icon={<HandHeart className="h-8 w-8 text-white" />} 
+            title="Yours, Always" 
+            description="No monthly fees. No limitations. Once she’s yours, she’s fully yours - to hold, explore, and enjoy anytime. Real intimacy, without the games."
             flipOnMount={true}
           />
           
           <FeatureCard 
-            icon={<Video className="h-8 w-8 text-white" />} 
-            title="Exclusive Member Access" 
-            description="Get access to private videos and photo sets reserved only for subscribers-content that goes beyond the surface."
+            icon={<GemIcon className="h-8 w-8 text-white" />} 
+            title="Lifelike Perfection" 
+            description="She doesn’t just look real - she feels real. Every Metadite doll is crafted with stunning detail, soft skin, and lifelike curves that respond to your touch. Built to satisfy, designed to last."
             delay="0.3s"
             flipOnMount={true}
           />
           
           <FeatureCard 
-            icon={<Users className="h-8 w-8 text-white" />} 
-            title="Real Interaction, Real Connection" 
-            description="Use your messages to connect with models on a deeper level before making a purchase. It's more than content-it's conversation, chemistry, and choice."
+            icon={<ShipWheel className="h-8 w-8 text-white" />} 
+            title=" Ready to Ship" 
+            description="No delays, no waiting lists. Every doll is in stock and ships discreetly, directly to your door. Premium packaging, private delivery - pleasure is just days away."
             delay="0.6s"
             flipOnMount={true}
           />

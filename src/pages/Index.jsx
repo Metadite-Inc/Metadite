@@ -9,7 +9,7 @@ import HeroSection from '../components/home/HeroSection';
 import FeaturesSection from '../components/home/FeaturesSection';
 import FeaturedModelsSection from '../components/home/FeaturedModelsSection';
 import TestimonialsSection from '../components/home/TestimonialsSection';
-import CtaSection from '../components/home/CtaSection';
+//import CtaSection from '../components/home/CtaSection';
 import { fetchFeaturedModels, testimonials } from '../data/homePageData';
 
 const Index = () => {
@@ -87,7 +87,7 @@ const Index = () => {
         <FeaturesSection theme={theme} />
         <FeaturedModelsSection models={featuredModels} loading={modelsLoading} theme={theme} />
         <TestimonialsSection testimonials={testimonials} theme={theme} />
-        <CtaSection user={user} hasVipAccess={hasVipAccess} />
+        {/* <CtaSection user={user} hasVipAccess={hasVipAccess} /> */}
       </main>
       
       <Footer />

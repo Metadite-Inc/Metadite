@@ -38,6 +38,8 @@ import Terms from "./pages/Terms";
 import OrderDetail from "./pages/OrderDetail";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ModeratorChatActivity from './pages/ModeratorChatActivity';
+import Help from './pages/Help';
+import FAQ from './pages/FAQ';
 
 // Create a client
 const queryClient = new QueryClient();
@@ -208,6 +210,8 @@ const App = () => {
                         </ProtectedRoute>
                       } 
                     />
+                    <Route path="/help" element={<Help />} />
+                    <Route path="/faq" element={<FAQ />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </CartProvider>
