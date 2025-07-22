@@ -59,13 +59,13 @@ const HeroSection = ({ isLoaded, user, hasVipAccess, theme }) => {
         <div className="flex flex-col md:flex-row items-center">
           <div className={`md:w-1/2 md:pr-8 mb-8 md:mb-0 transition-all duration-700 ${isLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10'}`}>
             <span className="inline-block px-3 py-1 bg-metadite-primary/10 text-metadite-primary rounded-full text-sm font-medium mb-4">
-              Curated intimacy
+              Real. Touchable. Irresistible.
             </span>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 bg-gradient-to-r from-metadite-dark via-metadite-primary to-metadite-secondary bg-clip-text text-transparent">
-              A New Era of Connection
+              This isn’t fantasy - it’s Metadite.
             </h1>
             <p className="text-gray-600 text-lg mb-6">
-            Where every glance lingers a little longer, every word touches a little deeper, and intimacy, access, and interaction blend into an irresistible experience that leaves you wanting more.
+            Explore a curated collection of stunning, ready-to-ship sex dolls designed for intense connection and lasting pleasure. Choose the one that matches your desire and make her yours today.
             </p>
             <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
               <Link 
