@@ -85,9 +85,9 @@ const Models = () => {
       model.description.toLowerCase().includes(searchTerm.toLowerCase());
 
     let matchesPrice = true;
-    if (priceFilter === 'under200' && model.price < 200) matchesPrice = true;
-    else if (priceFilter === '200to550' && model.price >= 200 && model.price <= 550) matchesPrice = true;
-    else if (priceFilter === 'over550' && model.price > 550) matchesPrice = true;
+    if (priceFilter === 'under1000' && model.price < 1000) matchesPrice = true;
+    else if (priceFilter === '1000to1500' && model.price >= 1000 && model.price <= 1500) matchesPrice = true;
+    else if (priceFilter === 'over1500' && model.price > 1500) matchesPrice = true;
     else if (priceFilter !== 'all') matchesPrice = false;
 
     return matchesSearch && matchesPrice;
