@@ -35,14 +35,14 @@ const Help = () => {
               <li>Contact support for account issues.</li>
             </ul>
           </div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 transition-colors">
+          {/*<div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 transition-colors">
             <h2 className="text-2xl font-semibold mb-4">Payments & Subscriptions</h2>
             <ul className="list-disc list-inside space-y-2">
               <li>Upgrade to VIP or VVIP membership.</li>
               <li>View, manage, or cancel your subscriptions.</li>
               <li>Get help with payment issues or refunds.</li>
             </ul>
-          </div>
+          </div>*/}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 transition-colors">
             <h2 className="text-2xl font-semibold mb-4">Still Need Help?</h2>
             <ul className="list-disc list-inside space-y-2">
