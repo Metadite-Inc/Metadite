@@ -62,10 +62,10 @@ const HeroSection = ({ isLoaded, user, hasVipAccess, theme }) => {
               Real. Touchable. Irresistible.
             </span>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 bg-gradient-to-r from-metadite-dark via-metadite-primary to-metadite-secondary bg-clip-text text-transparent">
-              This isn’t fantasy - it’s Metadite.
+              Your Ultimate Companion Awaits
             </h1>
             <p className="text-gray-600 text-lg mb-6">
-            Explore a curated collection of stunning, ready-to-ship sex dolls designed for intense connection and lasting pleasure. Choose the one that matches your desire and make her yours today.
+            This isn’t fantasy - it’s Metadite. Explore a curated collection of stunning, ready-to-ship sex dolls designed for intense connection and lasting pleasure. Choose the one that matches your desire and make her yours today.
             </p>
             <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
               <Link 
