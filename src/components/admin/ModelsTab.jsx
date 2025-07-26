@@ -100,11 +100,46 @@ const ModelsTab = ({ isLoaded }) => {
     setAdditionalImages([...additionalImages, { file, preview }]);
   };
 
+  const handleAddMultipleImages = (files) => {
+    const validFiles = Array.from(files).filter(file => {
+      // Check if image is larger than 20MB
+      if (file.size > 20 * 1024 * 1024) {
+        toast.error(`Image ${file.name} is too large`, {
+          description: "Images must be less than 20MB."
+        });
+        return false;
+      }
+      return true;
+    });
+
+    const newImages = validFiles.map(file => ({
+      file,
+      preview: URL.createObjectURL(file)
+    }));
+
+    setAdditionalImages([...additionalImages, ...newImages]);
+  };
+
   const handleRemoveAdditionalImage = (index) => {
     const newImages = [...additionalImages];
     URL.revokeObjectURL(newImages[index].preview); // Clean up the URL object
     newImages.splice(index, 1);
     setAdditionalImages(newImages);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      handleAddMultipleImages(files);
+    }
   };
 
   const handleUploadImages = async () => {
@@ -219,7 +254,6 @@ const ModelsTab = ({ isLoaded }) => {
     }
   };
 
-  const [assignedModerators, setAssignedModerators] = useState({});
   useEffect(() => {
     const fetchModelsAndModerators = async () => {
       try {
@@ -231,24 +265,7 @@ const ModelsTab = ({ isLoaded }) => {
         setTotalModels(response.total);
         setTotalPages(Math.max(1, Math.ceil(response.total / modelsPerPage)));
 
-        // Fetch assigned moderator for each model
-        const moderatorMap = {};
-        await Promise.all(
-          response.data.map(async (model) => {
-            const moderator = await apiService.getAssignedModerator(model.id);
-            if (!moderator) {
-              moderatorMap[model.id] = 'None assigned';
-            } else if (Array.isArray(moderator)) {
-              moderatorMap[model.id] = moderator.length > 0
-                ? moderator.map(m => m.full_name || m.name || m.email).join(', ')
-                : 'None assigned';
-            } else {
-              moderatorMap[model.id] = moderator.full_name || moderator.name || moderator.email || 'None assigned';
-            }
-          })
-        );
-        setAssignedModerators(moderatorMap);
-
+        // Removed moderator fetching to prevent 404 errors
         setLoading(false);
       } catch (error) {
         console.error("Error fetching models:", error);
@@ -261,6 +278,8 @@ const ModelsTab = ({ isLoaded }) => {
 
   // Handle edit button click
   const handleEditModel = (modelId) => {
+    console.log('Edit button clicked for model ID:', modelId);
+    console.log('Navigating to:', `/admin/model/edit/${modelId}`);
     navigate(`/admin/model/edit/${modelId}`);
   };
 
@@ -547,7 +566,11 @@ const ModelsTab = ({ isLoaded }) => {
               
               <div className="mb-6">
                 <h4 className="text-md font-medium mb-2">Additional Images</h4>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                <div 
+                  className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"
+                  onDragOver={handleDragOver}
+                  onDrop={handleDrop}
+                >
                   {additionalImages.map((img, index) => (
                     <div key={index} className="relative">
                       <img 
@@ -564,18 +587,24 @@ const ModelsTab = ({ isLoaded }) => {
                     </div>
                   ))}
                   
-                  <label className="border-2 border-dashed border-gray-300 rounded flex items-center justify-center cursor-pointer h-[120px]">
+                  <label 
+                    className="border-2 border-dashed border-gray-300 rounded flex items-center justify-center cursor-pointer h-[120px] hover:border-metadite-primary transition-colors"
+                    onDragOver={handleDragOver}
+                    onDrop={handleDrop}
+                  >
                     <div className="text-center">
                       <Plus className="h-6 w-6 mx-auto mb-1 text-gray-400" />
                       <span className="text-sm text-gray-500">Add Image</span>
+                      <span className="text-xs text-gray-400 block mt-1">or drag & drop multiple images</span>
                     </div>
                     <input 
                       type="file" 
                       accept="image/*" 
+                      multiple
                       className="hidden" 
                       onChange={(e) => {
-                        if (e.target.files?.[0]) {
-                          handleAddAdditionalImage(e.target.files[0]);
+                        if (e.target.files?.length > 0) {
+                          handleAddMultipleImages(e.target.files);
                           e.target.value = ''; // Reset input value for reuse
                         }
                       }}
@@ -667,13 +696,16 @@ const ModelsTab = ({ isLoaded }) => {
                       </span>
                     </td>
                     <td className={`px-6 py-4 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
-                      {assignedModerators[model.id] || 'None assigned'}
+                      {/* Removed assigned moderator display */}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex space-x-2">
                         <button 
                           className="text-blue-500 hover:text-blue-700 transition-colors"
-                          onClick={() => handleEditModel(model.id)}
+                          onClick={() => {
+                            console.log('Model data:', model);
+                            handleEditModel(model.id);
+                          }}
                           title="Edit Model"
                         >
                           <Edit className="h-4 w-4" />

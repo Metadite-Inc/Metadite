@@ -42,6 +42,9 @@ const ModelEdit = () => {
   const [primaryImageFile, setPrimaryImageFile] = useState(null);
   const [primaryImagePreview, setPrimaryImagePreview] = useState(null);
   const [additionalImages, setAdditionalImages] = useState([]);
+  const [existingImages, setExistingImages] = useState([]);
+  const [imagesToRemove, setImagesToRemove] = useState([]);
+  const [removePrimaryImage, setRemovePrimaryImage] = useState(false);
 
   // Fetch model details on component mount
   useEffect(() => {
@@ -71,6 +74,7 @@ const ModelEdit = () => {
             doll_body_size: modelDetails.specifications.find(s => s.name === 'Body Size')?.value.replace(' CM', '') || '',
           });
           setPrimaryImagePreview(modelDetails.image);
+          setExistingImages(modelDetails.gallery || []);
         } else {
           toast.error('Model not found');
           navigate('/admin');
@@ -108,21 +112,37 @@ const ModelEdit = () => {
 
     try {
       setIsSaving(true);
+      await apiService.updateModel(parseInt(id), {
+        ...formData,
+        price: parseFloat(formData.price),
+        doll_height: parseFloat(formData.doll_height),
+        doll_vaginal_depth: parseFloat(formData.doll_vaginal_depth),
+        doll_anal_depth: parseFloat(formData.doll_anal_depth),
+        doll_oral_depth: parseFloat(formData.doll_oral_depth),
+        doll_weight: parseFloat(formData.doll_weight),
+        doll_gross_weight: parseFloat(formData.doll_gross_weight),
+      });
       
-      // Here you would implement the update API call
-      // For now, we'll just show a success message
-      toast.success("Model updated successfully!");
+      // Remove existing images that were marked for deletion
+      if (imagesToRemove.length > 0) {
+        for (const imageUrl of imagesToRemove) {
+          await apiService.deleteModelImage(parseInt(id), imageUrl);
+        }
+      }
+      
+      // Remove primary image if marked for removal
+      if (removePrimaryImage && model?.image) {
+        await apiService.deleteModelImage(parseInt(id), model.image);
+      }
       
       // If there are new images to upload
       if (primaryImageFile) {
         await apiService.uploadModelImage(parseInt(id), primaryImageFile, '', true);
       }
-      
       if (additionalImages.length > 0) {
         const additionalFiles = additionalImages.map(img => img.file);
         await apiService.uploadModelImages(parseInt(id), additionalFiles);
       }
-      
       navigate('/admin');
     } catch (error) {
       toast.error("Failed to update model");
@@ -150,6 +170,26 @@ const ModelEdit = () => {
     URL.revokeObjectURL(newImages[index].preview);
     newImages.splice(index, 1);
     setAdditionalImages(newImages);
+  };
+
+  const handleRemoveExistingImage = (imageUrl) => {
+    setImagesToRemove([...imagesToRemove, imageUrl]);
+    setExistingImages(existingImages.filter(img => img !== imageUrl));
+  };
+
+  const handleRestoreExistingImage = (imageUrl) => {
+    setImagesToRemove(imagesToRemove.filter(img => img !== imageUrl));
+    setExistingImages([...existingImages, imageUrl]);
+  };
+
+  const handleRemovePrimaryImage = () => {
+    setRemovePrimaryImage(true);
+    setPrimaryImagePreview(null);
+  };
+
+  const handleRestorePrimaryImage = () => {
+    setRemovePrimaryImage(false);
+    setPrimaryImagePreview(model?.image || '');
   };
 
   if (isLoading) {
@@ -415,71 +455,171 @@ const ModelEdit = () => {
                   
                   <div className="mb-6">
                     <h4 className="text-md font-medium mb-2">Primary Image</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm text-gray-500 mb-2">Current Image:</p>
-                        {primaryImagePreview && (
+                    
+                    {/* Current Primary Image */}
+                    {primaryImagePreview && !removePrimaryImage && (
+                      <div className="mb-4">
+                        <p className="text-sm text-gray-500 mb-2">Current Primary Image:</p>
+                        <div className="relative inline-block">
                           <img 
                             src={primaryImagePreview} 
                             alt="Current Primary" 
                             className="w-full max-w-[200px] h-[150px] object-cover rounded border border-gray-200" 
                           />
-                        )}
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500 mb-2">Upload New Image:</p>
-                        <ModelImageUploader
-                          onImageChange={(file) => {
-                            if (file && file.size > 20 * 1024 * 1024) {
-                              toast.error("Image too large", {
-                                description: "Images must be less than 20MB."
-                              });
-                              return;
-                            }
-                            setPrimaryImageFile(file);
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="mb-6">
-                    <h4 className="text-md font-medium mb-2">Add Additional Images</h4>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                      {additionalImages.map((img, index) => (
-                        <div key={index} className="relative">
-                          <img 
-                            src={img.preview} 
-                            alt={`Additional ${index + 1}`} 
-                            className="w-full h-[120px] object-cover rounded border border-gray-200" 
-                          />
                           <button 
                             type="button"
-                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"
-                            onClick={() => handleRemoveAdditionalImage(index)}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                            onClick={handleRemovePrimaryImage}
+                            title="Remove primary image"
                           >
                             <X className="h-3 w-3" />
                           </button>
                         </div>
-                      ))}
-                      
-                      <label className="border-2 border-dashed border-gray-300 rounded flex items-center justify-center cursor-pointer h-[120px]">
-                        <div className="text-center">
-                          <Plus className="h-6 w-6 mx-auto mb-1 text-gray-400" />
-                          <span className="text-sm text-gray-500">Add Image</span>
+                      </div>
+                    )}
+
+                    {/* Primary Image Marked for Removal */}
+                    {removePrimaryImage && model?.image && (
+                      <div className="mb-4">
+                        <p className="text-sm text-gray-500 mb-2">Primary image to be removed:</p>
+                        <div className="relative inline-block">
+                          <img 
+                            src={model.image} 
+                            alt="Primary to Remove" 
+                            className="w-full max-w-[200px] h-[150px] object-cover rounded border-2 border-red-300 opacity-60" 
+                          />
+                          <button 
+                            type="button"
+                            className="absolute -top-2 -right-2 bg-green-500 text-white rounded-full p-1 hover:bg-green-600 transition-colors"
+                            onClick={handleRestorePrimaryImage}
+                            title="Restore primary image"
+                          >
+                            <Plus className="h-3 w-3" />
+                          </button>
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <span className="bg-red-500 text-white text-xs px-2 py-1 rounded">Will be removed</span>
+                          </div>
                         </div>
-                        <input 
-                          type="file" 
-                          accept="image/*" 
-                          className="hidden" 
-                          onChange={(e) => {
-                            if (e.target.files?.[0]) {
-                              handleAddAdditionalImage(e.target.files[0]);
-                              e.target.value = '';
-                            }
-                          }}
-                        />
-                      </label>
+                      </div>
+                    )}
+
+                    {/* Upload New Primary Image */}
+                    <div className="mb-4">
+                      <p className="text-sm text-gray-500 mb-2">Upload New Primary Image:</p>
+                      <ModelImageUploader
+                        onImageChange={(file) => {
+                          if (file && file.size > 20 * 1024 * 1024) {
+                            toast.error("Image too large", {
+                              description: "Images must be less than 20MB."
+                            });
+                            return;
+                          }
+                          setPrimaryImageFile(file);
+                          // If user uploads a new image, unmark removal
+                          setRemovePrimaryImage(false);
+                        }}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="mb-6">
+                    <h4 className="text-md font-medium mb-2">Additional Images</h4>
+                    
+                    {/* Existing Images */}
+                    {existingImages.length > 0 && (
+                      <div className="mb-4">
+                        <p className="text-sm text-gray-500 mb-2">Current Images:</p>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                          {existingImages.map((imageUrl, index) => (
+                            <div key={`existing-${index}`} className="relative">
+                              <img 
+                                src={imageUrl} 
+                                alt={`Existing ${index + 1}`} 
+                                className="w-full h-[120px] object-cover rounded border border-gray-200" 
+                              />
+                              <button 
+                                type="button"
+                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                                onClick={() => handleRemoveExistingImage(imageUrl)}
+                                title="Remove image"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Images Marked for Removal */}
+                    {imagesToRemove.length > 0 && (
+                      <div className="mb-4">
+                        <p className="text-sm text-gray-500 mb-2">Images to be removed:</p>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                          {imagesToRemove.map((imageUrl, index) => (
+                            <div key={`remove-${index}`} className="relative">
+                              <img 
+                                src={imageUrl} 
+                                alt={`To Remove ${index + 1}`} 
+                                className="w-full h-[120px] object-cover rounded border-2 border-red-300 opacity-60" 
+                              />
+                              <button 
+                                type="button"
+                                className="absolute -top-2 -right-2 bg-green-500 text-white rounded-full p-1 hover:bg-green-600 transition-colors"
+                                onClick={() => handleRestoreExistingImage(imageUrl)}
+                                title="Restore image"
+                              >
+                                <Plus className="h-3 w-3" />
+                              </button>
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <span className="bg-red-500 text-white text-xs px-2 py-1 rounded">Will be removed</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* New Images to Add */}
+                    <div className="mb-4">
+                      <p className="text-sm text-gray-500 mb-2">Add New Images:</p>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                        {additionalImages.map((img, index) => (
+                          <div key={`new-${index}`} className="relative">
+                            <img 
+                              src={img.preview} 
+                              alt={`New ${index + 1}`} 
+                              className="w-full h-[120px] object-cover rounded border border-gray-200" 
+                            />
+                            <button 
+                              type="button"
+                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                              onClick={() => handleRemoveAdditionalImage(index)}
+                              title="Remove new image"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                        ))}
+                        
+                        <label className="border-2 border-dashed border-gray-300 rounded flex items-center justify-center cursor-pointer h-[120px] hover:border-metadite-primary transition-colors">
+                          <div className="text-center">
+                            <Plus className="h-6 w-6 mx-auto mb-1 text-gray-400" />
+                            <span className="text-sm text-gray-500">Add Image</span>
+                          </div>
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            className="hidden" 
+                            onChange={(e) => {
+                              if (e.target.files?.[0]) {
+                                handleAddAdditionalImage(e.target.files[0]);
+                                e.target.value = '';
+                              }
+                            }}
+                          />
+                        </label>
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -26,6 +26,7 @@ import { Separator } from '../components/ui/separator';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
+import { userApi } from '../lib/api/user_api';
 
 const OrderDetail = () => {
   const { orderId } = useParams();
@@ -39,60 +40,15 @@ const OrderDetail = () => {
   useEffect(() => {
     const fetchOrder = async () => {
       try {
-        // In a real app, this would fetch from an API based on the orderId
-        await new Promise(resolve => setTimeout(resolve, 800));
-        
-        // Mock order data
-        const mockOrder = {
-          id: orderId,
-          orderNumber: `ORD-${orderId}`,
-          date: '2025-04-28',
-          time: '14:32:15',
-          paymentTime: '14:35:22',
-          paymentMethod: 'Credit Card (Visa ending in 4242)',
-          status: 'shipped',
-          trackingNumber: 'TRK123456789',
-          shippingAddress: {
-            name: 'John Doe',
-            street: '123 Main St',
-            city: 'New York',
-            state: 'NY',
-            zipCode: '10001',
-            country: 'USA',
-          },
-          items: [
-            {
-              id: 1,
-              name: 'Emma Watson Model',
-              description: 'Premium quality collectible model with authentic details.',
-              price: 29.99,
-              quantity: 1,
-              image: 'https://images.unsplash.com/photo-1603552489088-b8304faff8ad?q=80&w=300&auto=format&fit=crop'
-            },
-            {
-              id: 2,
-              name: 'Premium Access',
-              description: 'One month subscription to premium model content.',
-              price: 19.99,
-              quantity: 1,
-              image: 'https://images.unsplash.com/photo-1547277854-fa0bf6c8ba26?q=80&w=300&auto=format&fit=crop'
-            }
-          ],
-          productsAmount: 49.98,
-          shippingFee: 0,
-          shippingDiscount: 0,
-          paymentAmount: 49.98
-        };
-        
-        setOrder(mockOrder);
-        setIsLoading(false);
+        const orderData = await userApi.getOrderById(orderId);
+        setOrder(orderData);
       } catch (error) {
         console.error('Error fetching order:', error);
         toast.error('Failed to load order details');
+      } finally {
         setIsLoading(false);
       }
     };
-    
     fetchOrder();
   }, [orderId]);
 
@@ -172,8 +128,8 @@ const OrderDetail = () => {
                   Order Not Found
                 </h2>
                 <div className={`max-w-md mx-auto ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-  We couldn't find the order you're looking for. It may have been deleted or the ID is incorrect.
-</div>
+                  We couldn't find the order you're looking for. It may have been deleted or the ID is incorrect.
+                </div>
                 <Button 
                   className="mt-6" 
                   onClick={() => navigate('/dashboard')}
@@ -242,13 +198,13 @@ const OrderDetail = () => {
                     <Info className="h-4 w-4 text-muted-foreground cursor-help" title="Order ID" />
                   </CardTitle>
                   <CardDescription className={`${theme === 'dark' ? 'text-gray-400' : ''}`}>
-  <div className="flex flex-wrap items-center mt-2 gap-1">
-    <Calendar className="h-3.5 w-3.5 mr-1" /> 
-    <span className="mr-2">Order Date: {order.date}</span>
-    <Clock className="h-3.5 w-3.5 mr-1" /> 
-    <span>Order Time: {order.time}</span>
-  </div>
-</CardDescription>
+                  <div className="flex flex-wrap items-center mt-2 gap-1">
+                    <Calendar className="h-3.5 w-3.5 mr-1" /> 
+                    <span className="mr-2">Order Date: {order.date}</span>
+                    <Clock className="h-3.5 w-3.5 mr-1" /> 
+                    <span>Order Time: {order.time}</span>
+                  </div>
+                  </CardDescription>
                 </div>
                 
                 {order.status === 'shipped' && (
