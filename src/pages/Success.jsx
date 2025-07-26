@@ -3,17 +3,21 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { Check } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useCart } from '../context/CartContext';
 
 const Success = () => {
   const { theme } = useTheme();
   const { clearCart } = useCart();
+  const [lastOrder, setLastOrder] = useState(null);
   useEffect(() => {
     if (localStorage.getItem('cartShouldClear') === 'true') {
       clearCart();
       localStorage.removeItem('cartShouldClear');
     }
+    // Load last order for tracking
+    const order = localStorage.getItem('lastOrder');
+    if (order) setLastOrder(JSON.parse(order));
     // eslint-disable-next-line
   }, []);
   return (
@@ -35,7 +39,9 @@ const Success = () => {
             </p>
             <div className={`${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'} rounded-lg p-4 mb-6`}>
               <div className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} mb-1`}>Order number</div>
-              <div className={`font-medium ${theme === 'dark' ? 'text-white' : ''}`}>ORD-{Math.floor(100000 + Math.random() * 900000)}</div>
+              <div className={`font-medium ${theme === 'dark' ? 'text-white' : ''}`}>
+                {lastOrder && lastOrder.order_id ? lastOrder.order_id : `ORD-${Math.floor(100000 + Math.random() * 900000)}`}
+              </div>
             </div>
             <div className="space-y-4">
               <Link 
@@ -44,6 +50,15 @@ const Success = () => {
               >
                 View Order Status
               </Link>
+              {lastOrder && lastOrder.order_id && lastOrder.shippingDetails &&
+                Object.values(lastOrder.shippingDetails).every(v => v && v !== '') && (
+                  <Link
+                    to={`/order/${lastOrder.order_id}`}
+                    className="block w-full bg-gradient-to-r from-metadite-secondary to-metadite-primary text-white py-3 rounded-md hover:opacity-90 transition-opacity"
+                  >
+                    Track This Order
+                  </Link>
+              )}
               <Link 
                 to="/"
                 className={`block w-full border py-3 rounded-md transition-colors ${

@@ -457,6 +457,66 @@ class ApiService {
       console.error(error);
     }
   }
+
+  // Update a model (doll)
+  async updateModel(id: number, data: any): Promise<any> {
+    try {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        toast.error('Authentication required', {
+          description: 'You must be logged in as an admin to update models.',
+        });
+        return null;
+      }
+      const response = await this.request(`/api/dolls/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+      });
+      toast.success('Model updated successfully!');
+      return response;
+    } catch (error) {
+      toast.error('Failed to update model');
+      throw error;
+    }
+  }
+
+  // Delete a specific image from a model
+  async deleteModelImage(dollId: number, imageUrl: string): Promise<boolean> {
+    try {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        toast.error('Authentication required');
+        return false;
+      }
+
+      // Extract the image filename from the URL
+      const urlParts = imageUrl.split('/');
+      const filename = urlParts[urlParts.length - 1];
+
+      const response = await this.request(`/api/dolls/${dollId}/images/${filename}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response) {
+        toast.success('Image deleted successfully');
+        return true;
+      } else {
+        toast.error('Failed to delete image');
+        return false;
+      }
+    } catch (error) {
+      console.error('Error deleting image:', error);
+      toast.error('Failed to delete image');
+      return false;
+    }
+  }
 }
 
 export const apiService = new ApiService();

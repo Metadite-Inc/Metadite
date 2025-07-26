@@ -133,50 +133,10 @@ const useUnreadCount = () => {
   }, []);
 
   useEffect(() => {
-    isMountedRef.current = true;
-    notificationService.loadSoundPreference();
-
-    throttledFetch();
-
-    const handleUserInteraction = () => {
-      notificationService.initializeAudioContext();
-      document.removeEventListener('click', handleUserInteraction);
-      document.removeEventListener('keydown', handleUserInteraction);
-      document.removeEventListener('touchstart', handleUserInteraction);
-    };
-
-    document.addEventListener('click', handleUserInteraction);
-    document.addEventListener('keydown', handleUserInteraction);
-    document.addEventListener('touchstart', handleUserInteraction);
-
-    let testTimeout: ReturnType<typeof setTimeout> | null = null;
-    if (user && notificationService.isNotificationEnabled()) {
-      const hasTested = sessionStorage.getItem('notificationTested');
-      if (!hasTested) {
-        testTimeout = setTimeout(() => {
-          notificationService.checkNotificationDisplay();
-          const lastTestTime = sessionStorage.getItem('lastNotificationTest');
-          const now = Date.now();
-          if (!lastTestTime || now - parseInt(lastTestTime) > NOTIFICATION_THROTTLE_MS) {
-            notificationService.notifyNewMessage('Test', 'Notification system is working!', 0);
-            sessionStorage.setItem('lastNotificationTest', now.toString());
-          }
-          sessionStorage.setItem('notificationTested', 'true');
-        }, 3000);
-      }
-    }
-
-    const interval = setInterval(throttledFetch, REFRESH_INTERVAL_MS);
-
-    return () => {
-      isMountedRef.current = false;
-      clearInterval(interval);
-      if (testTimeout) clearTimeout(testTimeout);
-      document.removeEventListener('click', handleUserInteraction);
-      document.removeEventListener('keydown', handleUserInteraction);
-      document.removeEventListener('touchstart', handleUserInteraction);
-    };
-  }, [user, refreshTrigger, throttledFetch, notificationService]);
+    fetchUnreadCount();
+    // Removed interval for polling
+    return undefined;
+  }, [user, refreshTrigger]);
 
   return {
     totalUnread: unreadData.total_unread,

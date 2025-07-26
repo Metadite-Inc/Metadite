@@ -32,6 +32,9 @@ const Checkout = () => {
   const [isComplete, setIsComplete] = useState(false);
   const { theme } = useTheme();
 
+  // Helper to check if all shipping fields are filled
+  const isShippingComplete = Object.values(shippingDetails).every(v => v && v !== '');
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setShippingDetails({
@@ -57,10 +60,20 @@ const Checkout = () => {
         success_url: window.location.origin + '/success',
         cancel_url: window.location.origin + '/cancel',
         description: `Order for ${shippingDetails.firstName} ${shippingDetails.lastName}`,
+        shipping_details: shippingDetails, // Add shipping details to the order data
+        items, // Add all items for future extensibility
       };
       const result = await createNowpaymentsInvoice(data);
       if (result && result.invoice_url) {
         localStorage.setItem('cartShouldClear', 'true');
+        // Store order info for tracking after redirect
+        localStorage.setItem('lastOrder', JSON.stringify({
+          order_id,
+          shippingDetails,
+          items,
+          totalAmount,
+          date: new Date().toISOString(),
+        }));
         window.location.href = result.invoice_url;
       } else {
         throw new Error('Failed to get invoice URL from NowPayments. Please try again.');
@@ -445,7 +458,7 @@ const Checkout = () => {
                     <button
                       type="submit"
                       onClick={handleNowpaymentsCheckout}
-                      disabled={isProcessing}
+                      disabled={isProcessing || !isShippingComplete}
                       className="w-full flex items-center justify-center bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white py-3 px-4 rounded-md hover:opacity-90 transition-opacity disabled:opacity-70"
                     >
                       {isProcessing ? (

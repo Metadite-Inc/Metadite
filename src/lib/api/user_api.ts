@@ -118,6 +118,22 @@ class userApiService {
     }
   }
 
+  async getOrderById(orderId: string): Promise<Order> {
+    try {
+      const result = await this.request<Order>(`/api/orders/${orderId}`, {
+        method: 'GET',
+      });
+      return result;
+    } catch (error) {
+      if (error.message?.includes('401') || error.message?.includes('403')) {
+        toast.error('Authentication failed. Please log in again.');
+      } else {
+        toast.error('Failed to fetch order details');
+      }
+      throw error;
+    }
+  }
+
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     // Use access_token to match auth_api.ts implementation
     const token = localStorage.getItem('access_token');
