@@ -63,8 +63,7 @@ const ModelTabs = ({ model, onReviewSubmitted }) => {
         {activeTab === 'description' && (
           <div className="prose max-w-none">
             <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : ''}`}>Product Description</h3>
-            {/*<p className={`mb-4 ${isDark ? 'text-gray-300' : ''}`}>{model.longDescription}</p>*/}
-            <p className={isDark ? 'text-gray-300' : ''}>{model.detailedDescription}</p>
+            <p className={`${isDark ? 'text-gray-300' : ''}`}>{model.longDescription}</p>
           </div>
         )}
         
