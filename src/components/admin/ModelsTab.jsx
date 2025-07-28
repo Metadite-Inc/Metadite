@@ -36,6 +36,8 @@ const ModelsTab = ({ isLoaded }) => {
     doll_gross_weight: '',
     doll_packing_size: '',
     doll_body_size: '',
+    in_stock: true,
+    assigned: false,
   });
 
   const [primaryImageFile, setPrimaryImageFile] = useState(null);

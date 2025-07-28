@@ -14,7 +14,6 @@ export interface CreateModelRequest {
   name: string;
   description: string;
   price: number;
-  stock: number;
   is_available: boolean;
   doll_category: string;
   doll_height: number;
@@ -26,7 +25,13 @@ export interface CreateModelRequest {
   doll_gross_weight: number;
   doll_packing_size: string;
   doll_body_size: string;
-  created_at: Date; // Fixed: date to Date
+  long_description?: string;
+  image?: string;
+  category?: string;
+  in_stock?: boolean;
+  assigned?: boolean;
+  doll_origin?: string;
+  doll_hair_type?: string;
 }
 
 export interface ModelDetail extends ModelBasic {
@@ -182,7 +187,7 @@ class ApiService {
         return null;
       }
       
-      const response = await this.request<any>('/api/dolls/create/', {
+      const response = await this.request<any>('/api/dolls/', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
