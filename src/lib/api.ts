@@ -444,7 +444,7 @@ class ApiService {
         return;
       }
 
-      const response = await fetch(`${API_URL}/api/dolls/delete/${id}`, {
+      const response = await fetch(`${API_URL}/api/dolls/${id}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
