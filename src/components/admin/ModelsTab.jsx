@@ -27,13 +27,13 @@ const ModelsTab = ({ isLoaded }) => {
     price: '',
     is_available: true,
     doll_category: 'standard',
-    doll_height: '',
-    doll_vaginal_depth: '',
+    doll_height: 0,
+    doll_vaginal_depth: 0,
     doll_material: '',
-    doll_anal_depth: '',
-    doll_oral_depth: '',
-    doll_weight: '',
-    doll_gross_weight: '',
+    doll_anal_depth: 0,
+    doll_oral_depth: 0,
+    doll_weight: 0,
+    doll_gross_weight: 0,
     doll_packing_size: '',
     doll_body_size: '',
     in_stock: true,
@@ -69,7 +69,7 @@ const ModelsTab = ({ isLoaded }) => {
 
   const handleSaveDetails = async (e) => {
     e.preventDefault();
-    if (!newModelData.name || !newModelData.price || !newModelData.description) {
+    if (!newModelData.name || newModelData.price <= 0 || !newModelData.description) {
       toast.error("Missing required fields", {
         description: "Please fill in all required fields.",
       });
@@ -331,8 +331,8 @@ const ModelsTab = ({ isLoaded }) => {
                   <input
                     type="number"
                     step="0.01"
-                    value={newModelData.price}
-                    onChange={(e) => setNewModelData({...newModelData, price: e.target.value})}
+                                value={newModelData.price}
+            onChange={(e) => setNewModelData({...newModelData, price: parseFloat(e.target.value) || 0})}
                     className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary"
                     required
                   />
