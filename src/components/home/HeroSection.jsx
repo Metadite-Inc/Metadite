@@ -2,6 +2,54 @@ import { Link } from 'react-router-dom';
 import React, { useState, useEffect, useRef } from 'react';
 import { slideshowApi } from '../../lib/api/slideshow_api';
 
+// Typewriter hook for word-by-word animation
+function useTypewriterWords(words, typingSpeed = 200, deletingSpeed = 80, pause = 1200) {
+  const [displayed, setDisplayed] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [wordIndex, setWordIndex] = useState(0);
+  const [charIndex, setCharIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const timeoutRef = useRef();
+
+  useEffect(() => {
+    if (isPaused) return;
+    const currentWord = words[wordIndex];
+    if (!isDeleting) {
+      if (charIndex < currentWord.length) {
+        timeoutRef.current = setTimeout(() => {
+          setDisplayed(currentWord.slice(0, charIndex + 1));
+          setCharIndex(charIndex + 1);
+        }, typingSpeed);
+      } else {
+        timeoutRef.current = setTimeout(() => setIsDeleting(true), pause);
+      }
+    } else {
+      if (charIndex > 0) {
+        timeoutRef.current = setTimeout(() => {
+          setDisplayed(currentWord.slice(0, charIndex - 1));
+          setCharIndex(charIndex - 1);
+        }, deletingSpeed);
+      } else {
+        timeoutRef.current = setTimeout(() => {
+          setIsDeleting(false);
+          setWordIndex((wordIndex + 1) % words.length);
+        }, 500);
+      }
+    }
+    return () => clearTimeout(timeoutRef.current);
+  }, [charIndex, isDeleting, wordIndex, isPaused, words, typingSpeed, deletingSpeed, pause]);
+
+  // Pause on hover/focus for accessibility
+  const pauseHandlers = {
+    onMouseEnter: () => setIsPaused(true),
+    onMouseLeave: () => setIsPaused(false),
+    onFocus: () => setIsPaused(true),
+    onBlur: () => setIsPaused(false),
+  };
+
+  return [displayed, pauseHandlers];
+}
+
 const HeroSection = ({ isLoaded, user, hasVipAccess, theme }) => {
   const [slideshowItems, setSlideshowItems] = useState([]);
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -53,16 +101,34 @@ const HeroSection = ({ isLoaded, user, hasVipAccess, theme }) => {
   useEffect(() => {
     return () => timeoutRef.current && clearTimeout(timeoutRef.current);
   }, []);
+
+  const fixedPrefix = 'Your ';
+  const fixedSuffix = ' Awaits';
+  const animatedWords = ['Ultimate Companion'];
+  const [typewriterText, typewriterHandlers] = useTypewriterWords(animatedWords, 200, 80, 1200);
+
   return (
     <section className={`pt-20 px-2 ${theme === 'dark' ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' : 'bg-gradient-to-br from-white via-metadite-light to-white'}`}>
       <div className="container mx-auto max-w-6xl">
         <div className="flex flex-col md:flex-row items-center">
-          <div className={`md:w-1/2 md:pr-8 mb-8 md:mb-0 transition-all duration-700 ${isLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10'}`}>
+          <div className={`md:w-3/5 md:pr-12 mb-8 md:mb-0 transition-all duration-700 ${isLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10'}`}>
             <span className="inline-block px-3 py-1 bg-metadite-primary/10 text-metadite-primary rounded-full text-sm font-medium mb-4">
               Real. Touchable. Irresistible.
             </span>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 bg-gradient-to-r from-metadite-dark via-metadite-primary to-metadite-secondary bg-clip-text text-transparent">
-              Your Ultimate Companion Awaits
+            <h1
+              className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 bg-gradient-to-r from-metadite-dark via-metadite-primary to-metadite-secondary bg-clip-text text-transparent relative leading-tight"
+              tabIndex={0}
+            >
+              <span {...typewriterHandlers}>
+                <div className="leading-tight">
+                  <div className="mb-1">{fixedPrefix}</div>
+                  <div className="inline-block bg-gradient-to-r from-metadite-primary to-metadite-secondary  rounded text-white">
+                    {typewriterText}
+                    <span className="typewriter-cursor">|</span>
+                  </div>
+                  <div>{fixedSuffix}</div>
+                </div>
+              </span>
             </h1>
             <p className="text-gray-600 text-lg mb-6">
             This isn’t fantasy - it’s Metadite. Explore a curated collection of stunning, ready-to-ship sex dolls designed for intense connection and lasting pleasure. Choose the one that matches your desire and make her yours today.
@@ -93,7 +159,7 @@ const HeroSection = ({ isLoaded, user, hasVipAccess, theme }) => {
             </div>
           </div>
           
-          <div className={`pt-10 pb-10 md:pl-20 md:w-2/5 transition-all duration-700 delay-300 ${isLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'} flex justify-center md:block`}>
+          <div className={`pt-10 pb-10 md:pl-8 md:w-2/5 transition-all duration-700 delay-300 ${isLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'} flex justify-center md:block`}>
             <div className="relative">
               {/* Slideshow Start */}
               <div className="relative w-screen max-w-none px-0 mx-0 rounded-none sm:w-auto sm:max-w-[97vw] sm:px-0 sm:mx-auto sm:rounded-xl aspect-[3.2/5.4] z-10 min-h-[420px] max-h-[500px] overflow-hidden">
