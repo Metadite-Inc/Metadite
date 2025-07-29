@@ -46,7 +46,7 @@ const StaffNavbar = () => {
     if (user?.role === 'admin') {
       return [
         { to: '/admin', label: 'Admin' },
-        { to: '/moderator-assignments', label: 'Assignments' },
+        { to: '/admin-orders', label: 'Orders' },
         { to: '/staff-dashboard', label: 'Dashboard' }
       ];
     }

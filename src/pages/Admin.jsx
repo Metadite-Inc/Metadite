@@ -8,6 +8,7 @@ import { authApi } from '../lib/api/auth_api';
 import { toast } from 'sonner';
 import { Settings } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import AdminNotificationService from '../services/AdminNotificationService';
 
 // Import admin components
 import AdminSidebar from '../components/admin/AdminSidebar';
@@ -49,6 +50,21 @@ const Admin = () => {
           return;
         }
         setIsLoaded(true);
+        
+        // Connect to admin notifications
+        const adminNotificationService = AdminNotificationService.getInstance();
+        await adminNotificationService.connect();
+        
+        // Set up ping interval to keep connection alive
+        const pingInterval = setInterval(() => {
+          adminNotificationService.sendPing();
+        }, 30000); // Ping every 30 seconds
+        
+        // Cleanup function
+        return () => {
+          clearInterval(pingInterval);
+          adminNotificationService.disconnect();
+        };
       } catch (error) {
         console.error('Admin access validation failed:', error);
         toast.error('Authentication failed. Please log in again.');

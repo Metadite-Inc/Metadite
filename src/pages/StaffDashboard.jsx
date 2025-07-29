@@ -8,7 +8,13 @@ import { useTheme } from '../context/ThemeContext';
 import { User, MessageSquare, Settings } from 'lucide-react';
 import StaffDashboardMenu from '../components/staff-dashboard/StaffDashboardMenu';
 import StaffAccountOverview from '../components/staff-dashboard/StaffAccountOverview';
+import StaffAccountSettings from '../components/staff-dashboard/StaffAccountSettings';
 import StaffOtherTabs from '../components/staff-dashboard/StaffOtherTabs';
+import AdminSummaryTab from '../components/staff-dashboard/AdminSummaryTab';
+import ModerationSummaryTab from '../components/staff-dashboard/ModerationSummaryTab';
+import ChatActivityTab from '../components/staff-dashboard/ChatActivityTab';
+import SystemHealthTab from '../components/staff-dashboard/SystemHealthTab';
+import AdminNotificationService from '../services/AdminNotificationService';
 
 const StaffDashboard = () => {
   const { user, logout, loading } = useAuth();
@@ -32,7 +38,28 @@ const StaffDashboard = () => {
 
   useEffect(() => {
     setIsLoaded(true);
-  }, []);
+    
+    // Connect to admin notifications if user is admin
+    if (user?.role === 'admin') {
+      const connectToNotifications = async () => {
+        const adminNotificationService = AdminNotificationService.getInstance();
+        await adminNotificationService.connect();
+        
+        // Set up ping interval to keep connection alive
+        const pingInterval = setInterval(() => {
+          adminNotificationService.sendPing();
+        }, 30000); // Ping every 30 seconds
+        
+        // Cleanup function
+        return () => {
+          clearInterval(pingInterval);
+          adminNotificationService.disconnect();
+        };
+      };
+      
+      connectToNotifications();
+    }
+  }, [user]);
 
   // Early loading state with optimized skeleton
   if (loading) {

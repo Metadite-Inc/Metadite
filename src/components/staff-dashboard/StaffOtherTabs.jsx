@@ -249,6 +249,17 @@ const StaffOtherTabs = ({ activeTab, user }) => {
                     <div className="text-sm text-gray-500">Coming Soon</div>
                   </div>
                 )}
+                {user?.role === 'admin' && (
+                  <div className="flex items-center justify-between py-2">
+                    <div>
+                      <p className="font-medium">New Orders</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Get notified when customers place new orders</p>
+                    </div>
+                    <div className={`text-sm font-medium ${notificationPermission === 'granted' ? 'text-green-600' : 'text-gray-500'}`}>
+                      {notificationPermission === 'granted' ? 'Active' : 'Enable notifications first'}
+                    </div>
+                  </div>
+                )}
                 <div className="flex items-center justify-between py-2">
                   <div>
                     <p className="font-medium">Account Security</p>

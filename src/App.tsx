@@ -26,6 +26,7 @@ import Cancel from "./pages/Cancel";
 import Admin from "./pages/Admin";
 import Moderator from "./pages/Moderator";
 import ModeratorAssignments from "./pages/ModeratorAssignments";
+import AdminOrders from "./pages/AdminOrders";
 import Models from "./pages/Models";
 import ModelDetail from "./pages/ModelDetail";
 import ModelEdit from "./pages/ModelEdit";
@@ -170,6 +171,14 @@ const App = () => {
                       element={
                         <ProtectedRoute allowedRoles={['admin', 'moderator']}>
                           <ModeratorAssignments />
+                        </ProtectedRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/admin-orders" 
+                      element={
+                        <ProtectedRoute allowedRoles={['admin']}>
+                          <AdminOrders />
                         </ProtectedRoute>
                       } 
                     />

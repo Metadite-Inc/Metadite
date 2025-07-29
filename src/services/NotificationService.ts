@@ -30,8 +30,8 @@ class NotificationService {
   }
 
   private createNotificationSound() {
-    // Create a simple beep sound using Web Audio API
-    const createBeep = () => {
+    // Create a better notification sound using Web Audio API
+    const createNotificationSound = () => {
       try {
         // Use the stored audio context or create a new one
         const audioContext = this.audioContext || new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -42,27 +42,47 @@ class NotificationService {
           audioContext.resume();
         }
         
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
+        // Create a more pleasant notification sound with multiple tones
+        const now = audioContext.currentTime;
         
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
+        // First tone (higher pitch)
+        const oscillator1 = audioContext.createOscillator();
+        const gainNode1 = audioContext.createGain();
+        oscillator1.connect(gainNode1);
+        gainNode1.connect(audioContext.destination);
         
-        oscillator.frequency.value = 800;
-        oscillator.type = 'sine';
+        oscillator1.frequency.value = 1000;
+        oscillator1.type = 'sine';
         
-        gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-        gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.01);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+        gainNode1.gain.setValueAtTime(0, now);
+        gainNode1.gain.linearRampToValueAtTime(0.2, now + 0.01);
+        gainNode1.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
         
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.3);
+        oscillator1.start(now);
+        oscillator1.stop(now + 0.2);
+        
+        // Second tone (lower pitch) - starts after first tone
+        const oscillator2 = audioContext.createOscillator();
+        const gainNode2 = audioContext.createGain();
+        oscillator2.connect(gainNode2);
+        gainNode2.connect(audioContext.destination);
+        
+        oscillator2.frequency.value = 800;
+        oscillator2.type = 'sine';
+        
+        gainNode2.gain.setValueAtTime(0, now + 0.1);
+        gainNode2.gain.linearRampToValueAtTime(0.15, now + 0.11);
+        gainNode2.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+        
+        oscillator2.start(now + 0.1);
+        oscillator2.stop(now + 0.3);
+        
       } catch (error) {
         console.warn('Could not play notification sound:', error);
       }
     };
 
-    this.notificationSound = { play: createBeep } as any;
+    this.notificationSound = { play: createNotificationSound } as any;
   }
 
   private checkPermissionStatus() {
@@ -267,6 +287,74 @@ class NotificationService {
   public testUnreadCountNotification() {
     console.log('🧪 Testing unread count notification...');
     this.notifyUnreadCountIncrease(5, { "1": 3, "2": 2 }, "You have 5 new messages!");
+  }
+
+  public notifyNewOrder(orderNumber: string, customerName: string, total: number) {
+    console.log('📦 notifyNewOrder called:', { orderNumber, customerName, total });
+    
+    if (!this.isEnabled) {
+      console.log('❌ Notifications not enabled, returning');
+      return;
+    }
+
+    // Play sound
+    this.playNotificationSound();
+
+    // Show notification
+    this.showNotification(`New Order: ${orderNumber}`, {
+      body: `Order from ${customerName} - $${total.toFixed(2)}`,
+      icon: '/logo.png',
+      tag: `order-${orderNumber}`, // Prevents duplicate notifications for same order
+      requireInteraction: false
+    });
+
+    // Also show a toast notification
+    toast.success(`New order received: ${orderNumber}`, {
+      duration: 5000,
+      position: 'top-right',
+      style: {
+        background: '#10b981',
+        color: 'white',
+        border: 'none',
+        borderRadius: '8px',
+        fontSize: '14px',
+        fontWeight: '500'
+      }
+    });
+  }
+
+  public notifyNewPayment(paymentId: number, customerName: string, amount: number, currency: string = 'USD') {
+    console.log('💰 notifyNewPayment called:', { paymentId, customerName, amount, currency });
+    
+    if (!this.isEnabled) {
+      console.log('❌ Notifications not enabled, returning');
+      return;
+    }
+
+    // Play sound
+    this.playNotificationSound();
+
+    // Show notification
+    this.showNotification(`New Payment: #${paymentId}`, {
+      body: `Payment from ${customerName} - ${currency} ${amount.toFixed(2)}`,
+      icon: '/logo.png',
+      tag: `payment-${paymentId}`, // Prevents duplicate notifications for same payment
+      requireInteraction: false
+    });
+
+    // Also show a toast notification
+    toast.success(`New payment received: ${currency} ${amount.toFixed(2)}`, {
+      duration: 5000,
+      position: 'top-right',
+      style: {
+        background: '#059669',
+        color: 'white',
+        border: 'none',
+        borderRadius: '8px',
+        fontSize: '14px',
+        fontWeight: '500'
+      }
+    });
   }
 }
 
