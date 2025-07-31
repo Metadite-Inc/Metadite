@@ -497,47 +497,67 @@ const AdminOrders = () => {
       </div>
 
       {/* Update Status Dialog */}
-      <Dialog open={updateDialogOpen} onOpenChange={setUpdateDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Update Order Status</DialogTitle>
-                         <DialogDescription>
-               Update the status for order {selectedOrder?.order_number}
-             </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium">Current Status</label>
-              <div className="mt-1">
-                {selectedOrder && getStatusBadge(selectedOrder.status)}
+      {updateDialogOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black bg-opacity-50"
+            onClick={() => setUpdateDialogOpen(false)}
+          />
+          
+          {/* Modal Content */}
+          <div className="relative bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Update Order Status
+              </h3>
+              <p className="text-gray-600">
+                Update the status for order {selectedOrder?.order_number}
+              </p>
+            </div>
+            
+            <div className="space-y-4 mb-6">
+              <div>
+                <label className="text-sm font-medium text-gray-700">Current Status</label>
+                <div className="mt-1">
+                  {selectedOrder && getStatusBadge(selectedOrder.status)}
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">New Status</label>
+                <select 
+                  value={newStatus} 
+                  onChange={(e) => setNewStatus(e.target.value)}
+                  className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Select new status</option>
+                  {orderStatuses.map(status => (
+                    <option key={status.value} value={status.value}>
+                      {status.label}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
-            <div>
-              <label className="text-sm font-medium">New Status</label>
-              <Select value={newStatus} onValueChange={setNewStatus}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Select new status" />
-                </SelectTrigger>
-                <SelectContent>
-                  {orderStatuses.map(status => (
-                    <SelectItem key={status.value} value={status.value}>
-                      {status.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            
+            <div className="flex justify-end space-x-3">
+              <button 
+                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                onClick={() => setUpdateDialogOpen(false)}
+              >
+                Cancel
+              </button>
+              <button 
+                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={handleUpdateStatus}
+                disabled={!newStatus || newStatus === selectedOrder?.status}
+              >
+                Update Status
+              </button>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setUpdateDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleUpdateStatus} disabled={!newStatus || newStatus === selectedOrder?.status}>
-              Update Status
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
 
       <StaffFooter />
     </div>

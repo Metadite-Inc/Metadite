@@ -3,15 +3,36 @@ import { Facebook, Twitter, Instagram, Mail, ShoppingCart, Heart, User, Home, Me
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import useUnreadCount from '../hooks/useUnreadCount';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { newsletterApi } from '../lib/api/newsletter_api';
 
 const Footer = () => {
   const { user } = useAuth();
   const { unreadData } = useUnreadCount();
   const { cartItems } = useCart();
+  const [email, setEmail] = useState('');
+  const [isSubscribing, setIsSubscribing] = useState(false);
 
   // Memoize the cart item count calculation
   const cartItemCount = useMemo(() => (cartItems || []).reduce((total, item) => total + item.quantity, 0), [cartItems]);
+
+  const handleNewsletterSubscribe = async (e) => {
+    e.preventDefault();
+    
+    if (!email.trim()) {
+      return;
+    }
+
+    setIsSubscribing(true);
+    try {
+      await newsletterApi.subscribeToNewsletter(email.trim());
+      setEmail(''); // Clear the input after successful subscription
+    } catch (error) {
+      console.error('Newsletter subscription error:', error);
+    } finally {
+      setIsSubscribing(false);
+    }
+  };
   return (
     <>
       <footer className="bg-gradient-to-r from-metadite-dark to-metadite-primary text-white py-6">
@@ -62,16 +83,23 @@ const Footer = () => {
             <div className="space-y-4">
               <h4 className="text-lg font-semibold">Newsletter</h4>
               <p className="text-gray-300">Subscribe to receive updates and special offers.</p>
-              <div className="flex">
+              <form onSubmit={handleNewsletterSubscribe} className="flex">
                 <input 
                   type="email" 
                   placeholder="Your email" 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="px-4 py-2 rounded-l-md text-gray-800 w-full focus:outline-none"
+                  required
                 />
-                <button className="bg-metadite-accent hover:bg-opacity-90 transition-colors px-4 py-2 rounded-r-md">
-                  Subscribe
+                <button 
+                  type="submit"
+                  disabled={isSubscribing}
+                  className="bg-metadite-accent hover:bg-opacity-90 transition-colors px-4 py-2 rounded-r-md disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSubscribing ? 'Subscribing...' : 'Subscribe'}
                 </button>
-              </div>
+              </form>
             </div>
           </div>
           

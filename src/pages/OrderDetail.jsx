@@ -12,6 +12,8 @@ import {
 import { toast } from 'sonner';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import StaffNavbar from '../components/StaffNavbar';
+import StaffFooter from '../components/StaffFooter';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { 
@@ -27,6 +29,7 @@ import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
 import { userApi } from '../lib/api/user_api';
+import { adminOrdersApiService } from '../lib/api/admin_orders_api';
 
 const OrderDetail = () => {
   const { orderId } = useParams();
@@ -40,7 +43,13 @@ const OrderDetail = () => {
   useEffect(() => {
     const fetchOrder = async () => {
       try {
-        const orderData = await userApi.getOrderById(orderId);
+        let orderData;
+        if (user?.role === 'admin') {
+          orderData = await adminOrdersApiService.getOrderDetails(parseInt(orderId));
+        } else {
+          orderData = await userApi.getOrderById(orderId);
+        }
+        console.log('Fetched order data:', orderData);
         setOrder(orderData);
       } catch (error) {
         console.error('Error fetching order:', error);
@@ -50,18 +59,30 @@ const OrderDetail = () => {
       }
     };
     fetchOrder();
-  }, [orderId]);
+  }, [orderId, user?.role]);
 
   const handleTrackOrder = () => {
     toast.info('Tracking information sent to your email');
     // In a real app, this would open tracking information or redirect to carrier's website
   };
 
-  const handleDeleteOrder = () => {
-    // In a real app, this would send a delete request to the API
-    toast.success('Order successfully deleted');
-    setDeleteDialogOpen(false);
-    navigate('/dashboard');
+  const handleDeleteOrder = async () => {
+    try {
+      let success = false;
+      if (user?.role === 'admin') {
+        success = await adminOrdersApiService.deleteOrder(parseInt(orderId));
+      } else {
+        success = await userApi.deleteOrder(orderId);
+      }
+      
+      if (success) {
+        setDeleteDialogOpen(false);
+        navigate(user?.role === 'admin' ? '/admin-orders' : '/dashboard');
+      }
+    } catch (error) {
+      console.error('Error deleting order:', error);
+      toast.error('Failed to delete order');
+    }
   };
 
   const getStatusBadge = (status) => {
@@ -91,7 +112,7 @@ const OrderDetail = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col">
-        <Navbar />
+        {user?.role === 'admin' ? <StaffNavbar /> : <Navbar />}
         <div className={`flex-1 pt-20 pb-12 px-4 ${
           theme === 'dark' 
             ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' 
@@ -104,7 +125,7 @@ const OrderDetail = () => {
             </div>
           </div>
         </div>
-        <Footer />
+        {user?.role === 'admin' ? <StaffFooter /> : <Footer />}
       </div>
     );
   }
@@ -112,7 +133,7 @@ const OrderDetail = () => {
   if (!order) {
     return (
       <div className="min-h-screen flex flex-col">
-        <Navbar />
+        {user?.role === 'admin' ? <StaffNavbar /> : <Navbar />}
         <div className={`flex-1 pt-20 pb-12 px-4 ${
           theme === 'dark' 
             ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' 
@@ -132,22 +153,22 @@ const OrderDetail = () => {
                 </div>
                 <Button 
                   className="mt-6" 
-                  onClick={() => navigate('/dashboard')}
+                  onClick={() => navigate(user?.role === 'admin' ? '/admin-orders' : '/dashboard')}
                 >
-                  Go Back to Dashboard
+                  Go Back to {user?.role === 'admin' ? 'Orders' : 'Dashboard'}
                 </Button>
               </div>
             </div>
           </div>
         </div>
-        <Footer />
+        {user?.role === 'admin' ? <StaffFooter /> : <Footer />}
       </div>
     );
   }
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar />
+      {user?.role === 'admin' ? <StaffNavbar /> : <Navbar />}
       <div className={`flex-1 pt-20 pb-12 px-4 ${
         theme === 'dark' 
           ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' 
@@ -157,7 +178,7 @@ const OrderDetail = () => {
           {/* Header with Back Button and Order Status */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <button 
-              onClick={() => navigate('/dashboard')}
+              onClick={() => navigate(user?.role === 'admin' ? '/admin-orders' : '/dashboard')}
               className={`flex items-center gap-2 ${theme === 'dark' ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'} transition-colors`}
             >
               <ArrowRight className="h-4 w-4 rotate-180" />
@@ -165,26 +186,13 @@ const OrderDetail = () => {
             </button>
             <div className="flex items-center gap-2">
               {getStatusBadge(order.status)}
-              <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="destructive" size="sm" className="gap-1">
-                    <Trash2 className="h-4 w-4" />
-                    <span className="hidden sm:inline">Delete Order</span>
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Are you sure?</DialogTitle>
-                    <DialogDescription>
-                      This will permanently delete order {order.orderNumber}. This action cannot be undone.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <DialogFooter>
-                    <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
-                    <Button variant="destructive" onClick={handleDeleteOrder}>Delete Order</Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
+              <button 
+                onClick={() => setDeleteDialogOpen(true)}
+                className="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+              >
+                <Trash2 className="h-4 w-4" />
+                <span className="hidden sm:inline">Delete Order</span>
+              </button>
             </div>
           </div>
           
@@ -194,17 +202,21 @@ const OrderDetail = () => {
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div>
                   <CardTitle className="text-xl flex items-center gap-2">
-                    Order #{order.orderNumber}
+                    Order #{order.order_number || order.orderNumber || 'Unknown'}
                     <Info className="h-4 w-4 text-muted-foreground cursor-help" title="Order ID" />
                   </CardTitle>
-                  <CardDescription className={`${theme === 'dark' ? 'text-gray-400' : ''}`}>
-                  <div className="flex flex-wrap items-center mt-2 gap-1">
-                    <Calendar className="h-3.5 w-3.5 mr-1" /> 
-                    <span className="mr-2">Order Date: {order.date}</span>
-                    <Clock className="h-3.5 w-3.5 mr-1" /> 
-                    <span>Order Time: {order.time}</span>
+                  <div className={`text-sm text-muted-foreground mt-2 ${theme === 'dark' ? 'text-gray-400' : ''}`}>
+                    <div className="flex flex-wrap items-center gap-1">
+                      <Calendar className="h-3.5 w-3.5 mr-1" /> 
+                      <span className="mr-2">Order Date: {order.date || 'N/A'}</span>
+                      {order.time && (
+                        <>
+                          <Clock className="h-3.5 w-3.5 mr-1" /> 
+                          <span>Order Time: {order.time}</span>
+                        </>
+                      )}
+                    </div>
                   </div>
-                  </CardDescription>
                 </div>
                 
                 {order.status === 'shipped' && (
@@ -218,97 +230,146 @@ const OrderDetail = () => {
             
             <CardContent>
               {/* Shipment Details */}
-              <div className="mb-6">
-                <h3 className={`font-medium mb-2 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>Shipment Details</h3>
-                <div className={`p-4 rounded-md ${theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
-                  <p className="font-medium">{order.shippingAddress.name}</p>
-                  <p>{order.shippingAddress.street}</p>
-                  <p>{order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.zipCode}</p>
-                  <p>{order.shippingAddress.country}</p>
-                  
-                  {order.status === 'shipped' && order.trackingNumber && (
-                    <div className="mt-2 text-sm">
-                      <span className={`font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>Tracking Number:</span> {order.trackingNumber}
-                    </div>
-                  )}
-                </div>
-              </div>
-              
-              {/* Order Items */}
-              <h3 className={`font-medium mb-3 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>Order Items</h3>
-              <div className={`rounded-md overflow-hidden ${theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-50'} mb-6`}>
-                {order.items.map((item, index) => (
-                  <div key={item.id}>
-                    <div className="p-4 flex gap-3">
-                      <div className="w-16 h-16 rounded-md overflow-hidden flex-shrink-0">
-                        <img 
-                          src={item.image} 
-                          alt={item.name} 
-                          className="w-full h-full object-cover"
-                        />
+              {order.shippingAddress && (
+                <div className="mb-6">
+                  <h3 className={`font-medium mb-2 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>Shipment Details</h3>
+                  <div className={`p-4 rounded-md ${theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
+                    <p className="font-medium">{order.shippingAddress.name}</p>
+                    <p>{order.shippingAddress.street}</p>
+                    <p>{order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.zipCode}</p>
+                    <p>{order.shippingAddress.country}</p>
+                    
+                    {order.status === 'shipped' && (order.trackingNumber || order.tracking_number) && (
+                      <div className="mt-2 text-sm">
+                        <span className={`font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>Tracking Number:</span> {order.trackingNumber || order.tracking_number}
                       </div>
-                      <div className="flex-grow min-w-0"> {/* Prevent text overflow */}
-                        <h4 className="font-medium truncate">{item.name}</h4>
-                        <div className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>{item.description}</div>
-                      </div>
-                      <div className="flex flex-col items-end justify-between shrink-0">
-                        <span className="font-medium">{formatCurrency(item.price)}</span>
-                        <span className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                          Qty: {item.quantity}
-                        </span>
-                      </div>
-                    </div>
-                    {index < order.items.length - 1 && (
-                      <Separator className={theme === 'dark' ? 'bg-gray-600' : ''} />
                     )}
                   </div>
-                ))}
-              </div>
+                </div>
+              )}
+              
+              {/* Order Items */}
+              {order.items && order.items.length > 0 && (
+                <>
+                  <h3 className={`font-medium mb-3 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>Order Items</h3>
+                  <div className={`rounded-md overflow-hidden ${theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-50'} mb-6`}>
+                    {order.items.map((item, index) => (
+                      <div key={item.id || index}>
+                        <div className="p-4 flex gap-3">
+                          {item.image && (
+                            <div className="w-16 h-16 rounded-md overflow-hidden flex-shrink-0">
+                              <img 
+                                src={item.image} 
+                                alt={item.name || 'Item'} 
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          )}
+                          <div className="flex-grow min-w-0"> {/* Prevent text overflow */}
+                            <h4 className="font-medium truncate">{item.name || 'Unknown Item'}</h4>
+                            {item.description && (
+                              <div className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>{item.description}</div>
+                            )}
+                          </div>
+                          <div className="flex flex-col items-end justify-between shrink-0">
+                            <span className="font-medium">{formatCurrency(item.price || 0)}</span>
+                            <span className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                              Qty: {item.quantity || 1}
+                            </span>
+                          </div>
+                        </div>
+                        {index < order.items.length - 1 && (
+                          <Separator className={theme === 'dark' ? 'bg-gray-600' : ''} />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
               
               {/* Payment Details */}
               <h3 className={`font-medium mb-2 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>Payment Details</h3>
               <div className={`p-4 rounded-md ${theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between items-center">
-                    <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}>Payment Time:</span>
-                    <span>{order.date} {order.paymentTime}</span>
+                    <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}>Order Date:</span>
+                    <span>{order.date || 'N/A'}</span>
                   </div>
                   
-                  <div className="flex justify-between items-center">
-                    <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}>Payment Method:</span>
-                    <span className="text-right">{order.paymentMethod}</span>
-                  </div>
-                  
-                  <div className="flex justify-between items-center">
-                    <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}>Products Amount:</span>
-                    <span>{formatCurrency(order.productsAmount)}</span>
-                  </div>
-                  
-                  <div className="flex justify-between items-center">
-                    <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}>Shipping Fee:</span>
-                    <span>{order.shippingFee === 0 ? 'Free' : formatCurrency(order.shippingFee)}</span>
-                  </div>
-                  
-                  {order.shippingDiscount > 0 && (
+                  {order.paymentMethod && (
                     <div className="flex justify-between items-center">
-                      <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}>Shipping Discount:</span>
-                      <span className="text-green-600">-{formatCurrency(order.shippingDiscount)}</span>
+                      <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}>Payment Method:</span>
+                      <span className="text-right">{order.paymentMethod}</span>
                     </div>
                   )}
                   
-                  <div className="pt-2 border-t border-dashed border-gray-300 dark:border-gray-600 flex justify-between items-center">
-                    <span className="font-medium">Total Amount:</span>
+                  <div className="flex justify-between items-center">
+                    <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}>Total Amount:</span>
                     <span className="font-medium">
-                      {formatCurrency(order.paymentAmount)}
+                      {formatCurrency(order.total || 0)}
                     </span>
                   </div>
+                  
+                  {order.tracking_number && (
+                    <div className="flex justify-between items-center">
+                      <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}>Tracking Number:</span>
+                      <span>{order.tracking_number}</span>
+                    </div>
+                  )}
+                  
+                  {order.notes && (
+                    <div className="flex justify-between items-center">
+                      <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}>Notes:</span>
+                      <span>{order.notes}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
       </div>
-      <Footer />
+
+      {/* Delete Confirmation Modal */}
+      {deleteDialogOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black bg-opacity-50"
+            onClick={() => setDeleteDialogOpen(false)}
+          />
+          
+          {/* Modal Content */}
+          <div className="relative bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Delete Order
+              </h3>
+              <p className="text-gray-600">
+                Are you sure you want to delete order {order.order_number || order.orderNumber || 'Unknown'}? 
+                This action cannot be undone.
+              </p>
+            </div>
+            
+            <div className="flex justify-end space-x-3">
+              <button 
+                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                onClick={() => setDeleteDialogOpen(false)}
+              >
+                Cancel
+              </button>
+              <button 
+                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
+                onClick={handleDeleteOrder}
+              >
+                Delete Order
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {user?.role === 'admin' ? <StaffFooter /> : <Footer />}
     </div>
   );
 };

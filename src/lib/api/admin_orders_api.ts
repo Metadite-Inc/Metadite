@@ -121,7 +121,7 @@ class AdminOrdersApiService extends BaseApiService {
       await this.validateRole('admin');
       const token = this.validateAuth();
       
-      const response = await this.request<AdminOrder>(`/api/orders/${orderId}`, {
+      const response = await this.request<AdminOrder>(`/api/orders/admin/${orderId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -131,6 +131,28 @@ class AdminOrdersApiService extends BaseApiService {
       console.error('Error fetching order details:', error);
       toast.error('Failed to load order details');
       return null;
+    }
+  }
+
+  // Delete order
+  async deleteOrder(orderId: number): Promise<boolean> {
+    try {
+      await this.validateRole('admin');
+      const token = this.validateAuth();
+      
+      await this.request(`/api/orders/admin/${orderId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      
+      toast.success('Order deleted successfully');
+      return true;
+    } catch (error) {
+      console.error('Error deleting order:', error);
+      toast.error('Failed to delete order');
+      return false;
     }
   }
 }

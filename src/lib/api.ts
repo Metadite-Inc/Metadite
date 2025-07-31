@@ -93,7 +93,7 @@ class ApiService {
       let queryParams = `skip=${skip}&limit=${limit}`;
       
       // Add pagination parameters to the API request
-      const dolls = await this.request<any[]>(`/api/dolls?${queryParams}`);
+      const dolls = await this.request<any[]>(`/api/dolls/?${queryParams}`);
       const backendUrl = import.meta.env.VITE_API_BASE_URL;
 
       // Transform the API response to match our ModelBasic interface
@@ -136,7 +136,7 @@ class ApiService {
   // Get models filtered by category with pagination
   async getModelsByCategory(category: string, skip = 0, limit = 50): Promise<PaginationResponse<ModelBasic>> {
     try {
-      const dolls = await this.request<any[]>(`/api/dolls/category/${encodeURIComponent(category)}`);
+      const dolls = await this.request<any[]>(`/api/dolls/category/${encodeURIComponent(category)}/`);
       const backendUrl = import.meta.env.VITE_API_BASE_URL;
 
       // Transform the API response to match our ModelBasic interface
