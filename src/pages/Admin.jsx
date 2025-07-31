@@ -20,8 +20,9 @@ import SubscriptionsTab from '../components/admin/SubscriptionsTab';
 import PaymentsTab from '../components/admin/PaymentsTab';
 import FlaggedMessagesTab from '../components/admin/FlaggedMessagesTab';
 import VideosTab from '../components/admin/VideosTab'; // Import the new VideosTab component
-import ImagesTab from '../components/admin/ImagesTab'; // Import the new ImagesTab component
+// import ImagesTab from '../components/admin/ImagesTab'; // Import the new ImagesTab component - Temporarily disabled
 import SlideshowTab from '../components/admin/SlideshowTab';
+import NewsletterTab from '../components/admin/NewsletterTab'; // Import the new NewsletterTab component
 
 // Removed mock data - AdminSidebar now fetches real data
 
@@ -142,11 +143,14 @@ const Admin = () => {
               {/* Flagged Messages */}
               {activeTab === 'flagged' && <FlaggedMessagesTab isLoaded={isLoaded} />}
               
-              {/* VIP Images Management */}
-              {activeTab === 'images' && <ImagesTab isLoaded={isLoaded} />}
+              {/* VIP Images Management - Temporarily disabled */}
+              {/* {activeTab === 'images' && <ImagesTab isLoaded={isLoaded} />} */}
               
               {/* Slideshow Management */}
               {activeTab === 'slideshow' && <SlideshowTab isLoaded={isLoaded} />}
+              
+              {/* Newsletter Management */}
+              {activeTab === 'newsletter' && <NewsletterTab isLoaded={isLoaded} />}
             </div>
           </div>
         </div>

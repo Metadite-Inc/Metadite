@@ -36,7 +36,7 @@ class userApiService {
   async getUserOrders(): Promise<Order[]> {
     try {
       // Fetches the authenticated user's orders
-      const result = await this.request<Order[]>(`/api/orders`, {
+      const result = await this.request<Order[]>(`/api/orders/`, {
         method: 'GET',
       });
       return result;
@@ -52,7 +52,7 @@ class userApiService {
 
   async updateProfile(data: { full_name: string; email: string; region: string }): Promise<any> {
     try {
-      const result = await this.request<any>(`/api/auth/me`, {
+      const result = await this.request<any>(`/api/auth/me/`, {
         method: 'PATCH',
         body: JSON.stringify(data),
       });
@@ -70,7 +70,7 @@ class userApiService {
 
   async updatePassword(data: { current_password: string; new_password: string }): Promise<any> {
     try {
-      const result = await this.request<any>(`/api/auth/change-password`, {
+      const result = await this.request<any>(`/api/auth/change-password/`, {
         method: 'POST',
         body: JSON.stringify(data),
       });
@@ -88,7 +88,7 @@ class userApiService {
 
   async deleteAccount(): Promise<void> {
     try {
-      await this.request<void>(`/api/users/account`, {
+      await this.request<void>(`/api/users/account/`, {
         method: 'DELETE',
       });
       toast.success('Account deleted successfully');
@@ -104,7 +104,7 @@ class userApiService {
 
   async getChatAccessStatus(): Promise<ChatAccessStatus> {
     try {
-      const result = await this.request<ChatAccessStatus>(`/api/chat/access-status`, {
+      const result = await this.request<ChatAccessStatus>(`/api/chat/access-status/`, {
         method: 'GET',
       });
       return result;
@@ -131,6 +131,23 @@ class userApiService {
         toast.error('Failed to fetch order details');
       }
       throw error;
+    }
+  }
+
+  async deleteOrder(orderId: string): Promise<boolean> {
+    try {
+      await this.request(`/api/orders/${orderId}`, {
+        method: 'DELETE',
+      });
+      toast.success('Order deleted successfully');
+      return true;
+    } catch (error) {
+      if (error.message?.includes('401') || error.message?.includes('403')) {
+        toast.error('Authentication failed. Please log in again.');
+      } else {
+        toast.error('Failed to delete order');
+      }
+      return false;
     }
   }
 

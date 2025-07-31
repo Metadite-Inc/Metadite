@@ -206,7 +206,7 @@ const App = () => {
                     <Route 
                       path="/order/:orderId" 
                       element={
-                        <ProtectedRoute allowedRoles={['user']}>
+                        <ProtectedRoute allowedRoles={['user', 'admin']}>
                           <OrderDetail />
                         </ProtectedRoute>
                       } 
