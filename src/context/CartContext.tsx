@@ -10,6 +10,7 @@ export interface Model {
   price: number;
   description: string;
   image: string;
+  available_regions?: string[];
 }
 
 interface CartItem {

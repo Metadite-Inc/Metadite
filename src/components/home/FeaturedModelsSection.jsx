@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 import ModelCard from '../ModelCard';
 
-const FeaturedModelsSection = ({ models = [], loading = false, theme }) => {
+const FeaturedModelsSection = ({ models = [], loading = false, theme, user }) => {
   return (
     <section className={`py-16 px-4 ${theme === 'dark' ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' : 'bg-gradient-to-br from-white via-metadite-light to-white'}`}>
       <div className="container mx-auto max-w-6xl">
@@ -37,7 +37,7 @@ const FeaturedModelsSection = ({ models = [], loading = false, theme }) => {
         ) : models && models.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {models.map((model) => (
-              <ModelCard key={model.id} model={model} />
+              <ModelCard key={model.id} model={model} user={user} />
             ))}
           </div>
         ) : (

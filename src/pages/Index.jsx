@@ -85,7 +85,7 @@ const Index = () => {
       <main>
         <HeroSection isLoaded={isLoaded} user={user} hasVipAccess={hasVipAccess} theme={theme} />
         <FeaturesSection theme={theme} />
-        <FeaturedModelsSection models={featuredModels} loading={modelsLoading} theme={theme} />
+        <FeaturedModelsSection models={featuredModels} loading={modelsLoading} theme={theme} user={user} />
         <TestimonialsSection testimonials={testimonials} theme={theme} />
         {/* <CtaSection user={user} hasVipAccess={hasVipAccess} /> */}
       </main>

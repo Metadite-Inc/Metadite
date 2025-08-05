@@ -71,7 +71,14 @@ const ModelCard = ({ model, user, isFavorite, onRemoveFavorite }: ModelProps) =>
           toast.error("Please log in to save favorites");
           return;
         }
-        const result = await favoriteApiService.addToFavorites(Number(model.id), user.id);
+        // Validate model ID
+        if (!model.id || Number(model.id) <= 0) {
+          toast.error('Invalid model ID');
+          console.error('Invalid model ID:', model.id);
+          return;
+        }
+        
+        const result = await favoriteApiService.addToFavorites(Number(model.id));
         if (result) {
           setFavoriteId(result.id);
           setIsLiked(true);
@@ -95,7 +102,7 @@ const ModelCard = ({ model, user, isFavorite, onRemoveFavorite }: ModelProps) =>
 
   return (
     <div className="glass-card rounded-xl overflow-hidden transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1">
-      <div className="relative overflow-hidden">
+      <div className="relative overflow-hidden group">
         {!imageLoaded && <div className="absolute inset-0 shimmer"></div>}
         <div className="aspect-square w-full">
         <img
@@ -106,11 +113,39 @@ const ModelCard = ({ model, user, isFavorite, onRemoveFavorite }: ModelProps) =>
           onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
             e.currentTarget.src = 'https://placehold.co/600x400?text=No+Image';
           }}
+          loading="lazy"
+          decoding="async"
         />
+        
+        {/* Location Overlay - Bottom Left */}
+        {model.available_regions && model.available_regions.length > 0 && (
+          <div className="absolute bottom-2 left-2 bg-black/80 text-white px-2 py-1 rounded-md text-xs">
+            <div className="flex items-center space-x-2">
+              {model.available_regions.map((region) => {
+                const regionConfig = {
+                  usa: 'USA',
+                  canada: 'CA',
+                  mexico: 'MX',
+                  uk: 'UK',
+                  eu: 'EU',
+                  asia: 'AS'
+                };
+                return (
+                  <span key={region} className="text-xs">
+                    {regionConfig[region] || region}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        )}
         </div>
+        
+
+        
         <button 
           onClick={handleLike}
-          className="absolute top-3 right-3 bg-white/80 p-2 rounded-full shadow-md hover:bg-white transition-colors"
+          className="absolute top-3 right-3 bg-white/80 p-2 rounded-full shadow-md hover:bg-white transition-colors z-10"
         >
           <Heart className={`h-5 w-5 ${isLiked ? 'fill-red-500 text-red-500' : 'text-gray-500'}`} />
         </button>
@@ -125,6 +160,8 @@ const ModelCard = ({ model, user, isFavorite, onRemoveFavorite }: ModelProps) =>
         </div>
         
         <p className="text-gray-600 text-sm line-clamp-2 mb-4">{model.description}</p>
+        
+
         
         <div className="flex justify-between items-center">
           <Link to={`/model/${model.id}`} className="text-metadite-primary text-sm font-medium hover:underline">

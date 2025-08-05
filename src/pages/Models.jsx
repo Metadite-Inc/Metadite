@@ -8,6 +8,7 @@ import ModelPagination from '../components/models/ModelPagination';
 import NoResults from '../components/models/NoResults';
 import { useTheme } from '../context/ThemeContext';
 import { apiService } from '../lib/api';
+import { toast } from 'sonner';
 
 const Models = () => {
   const [models, setModels] = useState([]);
@@ -25,30 +26,28 @@ const Models = () => {
   // Categories derived from fetched models
   const [categories, setCategories] = useState(['all']);
 
-  // Fetch all categories on component mount
+  // Fetch categories on component mount
   useEffect(() => {
-    const fetchAllCategories = async () => {
+    const fetchCategories = async () => {
       try {
-        // Fetch all models in batches to retrieve all categories
-        const batchSize = 50; // Define a constant for batch size
-        let allModels = [];
-        let skip = 0;
-        let hasMore = true;
-        
-        while (hasMore) {
-          const response = await apiService.getModels(skip, batchSize);
-          allModels = [...allModels, ...response.data];
-          hasMore = response.data.length === batchSize; // Continue if batch is full
-          skip += batchSize;
-        }
-        
-        const uniqueCategories = ['all', ...new Set(allModels.map((model) => model.category))];
-        setCategories(uniqueCategories);
+        // Use a predefined list of categories instead of fetching all models
+        const predefinedCategories = [
+          'all',
+          'limited_edition',
+          'standard',
+          'premium'
+          //'exclusive',
+         // 'vintage',
+          //'custom'
+        ];
+        setCategories(predefinedCategories);
       } catch (error) {
         console.error('Failed to fetch categories:', error);
+        // Fallback to basic categories
+        setCategories(['all', 'limited_edition', 'standard']);
       }
     };
-    fetchAllCategories();
+    fetchCategories();
   }, []); // Only run once on mount
 
   useEffect(() => {
@@ -73,9 +72,14 @@ const Models = () => {
       } catch (error) {
         console.error('Failed to fetch models:', error);
         setIsLoaded(true);
+        // Show error toast
+        toast.error('Failed to load models. Please try again.');
       }
     };
-    fetchModels();
+    
+    // Add a small delay to prevent rapid successive calls
+    const timeoutId = setTimeout(fetchModels, 100);
+    return () => clearTimeout(timeoutId);
   }, [currentPage, categoryFilter]); // Add categoryFilter to dependencies
 
   // Filter models based on search and price filters (category filtering now handled by API)
