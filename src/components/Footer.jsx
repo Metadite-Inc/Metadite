@@ -7,11 +7,13 @@ import { useMemo, useState } from 'react';
 import { newsletterApi } from '../lib/api/newsletter_api';
 import { toast } from 'sonner';
 
+
 const Footer = () => {
   const { user } = useAuth();
   const { unreadData } = useUnreadCount();
   const { cartItems } = useCart();
   const navigate = useNavigate();
+
   const [email, setEmail] = useState('');
   const [isSubscribing, setIsSubscribing] = useState(false);
 
@@ -54,6 +56,7 @@ const Footer = () => {
       navigate('/login');
     }
   };
+
   return (
     <>
       <footer className="bg-gradient-to-r from-metadite-dark to-metadite-primary text-white py-6">
