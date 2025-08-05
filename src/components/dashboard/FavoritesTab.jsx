@@ -16,17 +16,59 @@ const FavoritesTab = ({ user }) => {
       try {
         setIsLoading(true);
         const favoriteModels = await favoriteApiService.getUserFavorites();
-        // Fetch full model details for each favorite
+        console.log('Raw favorites data:', favoriteModels);
+        
+        // Check if favorites already include doll data
+        const favoritesWithDollData = favoriteModels.filter(fav => fav.doll);
+        const favoritesWithoutDollData = favoriteModels.filter(fav => !fav.doll);
+        
+        console.log('Favorites with doll data:', favoritesWithDollData.length);
+        console.log('Favorites without doll data:', favoritesWithoutDollData.length);
+        
+        // Process favorites - use doll data if available, otherwise fetch it
         const detailedModels = await Promise.all(
           favoriteModels.map(async (favorite) => {
-            const modelDetail = await import('../../lib/api').then(m => m.apiService.getModelDetails(favorite.doll_id));
-            return {
-              favoriteId: favorite.id,
-              model: modelDetail
-            };
+            // Skip favorites with invalid doll_id
+            if (!favorite.doll_id || favorite.doll_id === 0) {
+              console.warn('Skipping favorite with invalid doll_id:', favorite);
+              return null;
+            }
+
+            try {
+              let modelDetail;
+              
+              // If doll data is already included in the favorite, use it
+              if (favorite.doll) {
+                console.log('Using existing doll data for favorite:', favorite.id);
+                modelDetail = {
+                  id: favorite.doll.id,
+                  name: favorite.doll.name,
+                  price: favorite.doll.price,
+                  description: favorite.doll.description,
+                  image: favorite.doll.image,
+                  category: favorite.doll.category,
+                  available_regions: favorite.doll.available_regions || ['usa', 'canada', 'mexico', 'uk', 'eu', 'asia']
+                };
+              } else {
+                // Otherwise fetch the full model details
+                console.log('Fetching model details for favorite:', favorite.id, 'doll_id:', favorite.doll_id);
+                modelDetail = await import('../../lib/api').then(m => m.apiService.getModelDetails(favorite.doll_id));
+              }
+              
+              return {
+                favoriteId: favorite.id,
+                model: modelDetail
+              };
+            } catch (error) {
+              console.error(`Failed to fetch model details for doll_id ${favorite.doll_id}:`, error);
+              return null;
+            }
           })
         );
-        setFavorites(detailedModels);
+        
+        // Filter out null results (failed fetches)
+        const validFavorites = detailedModels.filter(fav => fav !== null);
+        setFavorites(validFavorites);
       } catch (error) {
         console.error('Error fetching favorites:', error);
         toast.error("Failed to load your favorites");

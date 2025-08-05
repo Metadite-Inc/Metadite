@@ -11,6 +11,7 @@ import { apiService } from '../lib/api';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import ModelImageUploader from '../components/ModelImageUploader';
+import RegionSelector from '../components/admin/RegionSelector';
 
 const ModelEdit = () => {
   const { id } = useParams();
@@ -37,6 +38,7 @@ const ModelEdit = () => {
     doll_gross_weight: '',
     doll_packing_size: '',
     doll_body_size: '',
+    available_regions: ['usa', 'canada', 'mexico', 'uk', 'eu', 'asia'], // Default to all regions
   });
 
   const [primaryImageFile, setPrimaryImageFile] = useState(null);
@@ -72,6 +74,7 @@ const ModelEdit = () => {
             doll_gross_weight: modelDetails.specifications.find(s => s.name === 'Gross Weight')?.value.replace(' KG', '') || '',
             doll_packing_size: modelDetails.specifications.find(s => s.name === 'Packing Size')?.value.replace(' CM', '') || '',
             doll_body_size: modelDetails.specifications.find(s => s.name === 'Body Size')?.value.replace(' CM', '') || '',
+            available_regions: modelDetails.available_regions || ['usa', 'canada', 'mexico', 'uk', 'eu', 'asia'],
           });
           setPrimaryImagePreview(modelDetails.image);
           setExistingImages(modelDetails.gallery || []);
@@ -446,6 +449,14 @@ const ModelEdit = () => {
                         Available for purchase
                       </span>
                     </label>
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <RegionSelector
+                      selectedRegions={formData.available_regions}
+                      onRegionsChange={(regions) => setFormData({...formData, available_regions: regions})}
+                      label="Available Regions"
+                    />
                   </div>
                 </div>
 

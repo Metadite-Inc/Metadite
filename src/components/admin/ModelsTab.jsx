@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import ModelImageUploader from '../ModelImageUploader';
+import RegionSelector from './RegionSelector';
 import { useTheme } from '../../context/ThemeContext';
 import { apiService } from '../../lib/api';
 
@@ -38,6 +39,7 @@ const ModelsTab = ({ isLoaded }) => {
     doll_body_size: '',
     in_stock: true,
     assigned: false,
+    available_regions: ['usa', 'canada', 'mexico', 'uk', 'eu', 'asia'], // Default to all regions
   });
 
   const [primaryImageFile, setPrimaryImageFile] = useState(null);
@@ -515,6 +517,14 @@ const ModelsTab = ({ isLoaded }) => {
                       Available for purchase
                     </span>
                   </label>
+                </div>
+
+                <div className="md:col-span-2">
+                  <RegionSelector
+                    selectedRegions={newModelData.available_regions}
+                    onRegionsChange={(regions) => setNewModelData({...newModelData, available_regions: regions})}
+                    label="Available Regions"
+                  />
                 </div>
               </div>
               <div className="flex justify-end">

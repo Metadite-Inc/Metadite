@@ -86,9 +86,19 @@ class FavoriteApiService {
    */
   async addToFavorites(dollId: number): Promise<FavoriteModel | null> {
     try {
+      console.log('addToFavorites called with dollId:', dollId);
+      
+      // Validate dollId
+      if (!dollId || dollId <= 0) {
+        toast.error('Invalid model ID');
+        console.error('Invalid dollId provided:', dollId);
+        return null;
+      }
+      
       const data: AddFavoriteRequest = {
         doll_id: dollId
       };
+      console.log('Sending data to backend:', data);
       
       const result = await this.request<FavoriteModel>('/api/favorites/', {
         method: 'POST',

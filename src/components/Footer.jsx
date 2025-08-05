@@ -1,15 +1,17 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Facebook, Twitter, Instagram, Mail, ShoppingCart, Heart, User, Home, MessageCircle, Baby } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import useUnreadCount from '../hooks/useUnreadCount';
 import { useMemo, useState } from 'react';
 import { newsletterApi } from '../lib/api/newsletter_api';
+import { toast } from 'sonner';
 
 const Footer = () => {
   const { user } = useAuth();
   const { unreadData } = useUnreadCount();
   const { cartItems } = useCart();
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [isSubscribing, setIsSubscribing] = useState(false);
 
@@ -31,6 +33,25 @@ const Footer = () => {
       console.error('Newsletter subscription error:', error);
     } finally {
       setIsSubscribing(false);
+    }
+  };
+
+  const handleLoginSignupClick = (e) => {
+    e.preventDefault();
+    
+    if (user) {
+      // User is already logged in
+      if (user.role === 'admin') {
+        navigate('/admin');
+      } else if (user.role === 'moderator') {
+        navigate('/moderator');
+      } else {
+        navigate('/dashboard');
+      }
+      toast.info('You are already logged in!');
+    } else {
+      // User is not logged in, navigate to login page
+      navigate('/login');
     }
   };
   return (
@@ -66,7 +87,7 @@ const Footer = () => {
                 <li><Link to="/" className="text-gray-300 hover:text-white transition-colors">Home</Link></li>
                 <li><Link to="/models" className="text-gray-300 hover:text-white transition-colors">Models</Link></li>
                 {/*<li><Link to="/vip-content" className="text-gray-300 hover:text-white transition-colors">VIP Content</Link></li>*/}
-                <li><Link to="/login" className="text-gray-300 hover:text-white transition-colors">Login / Sign Up</Link></li>
+                <li><a href="#" onClick={handleLoginSignupClick} className="text-gray-300 hover:text-white transition-colors cursor-pointer">Login / Sign Up</a></li>
               </ul>
             </div>
             

@@ -8,6 +8,7 @@ export interface ModelBasic {
   description: string;
   image: string;
   category: string;
+  available_regions?: string[];
 }
 
 export interface CreateModelRequest {
@@ -32,6 +33,7 @@ export interface CreateModelRequest {
   assigned?: boolean;
   doll_origin?: string;
   doll_hair_type?: string;
+  available_regions?: string[];
 }
 
 export interface ModelDetail extends ModelBasic {
@@ -42,6 +44,7 @@ export interface ModelDetail extends ModelBasic {
   inStock: boolean;
   specifications: { name: string; value: string }[];
   detailedDescription: string;
+  available_regions?: string[];
   shippingInfo: {
     dimensions: string;
     weight: string;
@@ -62,10 +65,24 @@ export interface PaginationResponse<T> {
 
 const API_URL = import.meta.env.VITE_API_BASE_URL;
 
+// Add caching for API responses
+const cache = new Map();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
 class ApiService {
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+    const url = `${API_URL}${endpoint}`;
+    
+    // Check cache for GET requests
+    if (options.method === 'GET' || !options.method) {
+      const cached = cache.get(url);
+      if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+        return cached.data;
+      }
+    }
+    
     try {
-      const response = await fetch(`${API_URL}${endpoint}`, {
+      const response = await fetch(url, {
         ...options,
         headers: {
           "Content-Type": "application/json",
@@ -74,14 +91,24 @@ class ApiService {
       });
 
       if (!response.ok) {
-        throw new Error(`API Error: ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        console.error('API Error:', response.status, errorData);
+        throw new Error(`API Error: ${response.status} - ${errorData.detail || 'Unknown error'}`);
       }
 
-      return await response.json();
+      const data = await response.json();
+      
+      // Cache GET responses
+      if (options.method === 'GET' || !options.method) {
+        cache.set(url, {
+          data,
+          timestamp: Date.now()
+        });
+      }
+      
+      return data;
     } catch (error) {
-      toast.error("Failed to load data", {
-        description: "Please try again later",
-      });
+      console.error('API Request Error:', error);
       throw error;
     }
   }
@@ -110,6 +137,7 @@ class ApiService {
           description: doll.description.substring(0, 100) + "...", // Truncate for preview
           image: mainImage,
           category: doll.doll_category,
+          available_regions: doll.available_regions || ['usa', 'canada', 'mexico', 'uk', 'eu', 'asia'],
         };
       });
 
@@ -153,6 +181,7 @@ class ApiService {
           description: doll.description.substring(0, 100) + "...",
           image: mainImage,
           category: doll.doll_category,
+          available_regions: doll.available_regions || ['usa', 'canada', 'mexico', 'uk', 'eu', 'asia'],
         };
       });
 
@@ -333,6 +362,7 @@ class ApiService {
         reviews: reviews.length, // Total number of reviews
         inStock: doll.is_available,
         category: doll.doll_category,
+        available_regions: doll.available_regions || ['usa', 'canada', 'mexico', 'uk', 'eu', 'asia'],
         specifications: [
           { name: 'Height', value: `${doll.doll_height} CM` },
           { name: "Material", value: doll.doll_material },
@@ -399,6 +429,7 @@ class ApiService {
             description: doll.description.substring(0, 100) + "...",
             image: mainImage,
             category: doll.doll_category,
+            available_regions: doll.available_regions || ['usa', 'canada', 'mexico', 'uk', 'eu', 'asia'],
           };
         });
     } catch (error) {

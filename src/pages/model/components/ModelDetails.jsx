@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { createChatRoom } from '../../../services/ChatService';
 import { toast } from 'sonner';
 import { useAuth } from '../../../context/AuthContext';
+import RegionDisplay from '../../../components/RegionDisplay';
 
 const ModelDetails = ({ 
   model, 
@@ -141,6 +142,41 @@ const ModelDetails = ({
           Buy Now
         </a>
       </div>
+
+      {/* Availability Line */}
+      {model.available_regions && model.available_regions.length > 0 && (
+        <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700 rounded-lg border border-blue-200 dark:border-gray-600">
+          <div className="flex items-center space-x-2 mb-2">
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+            <span className={`text-sm font-semibold ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
+              🌍 Available
+            </span>
+          </div>
+          <div className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+            <span className="font-medium">Shipping to: </span>
+            <span className="font-semibold text-blue-600 dark:text-blue-400">
+              {model.available_regions.map((region, index) => {
+                const regionNames = {
+                  usa: '🇺🇸 USA',
+                  canada: '🇨🇦 Canada', 
+                  mexico: '🇲🇽 Mexico',
+                  uk: '🇬🇧 UK',
+                  eu: '🇪🇺 EU',
+                  asia: '🌏 Asia'
+                };
+                return (
+                  <span key={region} className="inline-block mr-2">
+                    {regionNames[region] || region}
+                  </span>
+                );
+              })}
+            </span>
+          </div>
+          <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+            ✈️ Free shipping {/*• 📦 7-14 business days*/}
+          </div>
+        </div>
+      )}
 
       {/*<div className="mt-6">
         <Button 
