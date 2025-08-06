@@ -216,6 +216,9 @@ class ApiService {
         return null;
       }
       
+      console.log("API: Creating model with data:", model);
+      console.log("API: Available regions:", model.available_regions);
+      
       const response = await this.request<any>('/api/dolls/', {
         method: 'POST',
         headers: {

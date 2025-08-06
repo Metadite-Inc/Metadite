@@ -79,12 +79,15 @@ const ModelsTab = ({ isLoaded }) => {
     }
 
     try {
+      console.log("Sending model data:", newModelData);
+      console.log("Available regions:", newModelData.available_regions);
       const createdModel = await apiService.createModel(newModelData);
       if (createdModel) {
         setCreatedModelId(createdModel.id);
         toast.success("Model details saved successfully!");
       }
     } catch (err) {
+      console.error("Error creating model:", err);
       toast.error("Failed to save model details", { description: err.message });
     }
   };

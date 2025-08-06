@@ -5,6 +5,7 @@ import { ShoppingCart, Heart } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { toast } from 'sonner';
 import { favoriteApiService } from '../lib/api/favorite_api';
+import { ensureNumberId, isValidId } from '../lib/utils';
 
 // Import the Model type directly from CartContext
 import type { Model } from '../context/CartContext';
@@ -37,7 +38,7 @@ const ModelCard = ({ model, user, isFavorite, onRemoveFavorite }: ModelProps) =>
         const token = localStorage.getItem('access_token');
         if (!token) return;
 
-        const { is_favorite, favorite_id } = await favoriteApiService.checkIsFavorite(Number(model.id));
+        const { is_favorite, favorite_id } = await favoriteApiService.checkIsFavorite(ensureNumberId(model.id));
         setIsLiked(is_favorite);
         if (favorite_id) {
           setFavoriteId(favorite_id);
@@ -72,13 +73,13 @@ const ModelCard = ({ model, user, isFavorite, onRemoveFavorite }: ModelProps) =>
           return;
         }
         // Validate model ID
-        if (!model.id || Number(model.id) <= 0) {
+        if (!isValidId(model.id)) {
           toast.error('Invalid model ID');
           console.error('Invalid model ID:', model.id);
           return;
         }
         
-        const result = await favoriteApiService.addToFavorites(Number(model.id));
+        const result = await favoriteApiService.addToFavorites(ensureNumberId(model.id));
         if (result) {
           setFavoriteId(result.id);
           setIsLiked(true);

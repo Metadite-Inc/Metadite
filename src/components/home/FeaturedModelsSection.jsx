@@ -11,10 +11,10 @@ const FeaturedModelsSection = ({ models = [], loading = false, theme, user }) =>
           <h2 className={`text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Featured Models</h2>
           <Link
             to="/models"
-            className="inline-flex items-center bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white rounded-md px-4 py-2 font-medium shadow hover:opacity-90 focus:ring-2 focus:ring-metadite-primary transition"
+            className="inline-flex items-center bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white rounded-md px-3 py-1.5 sm:px-4 sm:py-2 font-medium shadow hover:opacity-90 focus:ring-2 focus:ring-metadite-primary transition text-sm sm:text-base whitespace-nowrap"
           >
             <span>View All</span>
-            <ChevronRight className="h-5 w-5 ml-2" />
+            <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5 ml-1 sm:ml-2" />
           </Link>
         </div>
         
@@ -47,7 +47,7 @@ const FeaturedModelsSection = ({ models = [], loading = false, theme, user }) =>
             </p>
             <Link 
               to="/models" 
-              className="inline-block mt-4 bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white px-6 py-2 rounded-md hover:opacity-90 transition-opacity"
+              className="inline-block mt-4 bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white px-6 py-2 rounded-md hover:opacity-90 transition-opacity w-full sm:w-auto text-center"
             >
               Browse All Models
             </Link>

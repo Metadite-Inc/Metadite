@@ -38,26 +38,32 @@ class NewsletterApiService {
 
   async subscribeToNewsletter(email: string): Promise<NewsletterSubscriptionResponse> {
     try {
-      const result = await this.request<NewsletterSubscriptionResponse>('/api/newsletter/subscribe/', {
+      const result = await this.request<NewsletterSubscriptionResponse & { message?: string }>('/api/newsletter/subscribe', {
         method: 'POST',
         body: JSON.stringify({ email }),
       });
       
-      toast.success('Successfully subscribed to newsletter!');
+      // Show appropriate message based on response
+      if (result.message) {
+        if (result.message.includes('already subscribed')) {
+          toast.info('You are already subscribed to our newsletter!');
+        } else {
+          toast.success(result.message);
+        }
+      } else {
+        toast.success('Successfully subscribed to newsletter!');
+      }
+      
       return result;
     } catch (error: any) {
-      if (error.message?.includes('already subscribed')) {
-        toast.error('This email is already subscribed to our newsletter');
-      } else {
-        toast.error('Failed to subscribe to newsletter. Please try again.');
-      }
+      toast.error('Failed to subscribe to newsletter. Please try again.');
       throw error;
     }
   }
 
   async unsubscribeFromNewsletter(email: string): Promise<void> {
     try {
-      await this.request('/api/newsletter/unsubscribe/', {
+      await this.request('/api/newsletter/unsubscribe', {
         method: 'POST',
         body: JSON.stringify({ email }),
       });

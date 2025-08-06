@@ -49,7 +49,7 @@ class AdminNewsletterApiService {
 
   async getAllSubscriptions(skip: number = 0, limit: number = 100): Promise<NewsletterSubscription[]> {
     try {
-      const result = await this.request<NewsletterSubscription[]>(`/api/newsletter/subscriptions/?skip=${skip}&limit=${limit}`);
+      const result = await this.request<NewsletterSubscription[]>(`/api/newsletter/admin/subscriptions?skip=${skip}&limit=${limit}`);
       return result;
     } catch (error: any) {
       toast.error('Failed to fetch newsletter subscriptions');
@@ -59,9 +59,8 @@ class AdminNewsletterApiService {
 
   async unsubscribeEmail(email: string): Promise<void> {
     try {
-      await this.request('/api/newsletter/admin/unsubscribe/', {
+      await this.request(`/api/newsletter/admin/unsubscribe/${email}`, {
         method: 'POST',
-        body: JSON.stringify({ email }),
       });
       toast.success('Successfully unsubscribed email');
     } catch (error: any) {

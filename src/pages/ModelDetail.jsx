@@ -6,6 +6,7 @@ import { useCart } from '../context/CartContext';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { userApi } from '../lib/api/user_api';
+import { ensureNumberId, isValidId } from '../lib/utils';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import ModelGallery from './model/components/ModelGallery';
@@ -46,7 +47,7 @@ const ModelDetail = () => {
       if (user && model) {
         try {
           const favorites = await userApi.getUserFavoriteModels();
-          const favorite = favorites.find(fav => fav.doll_id === parseInt(model.id));
+          const favorite = favorites.find(fav => fav.doll_id === model.id);
           if (favorite) {
             setIsLiked(true);
             setFavoriteId(favorite.id);
@@ -68,9 +69,9 @@ const ModelDetail = () => {
     const fetchUserReviews = async () => {
       if (user && model) {
         try {
-          const reviews = await userApi.getUserModelReviews(user.id);
+          const reviews = await userApi.getUserModelReviews();
           // Filter reviews for this specific model
-          const modelReviews = reviews.filter(review => review.doll_id === parseInt(model.id));
+          const modelReviews = reviews.filter(review => review.doll_id === model.id);
           setUserReviews(modelReviews);
         } catch (error) {
           console.error("Error fetching user reviews:", error);
@@ -117,13 +118,13 @@ const ModelDetail = () => {
     try {
       if (!isLiked) {
         // Add to favorites
-        const response = await userApi.addModelToFavorites(0, parseInt(model.id)); // 0 as placeholder
+        const response = await userApi.addModelToFavorites(ensureNumberId(model.id));
         setFavoriteId(response.id);
         setIsLiked(true);
         toast.success("Added to favorites");
       } else {
         // Remove from favorites
-        await userApi.removeModelFromFavorites(favoriteId);
+        await userApi.removeModelFromFavorites(ensureNumberId(model.id));
         setIsLiked(false);
         setFavoriteId(null);
         toast.success("Removed from favorites");
@@ -150,8 +151,7 @@ const ModelDetail = () => {
       try {
         // Add the new review via API
         const reviewData = await userApi.createModelReview(
-          user.id, 
-          parseInt(model.id), 
+          ensureNumberId(model.id), 
           newReview.rating, 
           newReview.comment
         );

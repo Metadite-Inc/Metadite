@@ -116,7 +116,7 @@ const HeroSection = ({ isLoaded, user, hasVipAccess, theme }) => {
               Real. Touchable. Irresistible.
             </span>
             <h1
-              className="text-3xl md:text-5xl lg:text-4xl font-bold mb-4 bg-gradient-to-r from-metadite-dark via-metadite-primary to-metadite-secondary bg-clip-text text-transparent relative leading-tight"
+              className="text-2xl md:text-5xl lg:text-4xl font-bold mb-4 bg-gradient-to-r from-metadite-dark via-metadite-primary to-metadite-secondary bg-clip-text text-transparent relative leading-tight"
               tabIndex={0}
             >
               <span {...typewriterHandlers}>
@@ -136,7 +136,7 @@ const HeroSection = ({ isLoaded, user, hasVipAccess, theme }) => {
             <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
               <Link 
                 to="/models"
-                className="bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white px-6 py-3 rounded-lg hover:opacity-90 transition-opacity shadow-lg font-medium"
+                className="bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white px-4 py-2 sm:px-6 sm:py-3 rounded-lg hover:opacity-90 transition-opacity shadow-lg font-medium text-sm sm:text-base"
               >
                 Browse Models
               </Link>
@@ -159,7 +159,7 @@ const HeroSection = ({ isLoaded, user, hasVipAccess, theme }) => {
             </div>
           </div>
           
-          <div className={`pt-10 pb-10 md:pl-8 md:w-2/5 transition-all duration-700 delay-300 ${isLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'} flex justify-center md:block`}>
+          <div className={`pt-0 pb-10 md:pl-8 md:w-2/5 transition-all duration-700 delay-300 ${isLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'} flex justify-center md:block`}>
             <div className="relative">
               {/* Slideshow Start */}
               <div className="relative w-screen max-w-none px-0 mx-0 rounded-none sm:w-auto sm:max-w-[97vw] sm:px-0 sm:mx-auto sm:rounded-xl aspect-[3.2/5.4] z-10 min-h-[420px] max-h-[500px] overflow-hidden">
