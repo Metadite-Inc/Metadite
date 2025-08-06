@@ -24,7 +24,7 @@ const Help = () => {
             <ul className="list-disc list-inside space-y-2">
               <li>Learn how to create an account and set up your profile.</li>
               <li>Explore our premium model collection and features.</li>
-              <li>Understand membership levels and VIP access.</li>
+              {/*<li>Understand membership levels and VIP access.</li>*/}
             </ul>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 transition-colors">

@@ -30,7 +30,7 @@ const FeaturesSection = ({ theme }) => {
           />
           
           <FeatureCard 
-            icon={<ShipWheel className="h-8 w-8 text-white" />} 
+            icon={<ShipWheel className="h-8 w-8 text-white animate-spin" />} 
             title=" Ready to Ship" 
             description="No delays, no waiting lists. Every doll is in stock and ships discreetly, directly to your door. Premium packaging, private delivery - pleasure is just days away."
             delay="0.6s"

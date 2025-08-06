@@ -86,7 +86,7 @@ const Footer = () => {
               <ul className="space-y-2">
                 <li><Link to="/" className="text-gray-300 hover:text-white transition-colors">Home</Link></li>
                 <li><Link to="/models" className="text-gray-300 hover:text-white transition-colors">Models</Link></li>
-                {/*<li><Link to="/vip-content" className="text-gray-300 hover:text-white transition-colors">VIP Content</Link></li>*/}
+                <li><Link to="/Privacy" className="text-gray-300 hover:text-white transition-colors">Privacy policy</Link></li>
                 <li><a href="#" onClick={handleLoginSignupClick} className="text-gray-300 hover:text-white transition-colors cursor-pointer">Login / Sign Up</a></li>
               </ul>
             </div>

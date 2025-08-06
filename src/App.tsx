@@ -36,6 +36,7 @@ import NotFound from "./pages/NotFound";
 import Upgrade from "./pages/Upgrade";
 import ChatPage from "./pages/ChatPage";
 import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
 import OrderDetail from "./pages/OrderDetail";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ModeratorChatActivity from './pages/ModeratorChatActivity';
@@ -203,6 +204,7 @@ const App = () => {
                     <Route path="/contact" element={<Contact />} />
                     <Route path="/upgrade" element={<Upgrade />} />
                     <Route path="/terms" element={<Terms />} />
+                    <Route path="/privacy" element={<Privacy />} />
                     <Route 
                       path="/order/:orderId" 
                       element={

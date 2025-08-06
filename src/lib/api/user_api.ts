@@ -226,9 +226,9 @@ class userApiService {
     }
   }
 
-  async removeModelFromFavorites(favoriteId: number): Promise<void> {
+  async removeModelFromFavorites(dollId: number): Promise<void> {
     try {
-      await this.request<void>(`/api/favorites/${favoriteId}`, {
+      await this.request<void>(`/api/favorites/${dollId}`, {
         method: 'DELETE',
       });
       toast.success("Model removed from favorites");

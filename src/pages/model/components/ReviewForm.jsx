@@ -49,7 +49,6 @@ const ReviewForm = ({ modelId, onReviewSubmitted, existingReview = null, onCance
       } else {
         // Create new review
         reviewData = await userApi.createModelReview(
-          user.id, 
           parseInt(modelId), 
           rating, 
           comment
