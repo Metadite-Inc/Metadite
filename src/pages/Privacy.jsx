@@ -34,6 +34,7 @@ const Privacy = () => {
               <FileText className="w-5 h-5 text-blue-500 mr-2" />
               <span className={`font-medium ${isDark ? 'text-blue-300' : 'text-blue-800'}`}>
                 Last updated: August 6, 2025
+
               </span>
             </div>
           </div>
@@ -322,6 +323,7 @@ const Privacy = () => {
                     We may update this Privacy Policy as needed to reflect changes in technology, legal requirements, or our operations. When we do, we will revise the "Last updated" date and post the updated policy on this page.
                     <br/><br/>
                     Last updated: August 6, 2025
+
                   </p>
                 </div>
               </div>
@@ -343,6 +345,7 @@ const Privacy = () => {
                   className={`inline-flex items-center justify-center px-6 py-3 bg-metadite-primary text-white rounded-lg hover:bg-metadite-primary/90 transition-colors`}
                 >
                   Contact Support Team
+
                 </a>
                 <Link 
                   to="/terms"

@@ -38,7 +38,6 @@ export const isValidId = (id: string | number): boolean => {
     return false;
   }
 };
-
 // Region detection utility
 export const detectUserRegion = async (): Promise<string> => {
   try {
