@@ -7,8 +7,16 @@ import { apiService } from '../lib/api';
  * @returns {Promise<Array>} Array of featured models
  */
 export async function fetchFeaturedModels() {
+  const API_URL = import.meta.env.VITE_API_BASE_URL;
+  const url = `${API_URL}/api/dolls/category/limited_edition`;
+
   try {
-    const dolls = await apiService.request('/api/dolls/category/limited_edition');
+    const res = await fetch(url);
+    if (!res.ok) {
+      console.error(`Failed to fetch featured models: ${res.status}`);
+      return [];
+    }
+    const dolls = await res.json();
     const backendUrl = import.meta.env.VITE_API_BASE_URL;
     return (dolls || []).slice(0, 3).map(doll => {
       let mainImage = '';
@@ -23,10 +31,11 @@ export async function fetchFeaturedModels() {
         description: doll.description.substring(0, 100) + "...",
         image: mainImage,
         category: doll.doll_category,
-        available_regions: doll.available_regions || ['usa', 'canada', 'mexico', 'uk', 'eu', 'asia'],
+        available_regions: doll.available_regions || ['usa', 'canada', 'mexico', 'uk', 'eu', 'au', 'nz'],
       };
     });
   } catch (error) {
+    console.error('Error in fetchFeaturedModels:', error);
     return [];
   }
 }

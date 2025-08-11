@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, User, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
@@ -7,6 +7,7 @@ import { useTheme } from '../../context/ThemeContext';
 import FormInput from './FormInput';
 import SocialLoginButtons from './SocialLoginButtons';
 import RegionSelect from './RegionSelect';
+import { detectUserRegion } from '../../lib/utils';
 
 const LoginForm = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -23,6 +24,21 @@ const LoginForm = () => {
   const { login, register } = useAuth();
   const { theme } = useTheme();
   const navigate = useNavigate();
+  
+  // Auto-detect user region on component mount
+  useEffect(() => {
+    const autoDetectRegion = async () => {
+      try {
+        const detectedRegion = await detectUserRegion();
+        setRegion(detectedRegion);
+      } catch (error) {
+        console.error('Failed to detect region:', error);
+        // Keep default empty state, user can select manually
+      }
+    };
+    
+    autoDetectRegion();
+  }, []);
   
   const handleToggleView = () => {
     setIsLogin(!isLogin);
@@ -84,7 +100,7 @@ const LoginForm = () => {
       }
       
       if (isLogin) {
-        const success = await login(email, password);
+        const success = await login(email, password, region);
         if (success) {
           toast.success("Login successful!");
           // Navigate to dashboard - server-side will handle role-based access

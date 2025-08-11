@@ -37,8 +37,6 @@ class CartApiService extends BaseApiService {
           quantity: quantity
         }),
       });
-      
-      toast.success('Item added to cart');
     } catch (error) {
       toast.error('Failed to add item to cart', {
         description: error instanceof Error ? error.message : 'Unknown error',

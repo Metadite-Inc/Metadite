@@ -9,6 +9,7 @@ if (!API_BASE_URL) {
 interface LoginRequest {
   email: string;
   password: string;
+  region?: string;
 }
 
 interface RegisterRequest {
@@ -61,6 +62,7 @@ api.interceptors.request.use((config) => {
 export const authApi = {
   // Login user
   async login(data: LoginRequest): Promise<TokenResponse> {
+    console.log('Attempting login with payload:', data); // Added for debugging
     const response = await api.post<TokenResponse>('/api/auth/login', data);
     localStorage.setItem('access_token', response.data.access_token);
     return response.data;

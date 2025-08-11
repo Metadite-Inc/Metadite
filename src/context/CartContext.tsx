@@ -156,7 +156,10 @@ export function CartProvider({ children }: CartProviderProps) {
   const addToCart = async (item: Model) => {
     // Don't allow staff users to add to cart
     if (isStaffUser) {
-      toast.error('Cart functionality is not available for staff accounts');
+      toast.error('Cart functionality is not available for staff accounts', {
+        duration: 1000,
+        position: 'bottom-center'
+      });
       return;
     }
 

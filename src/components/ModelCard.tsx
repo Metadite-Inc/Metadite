@@ -53,8 +53,8 @@ const ModelCard = ({ model, user, isFavorite, onRemoveFavorite }: ModelProps) =>
   
   const handleAddToCart = () => {
     addToCart(model);
-    toast.success("Added to cart!", {
-      description: `${model.name} has been added to your cart.`,
+    toast.success(`${model.name} added to cart`, {
+      duration: 1000,
     });
   };
   
@@ -118,28 +118,7 @@ const ModelCard = ({ model, user, isFavorite, onRemoveFavorite }: ModelProps) =>
           decoding="async"
         />
         
-        {/* Location Overlay - Bottom Left */}
-        {model.available_regions && model.available_regions.length > 0 && (
-          <div className="absolute bottom-2 left-2 bg-black/80 text-white px-2 py-1 rounded-md text-xs">
-            <div className="flex items-center space-x-2">
-              {model.available_regions.map((region) => {
-                const regionConfig = {
-                  usa: 'USA',
-                  canada: 'CA',
-                  mexico: 'MX',
-                  uk: 'UK',
-                  eu: 'EU',
-                  asia: 'AS'
-                };
-                return (
-                  <span key={region} className="text-xs">
-                    {regionConfig[region] || region}
-                  </span>
-                );
-              })}
-            </div>
-          </div>
-        )}
+
         </div>
         
 

@@ -81,13 +81,18 @@ class ApiService {
       }
     }
     
+    const headers = new Headers(options.headers);
+    headers.set('Content-Type', 'application/json');
+
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      headers.set('Authorization', `Bearer ${token}`);
+    }
+
     try {
       const response = await fetch(url, {
         ...options,
-        headers: {
-          "Content-Type": "application/json",
-          ...options.headers,
-        },
+        headers,
       });
 
       if (!response.ok) {
@@ -114,13 +119,57 @@ class ApiService {
   }
 
   // Get all models (dolls) with pagination - removed category parameter
-  async getModels(skip = 0, limit = 50): Promise<PaginationResponse<ModelBasic>> {
+    async getAllModels(skip = 0, limit = 50): Promise<PaginationResponse<ModelBasic>> {
+    try {
+      const response = await this.request<PaginationResponse<any> | any[]>(`/api/dolls/?skip=${skip}&limit=${limit}`);
+      const backendUrl = import.meta.env.VITE_API_BASE_URL;
+
+      const dolls = Array.isArray(response) ? response : response.data;
+
+      const transformedData = dolls.map(doll => {
+        let mainImage = '';
+        if (Array.isArray(doll.images)) {
+          const primary = doll.images.find((img: any) => img.is_primary);
+          mainImage = primary ? `${backendUrl}${primary.image_url}` : '';
+        }
+        return {
+          id: doll.id,
+          name: doll.name,
+          price: doll.price,
+          description: doll.description.substring(0, 100) + "...",
+          image: mainImage,
+          category: doll.doll_category,
+          available_regions: doll.available_regions || ['usa', 'canada', 'mexico', 'uk', 'eu', 'au', 'nz'],
+        };
+      });
+
+      if (Array.isArray(response)) {
+        return {
+          data: transformedData,
+          total: transformedData.length,
+          skip: skip,
+          limit: limit,
+        };
+      }
+
+      return {
+        ...response,
+        data: transformedData,
+      };
+    } catch (error) {
+      console.error('Failed to fetch all models:', error);
+      throw error;
+    }
+  }
+
+  async getModels(region: string, skip = 0, limit = 50): Promise<PaginationResponse<ModelBasic>> {
     try {
       // Build query parameters without category
-      let queryParams = `skip=${skip}&limit=${limit}`;
+      let queryParams = `region=${region}&skip=${skip}&limit=${limit}`;
       
       // Add pagination parameters to the API request
-      const dolls = await this.request<any[]>(`/api/dolls/?${queryParams}`);
+      const response = await this.request<PaginationResponse<any> | any[]>(`/api/dolls/?${queryParams}`);
+      const dolls = Array.isArray(response) ? response : response.data;
       const backendUrl = import.meta.env.VITE_API_BASE_URL;
 
       // Transform the API response to match our ModelBasic interface
@@ -137,20 +186,20 @@ class ApiService {
           description: doll.description.substring(0, 100) + "...", // Truncate for preview
           image: mainImage,
           category: doll.doll_category,
-          available_regions: doll.available_regions || ['usa', 'canada', 'mexico', 'uk', 'eu', 'asia'],
+          available_regions: doll.available_regions || ['usa', 'canada', 'mexico', 'uk', 'eu', 'au', 'nz'],
         };
       });
 
-      // For now, estimate the total from what we have
-      // In a real API, this would come from the backend
-      const total = Math.max(skip + dolls.length + (dolls.length === limit ? 22 : 0), dolls.length);
+      if (Array.isArray(response)) {
+        return {
+          data: transformedData,
+          total: transformedData.length,
+          skip: skip,
+          limit: limit,
+        };
+      }
 
-      return {
-        data: transformedData,
-        total: total,
-        skip: skip,
-        limit: limit
-      };
+      return { ...response, data: transformedData };
     } catch (error) {
       return {
         data: [],
@@ -181,7 +230,7 @@ class ApiService {
           description: doll.description.substring(0, 100) + "...",
           image: mainImage,
           category: doll.doll_category,
-          available_regions: doll.available_regions || ['usa', 'canada', 'mexico', 'uk', 'eu', 'asia'],
+          available_regions: doll.available_regions || ['usa', 'canada', 'mexico', 'uk', 'eu', 'au', 'nz'],
         };
       });
 
@@ -365,7 +414,7 @@ class ApiService {
         reviews: reviews.length, // Total number of reviews
         inStock: doll.is_available,
         category: doll.doll_category,
-        available_regions: doll.available_regions || ['usa', 'canada', 'mexico', 'uk', 'eu', 'asia'],
+        available_regions: doll.available_regions || ['usa', 'canada', 'mexico', 'uk', 'eu', 'au', 'nz'],
         specifications: [
           { name: 'Height', value: `${doll.doll_height} CM` },
           { name: "Material", value: doll.doll_material },
@@ -432,7 +481,7 @@ class ApiService {
             description: doll.description.substring(0, 100) + "...",
             image: mainImage,
             category: doll.doll_category,
-            available_regions: doll.available_regions || ['usa', 'canada', 'mexico', 'uk', 'eu', 'asia'],
+            available_regions: doll.available_regions || ['usa', 'canada', 'mexico', 'uk', 'eu', 'au', 'nz'],
           };
         });
     } catch (error) {

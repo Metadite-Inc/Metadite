@@ -126,7 +126,7 @@ class FavoriteApiService {
         method: 'DELETE',
       });
       
-      toast.success('Removed from favorites');
+      //toast.success('Removed from favorites');
       return true;
     } catch (error) {
       toast.error('Failed to remove from favorites', {

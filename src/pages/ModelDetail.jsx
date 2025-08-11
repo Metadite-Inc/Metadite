@@ -101,8 +101,8 @@ const ModelDetail = () => {
         quantity
       };
       addToCart(itemToAdd);
-      toast.success("Added to cart!", {
-        description: `${model.name} has been added to your cart.`,
+      toast.success(`${model.name} added to cart`, {
+        duration: 1000,
       });
     }
   };

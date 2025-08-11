@@ -213,15 +213,9 @@ class userApiService {
           doll_id: dollId
         })
       });
-      toast.success("Model added to favorites");
       return result;
     } catch (error) {
-      // Show more specific error messages
-      if (error.message?.includes("401") || error.message?.includes("403")) {
-        toast.error("Authentication failed. Please log in again.");
-      } else {
-        toast.error("Failed to add model to favorites");
-      }
+      // Re-throw the error to be handled by the calling component
       throw error;
     }
   }
@@ -231,14 +225,8 @@ class userApiService {
       await this.request<void>(`/api/favorites/${dollId}`, {
         method: 'DELETE',
       });
-      toast.success("Model removed from favorites");
     } catch (error) {
-      // Show more specific error messages
-      if (error.message?.includes("401") || error.message?.includes("403")) {
-        toast.error("Authentication failed. Please log in again.");
-      } else {
-        toast.error("Failed to remove model from favorites");
-      }
+      // Re-throw the error to be handled by the calling component
       throw error;
     }
   }

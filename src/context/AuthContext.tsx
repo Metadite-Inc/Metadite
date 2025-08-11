@@ -17,7 +17,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string, region?: string) => Promise<boolean>;
   logout: () => void;
   refreshUser: () => Promise<void>;
   register: (email: string, password: string, name: string, region: string) => Promise<void>;
@@ -30,10 +30,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (email: string, password: string, region?: string): Promise<boolean> => {
     try {
       setLoading(true);
-      await authApi.login({ email, password });
+      await authApi.login({ email, password, region });
       
       // Get user info after successful login
       const userResponse = await authApi.getCurrentUser();
