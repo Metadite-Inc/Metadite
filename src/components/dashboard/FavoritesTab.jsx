@@ -47,7 +47,7 @@ const FavoritesTab = ({ user }) => {
                   description: favorite.doll.description,
                   image: favorite.doll.image,
                   category: favorite.doll.category,
-                  available_regions: favorite.doll.available_regions || ['usa', 'canada', 'mexico', 'uk', 'eu', 'asia']
+                  available_regions: favorite.doll.available_regions || ['usa', 'canada', 'mexico', 'uk', 'eu', 'australia', 'new_zealand']
                 };
               } else {
                 // Otherwise fetch the full model details

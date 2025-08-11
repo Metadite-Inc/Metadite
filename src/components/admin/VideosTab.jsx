@@ -21,7 +21,7 @@ const VideosTab = ({ isLoaded }) => {
     const fetchData = async () => {
       try {
         // Fetch models
-        const response = await apiService.getModels(0, 100); // Get up to 100 models
+        const response = await apiService.getAllModels(0, 100); // Get up to 100 models
         setModels(response.data);
         
         // Fetch all videos

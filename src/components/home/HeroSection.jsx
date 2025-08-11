@@ -131,7 +131,7 @@ const HeroSection = ({ isLoaded, user, hasVipAccess, theme }) => {
               </span>
             </h1>
             <p className="text-gray-600 text-lg mb-6">
-            Metadite isn’t fantasy — it’s real pleasure. Choose your perfect doll and make her yours today.
+            Metadite isn’t fantasy - it’s real pleasure. Choose your perfect doll and make her yours today.
             </p>
             <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
               <Link 

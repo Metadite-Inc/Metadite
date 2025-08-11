@@ -96,7 +96,7 @@ const ModeratorsTab = ({ isLoaded }) => {
       await adminApiService.createModerator({
         email: newModeratorData.email,
         full_name: newModeratorData.name,
-        region: "Asia", // Default value or could be added to form
+        region: "Australia", // Default value or could be added to form
         role: "moderator",
         membership_level: "standard",
         is_active: true,

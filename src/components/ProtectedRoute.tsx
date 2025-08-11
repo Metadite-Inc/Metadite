@@ -1,43 +1,29 @@
-
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 interface ProtectedRouteProps {
-  children: React.ReactNode;
-  allowedRoles: ('admin' | 'moderator' | 'user')[];
+  children: JSX.Element;
+  roles?: string[];
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles }) => {
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, roles }) => {
   const { user, loading } = useAuth();
+  const location = useLocation();
 
-  // Show loading state while checking authentication
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-metadite-primary"></div>
-      </div>
-    );
+    return <div>Loading...</div>;
   }
 
-  // Redirect to login if not authenticated
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Check if user role is allowed
-  if (!allowedRoles.includes(user.role)) {
-    // Redirect based on user role
-    if (user.role === 'admin') {
-      return <Navigate to="/admin" replace />;
-    } else if (user.role === 'moderator') {
-      return <Navigate to="/moderator" replace />;
-    } else {
-      return <Navigate to="/dashboard" replace />;
-    }
+  if (roles && !roles.includes(user.role)) {
+    return <Navigate to="/" replace />;
   }
 
-  return <>{children}</>;
+  return children;
 };
 
 export default ProtectedRoute;

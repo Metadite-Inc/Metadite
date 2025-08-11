@@ -7,6 +7,7 @@ import ModelFilters from '../components/models/ModelFilters';
 import ModelPagination from '../components/models/ModelPagination';
 import NoResults from '../components/models/NoResults';
 import { useTheme } from '../context/ThemeContext';
+import { detectUserRegion } from '../lib/utils';
 import { apiService } from '../lib/api';
 import { toast } from 'sonner';
 
@@ -25,29 +26,30 @@ const Models = () => {
   
   // Categories derived from fetched models
   const [categories, setCategories] = useState(['all']);
+  const [userRegion, setUserRegion] = useState('usa'); // Default to 'usa'
 
   // Fetch categories on component mount
   useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchInitialData = async () => {
+      const token = localStorage.getItem('access_token');
+      if (token) {
+        try {
+          const region = await detectUserRegion();
+          setUserRegion(region);
+        } catch (error) {
+          console.error('Failed to detect region:', error);
+        }
+      }
+
       try {
-        // Use a predefined list of categories instead of fetching all models
-        const predefinedCategories = [
-          'all',
-          'limited_edition',
-          'standard',
-          'premium'
-          //'exclusive',
-         // 'vintage',
-          //'custom'
-        ];
+        const predefinedCategories = ['all', 'limited_edition', 'standard', 'premium'];
         setCategories(predefinedCategories);
       } catch (error) {
         console.error('Failed to fetch categories:', error);
-        // Fallback to basic categories
         setCategories(['all', 'limited_edition', 'standard']);
       }
     };
-    fetchCategories();
+    fetchInitialData();
   }, []); // Only run once on mount
 
   useEffect(() => {
@@ -59,7 +61,7 @@ const Models = () => {
         let response;
         if (categoryFilter === 'all') {
           // Fetch all models with pagination
-          response = await apiService.getModels(skip, modelsPerPage);
+          response = await apiService.getModels(userRegion, skip, modelsPerPage);
         } else {
           // Fetch filtered models by category
           response = await apiService.getModelsByCategory(categoryFilter, skip, modelsPerPage);
@@ -80,7 +82,7 @@ const Models = () => {
     // Add a small delay to prevent rapid successive calls
     const timeoutId = setTimeout(fetchModels, 100);
     return () => clearTimeout(timeoutId);
-  }, [currentPage, categoryFilter]); // Add categoryFilter to dependencies
+  }, [currentPage, categoryFilter, userRegion]); // Add categoryFilter to dependencies
 
   // Filter models based on search and price filters (category filtering now handled by API)
   const filteredModels = models.filter((model) => {

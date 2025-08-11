@@ -102,39 +102,7 @@ const AdminSummaryTab = () => {
     return colorMap[color] || 'bg-gray-500';
   };
 
-  // const recentActivities = [
-  //   {
-  //     type: 'user_signup',
-  //     message: 'New user registration: john.doe@example.com',
-  //     time: '5 minutes ago',
-  //     icon: Users,
-  //     color: 'green'
-  //   },
-  //   {
-  //     type: 'payment',
-  //     message: 'VIP subscription purchased by emma@example.com',
-  //     time: '12 minutes ago',
-  //     icon: DollarSign,
-  //     color: 'purple'
-  //   },
-  //   {
-  //     type: 'alert',
-  //     message: 'Message flagged for review in #general',
-  //     time: '23 minutes ago',
-  //     icon: AlertTriangle,
-  //     color: 'red'
-  //   },
-  //   {
-  //     type: 'system',
-  //     message: 'Database backup completed successfully',
-  //     time: '1 hour ago',
-  //     icon: Server,
-  //     color: 'blue'
-  //   }
-  // ];
-
-
-  return (
+    return (
     <div className="space-y-6">
       {summaryData.map((section, sectionIndex) => (
         <div key={sectionIndex} className={`glass-card rounded-xl p-6 ${theme === 'dark' ? 'bg-gray-800/70' : ''}`}>

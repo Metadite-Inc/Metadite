@@ -38,7 +38,7 @@ const ModelEdit = () => {
     doll_gross_weight: '',
     doll_packing_size: '',
     doll_body_size: '',
-    available_regions: ['usa', 'canada', 'mexico', 'uk', 'eu', 'asia'], // Default to all regions
+          available_regions: ['usa', 'canada', 'mexico', 'uk', 'eu', 'australia', 'new_zealand'], // Default to all regions
   });
 
   const [primaryImageFile, setPrimaryImageFile] = useState(null);
@@ -74,7 +74,7 @@ const ModelEdit = () => {
             doll_gross_weight: modelDetails.specifications.find(s => s.name === 'Gross Weight')?.value.replace(' KG', '') || '',
             doll_packing_size: modelDetails.specifications.find(s => s.name === 'Packing Size')?.value.replace(' CM', '') || '',
             doll_body_size: modelDetails.specifications.find(s => s.name === 'Body Size')?.value.replace(' CM', '') || '',
-            available_regions: modelDetails.available_regions || ['usa', 'canada', 'mexico', 'uk', 'eu', 'asia'],
+            available_regions: modelDetails.available_regions || ['usa', 'canada', 'mexico', 'uk', 'eu', 'australia', 'new_zealand'],
           });
           setPrimaryImagePreview(modelDetails.image);
           setExistingImages(modelDetails.gallery || []);

@@ -8,7 +8,8 @@ const regionConfig = {
   mexico: { name: 'Mexico', flag: '🇲🇽', code: 'MX' },
   uk: { name: 'UK', flag: '🇬🇧', code: 'GB' },
   eu: { name: 'EU', flag: '🇪🇺', code: 'EU' },
-  asia: { name: 'Asia', flag: '🌏', code: 'AS' },
+  au: { name: 'Australia', flag: '🇦🇺', code: 'AU' },
+  nz: { name: 'New Zealand', flag: '🇳🇿', code: 'NZ' },
 };
 
 const RegionDisplay = ({ regions = [], showFlags = true, showNames = false, maxDisplay = 3 }) => {
@@ -19,7 +20,7 @@ const RegionDisplay = ({ regions = [], showFlags = true, showNames = false, maxD
   }
 
   // If all regions are available, show "Global"
-  const allRegions = ["usa", "canada", "mexico", "uk", "eu", "asia"];
+  const allRegions = ["usa", "canada", "mexico", "uk", "eu", "au", "nz"];
   const isGlobal = allRegions.every(region => regions.includes(region));
   
   if (isGlobal) {

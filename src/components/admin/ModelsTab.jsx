@@ -39,13 +39,17 @@ const ModelsTab = ({ isLoaded }) => {
     doll_body_size: '',
     in_stock: true,
     assigned: false,
-    available_regions: ['usa', 'canada', 'mexico', 'uk', 'eu', 'asia'], // Default to all regions
+          available_regions: ['usa', 'canada', 'mexico', 'uk', 'eu', 'australia', 'new_zealand'], // Default to all regions
   });
 
   const [primaryImageFile, setPrimaryImageFile] = useState(null);
   const [primaryImagePreview, setPrimaryImagePreview] = useState(null);
   const [additionalImages, setAdditionalImages] = useState([]);
   const [createdModelId, setCreatedModelId] = useState(null);
+
+  const filteredModels = models.filter(model =>
+    model.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   // Fetch models with the new pagination API
   useEffect(() => {
@@ -54,10 +58,11 @@ const ModelsTab = ({ isLoaded }) => {
         setLoading(true);
         const skip = (currentPage - 1) * modelsPerPage;
 
-        const response = await apiService.getModels(skip, modelsPerPage);
+        const response = await apiService.getAllModels(skip, modelsPerPage);
+        console.log('API Response in ModelsTab:', response);
 
-        setModels(response.data);
-        setTotalModels(response.total);
+        setModels(response.data || []);
+        setTotalModels(response.total || 0);
         setTotalPages(Math.max(1, Math.ceil(response.total / modelsPerPage)));
         setLoading(false);
       } catch (error) {
@@ -67,7 +72,7 @@ const ModelsTab = ({ isLoaded }) => {
     };
 
     fetchModels();
-  }, [currentPage, searchTerm]);
+  }, [currentPage]);
 
   const handleSaveDetails = async (e) => {
     e.preventDefault();
@@ -266,16 +271,17 @@ const ModelsTab = ({ isLoaded }) => {
       try {
         setLoading(true);
         const skip = (currentPage - 1) * modelsPerPage;
-        const response = await apiService.getModels(skip, modelsPerPage);
 
-        setModels(response.data);
-        setTotalModels(response.total);
-        setTotalPages(Math.max(1, Math.ceil(response.total / modelsPerPage)));
+        const response = await apiService.getAllModels(skip, modelsPerPage);
+        console.log('API Response in ModelsTab:', response); // Added for debugging
 
-        // Removed moderator fetching to prevent 404 errors
+        setModels(response.data || []);
+        setTotalModels(response.total || 0);
+        setTotalPages(Math.max(1, Math.ceil((response.total || 0) / modelsPerPage)));
         setLoading(false);
       } catch (error) {
-        console.error("Error fetching models:", error);
+        console.error("Error fetching models in ModelsTab:", error); // More specific error
+        toast.error('Failed to fetch models.', { description: error.message });
         setLoading(false);
       }
     };
@@ -681,12 +687,12 @@ const ModelsTab = ({ isLoaded }) => {
                   <th className="px-6 py-3">Name</th>
                   <th className="px-6 py-3">Price</th>
                   <th className="px-6 py-3">Category</th>
-                  <th className="px-6 py-3">Assigned Moderator</th>
+                  <th className="px-6 py-3">Assigned Moderator</th> 
                   <th className="px-6 py-3">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {models.map((model) => (
+                {filteredModels.map((model) => (
                   <tr key={model.id} className={`border-t border-gray-100 transition-colors 
                     ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}
                     >

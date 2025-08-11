@@ -57,7 +57,21 @@ const App = () => {
               <AuthProvider>
                 <CartProvider>
                   <Toaster />
-                  <Sonner />
+                  <Sonner 
+                    position="bottom-center"
+                    toastOptions={{
+                      duration: 1000,
+                      style: {
+                        marginBottom: '20px',
+                        maxWidth: '90vw',
+                        width: 'auto',
+                        padding: '8px 16px',
+                        fontSize: '14px',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
+                      }
+                    }}
+                  />
                   <Routes>
                     <Route path="/" element={<Index />} />
                     <Route path="/underage" element={<UnderAge />} />
@@ -65,7 +79,7 @@ const App = () => {
                     <Route 
                       path="/dashboard" 
                       element={
-                        <ProtectedRoute allowedRoles={['user']}>
+                        <ProtectedRoute roles={['user']}>
                           <Dashboard />
                         </ProtectedRoute>
                       } 
@@ -73,7 +87,7 @@ const App = () => {
                     <Route 
                       path="/staff-dashboard" 
                       element={
-                        <ProtectedRoute allowedRoles={['admin', 'moderator']}>
+                        <ProtectedRoute roles={['admin', 'moderator']}>
                           <StaffDashboard />
                         </ProtectedRoute>
                       } 
@@ -81,7 +95,7 @@ const App = () => {
                     <Route 
                       path="/vip-content" 
                       element={
-                        <ProtectedRoute allowedRoles={['user']}>
+                        <ProtectedRoute roles={['user']}>
                           <VipContent />
                         </ProtectedRoute>
                       } 
@@ -90,7 +104,7 @@ const App = () => {
                     <Route 
                       path="/cart" 
                       element={
-                        <ProtectedRoute allowedRoles={['user']}>
+                        <ProtectedRoute roles={['user']}>
                           <Cart />
                         </ProtectedRoute>
                       } 
@@ -98,7 +112,7 @@ const App = () => {
                     <Route 
                       path="/checkout" 
                       element={
-                        <ProtectedRoute allowedRoles={['user']}>
+                        <ProtectedRoute roles={['user']}>
                           <Checkout />
                         </ProtectedRoute>
                       } 
@@ -106,7 +120,7 @@ const App = () => {
                     <Route 
                       path="/subscription-checkout" 
                       element={
-                        <ProtectedRoute allowedRoles={['user']}>
+                        <ProtectedRoute roles={['user']}>
                           <SubscriptionCheckout />
                         </ProtectedRoute>
                       } 
@@ -114,7 +128,7 @@ const App = () => {
                     <Route 
                       path="/success-subscription" 
                       element={
-                        <ProtectedRoute allowedRoles={['user']}>
+                        <ProtectedRoute roles={['user']}>
                           <SuccessSubscription />
                         </ProtectedRoute>
                       } 
@@ -122,7 +136,7 @@ const App = () => {
                     <Route 
                       path="/cancel-subscription" 
                       element={
-                        <ProtectedRoute allowedRoles={['user']}>
+                        <ProtectedRoute roles={['user']}>
                           <CancelSubscription />
                         </ProtectedRoute>
                       } 
@@ -130,7 +144,7 @@ const App = () => {
                     <Route 
                       path="/success" 
                       element={
-                        <ProtectedRoute allowedRoles={['user']}>
+                        <ProtectedRoute roles={['user']}>
                           <Success />
                         </ProtectedRoute>
                       } 
@@ -138,7 +152,7 @@ const App = () => {
                     <Route 
                       path="/cancel" 
                       element={
-                        <ProtectedRoute allowedRoles={['user']}>
+                        <ProtectedRoute roles={['user']}>
                           <Cancel />
                         </ProtectedRoute>
                       } 
@@ -146,7 +160,7 @@ const App = () => {
                     <Route 
                       path="/admin" 
                       element={
-                        <ProtectedRoute allowedRoles={['admin']}>
+                        <ProtectedRoute roles={['admin']}>
                           <Admin />
                         </ProtectedRoute>
                       } 
@@ -154,7 +168,7 @@ const App = () => {
                     <Route 
                       path="/admin/model/edit/:id" 
                       element={
-                        <ProtectedRoute allowedRoles={['admin']}>
+                        <ProtectedRoute roles={['admin']}>
                           <ModelEdit />
                         </ProtectedRoute>
                       } 
@@ -162,7 +176,7 @@ const App = () => {
                     <Route 
                       path="/moderator" 
                       element={
-                        <ProtectedRoute allowedRoles={['moderator']}>
+                        <ProtectedRoute roles={['moderator']}>
                           <Moderator />
                         </ProtectedRoute>
                       } 
@@ -170,7 +184,7 @@ const App = () => {
                     <Route 
                       path="/moderator-assignments" 
                       element={
-                        <ProtectedRoute allowedRoles={['admin', 'moderator']}>
+                        <ProtectedRoute roles={['admin', 'moderator']}>
                           <ModeratorAssignments />
                         </ProtectedRoute>
                       } 
@@ -178,7 +192,7 @@ const App = () => {
                     <Route 
                       path="/admin-orders" 
                       element={
-                        <ProtectedRoute allowedRoles={['admin']}>
+                        <ProtectedRoute roles={['admin']}>
                           <AdminOrders />
                         </ProtectedRoute>
                       } 
@@ -186,7 +200,7 @@ const App = () => {
                     <Route
                       path="/moderator-chat-activity/:moderatorId"
                       element={
-                        <ProtectedRoute allowedRoles={['admin']}>
+                        <ProtectedRoute roles={['admin']}>
                           <ModeratorChatActivity />
                         </ProtectedRoute>
                       }
@@ -196,7 +210,7 @@ const App = () => {
                     <Route 
                       path="/model-chat/:id" 
                       element={
-                        <ProtectedRoute allowedRoles={['user']}>
+                        <ProtectedRoute roles={['user']}>
                           <ModelChat />
                         </ProtectedRoute>
                       } 
@@ -208,7 +222,7 @@ const App = () => {
                     <Route 
                       path="/order/:orderId" 
                       element={
-                        <ProtectedRoute allowedRoles={['user', 'admin']}>
+                        <ProtectedRoute roles={['user', 'admin']}>
                           <OrderDetail />
                         </ProtectedRoute>
                       } 
@@ -216,7 +230,7 @@ const App = () => {
                     <Route 
                       path="/chat" 
                       element={
-                        <ProtectedRoute allowedRoles={['user']}>
+                        <ProtectedRoute roles={['user']}>
                           <ChatPage />
                         </ProtectedRoute>
                       } 

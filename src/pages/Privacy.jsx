@@ -33,7 +33,7 @@ const Privacy = () => {
             <div className="flex items-center">
               <FileText className="w-5 h-5 text-blue-500 mr-2" />
               <span className={`font-medium ${isDark ? 'text-blue-300' : 'text-blue-800'}`}>
-                Last updated: January 8, 2025
+                Last updated: August 6, 2025
               </span>
             </div>
           </div>
@@ -211,8 +211,8 @@ const Privacy = () => {
                     <p className={`text-sm mb-3 ${isDark ? 'text-purple-200' : 'text-purple-700'}`}>
                       To exercise your rights, contact:
                     </p>
-                    <a href="mailto:privacy@metadite.com" className={`text-metadite-primary hover:underline font-medium ${isDark ? 'text-metadite-primary' : ''}`}>
-                      privacy@metadite.com
+                    <a href="mailto:support@metadite.com" className={`text-metadite-primary hover:underline font-medium ${isDark ? 'text-metadite-primary' : ''}`}>
+                      support@metadite.com
                     </a>
                   </div>
                 </div>
@@ -319,7 +319,9 @@ const Privacy = () => {
                     10. Policy Updates
                   </h2>
                   <p className={`${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                    We may update this Privacy Policy to reflect changes in our practices, technology, or legal obligations. Updates will be posted on this page with the "Last updated" date clearly stated.
+                    We may update this Privacy Policy as needed to reflect changes in technology, legal requirements, or our operations. When we do, we will revise the "Last updated" date and post the updated policy on this page.
+                    <br/><br/>
+                    Last updated: August 6, 2025
                   </p>
                 </div>
               </div>
@@ -333,14 +335,14 @@ const Privacy = () => {
                 Questions About Your Privacy?
               </h2>
               <p className={`mb-6 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                We're here to help. Contact our privacy team for any questions or concerns.
+                We're here to help. Contact our support team for any questions or concerns.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <a 
-                  href="mailto:privacy@metadite.com"
+                  href="mailto:support@metadite.com"
                   className={`inline-flex items-center justify-center px-6 py-3 bg-metadite-primary text-white rounded-lg hover:bg-metadite-primary/90 transition-colors`}
                 >
-                  Contact Privacy Team
+                  Contact Support Team
                 </a>
                 <Link 
                   to="/terms"
