@@ -63,10 +63,10 @@ const Navbar = () => {
     className="h-12 w-auto mr-2"
   />
   <span className="hidden md:block text-2xl font-bold bg-gradient-to-r from-metadite-primary to-metadite-secondary bg-clip-text text-transparent">
-    Metadite
+    Metadite example 1
   </span>
   <span className="md:hidden text-xl font-bold bg-gradient-to-r from-metadite-primary to-metadite-secondary bg-clip-text text-transparent">
-    Metadite
+    Metadite example 1
   </span>
 </a>
 
