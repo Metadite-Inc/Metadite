@@ -31,7 +31,7 @@ export async function fetchFeaturedModels() {
         description: doll.description.substring(0, 100) + "...",
         image: mainImage,
         category: doll.doll_category,
-        available_regions: doll.available_regions || ['usa', 'canada', 'mexico', 'uk', 'eu', 'au', 'nz'],
+        available_regions: doll.available_regions || ['usa', 'canada', 'mexico', 'uk', 'eu', 'australia', 'new_zealand'],
       };
     });
   } catch (error) {

@@ -58,6 +58,7 @@ const ModelEdit = () => {
         const modelDetails = await apiService.getModelDetails(parseInt(id));
         
         if (modelDetails) {
+          console.log('Received model details:', modelDetails);
           setModel(modelDetails);
           setFormData({
             name: modelDetails.name,
@@ -76,6 +77,9 @@ const ModelEdit = () => {
             doll_body_size: modelDetails.specifications.find(s => s.name === 'Body Size')?.value.replace(' CM', '') || '',
             available_regions: modelDetails.available_regions || ['usa', 'canada', 'mexico', 'uk', 'eu', 'australia', 'new_zealand'],
           });
+          
+          console.log('Set form data with regions:', modelDetails.available_regions || ['usa', 'canada', 'mexico', 'uk', 'eu', 'australia', 'new_zealand']);
+          
           setPrimaryImagePreview(modelDetails.image);
           setExistingImages(modelDetails.gallery || []);
         } else {
@@ -113,9 +117,17 @@ const ModelEdit = () => {
       return;
     }
 
+    if (!formData.available_regions || formData.available_regions.length === 0) {
+      toast.error("Region selection required", {
+        description: "Please select at least one region where this model will be available.",
+      });
+      return;
+    }
+
     try {
       setIsSaving(true);
-      await apiService.updateModel(parseInt(id), {
+      // Prepare the data for the API
+      const updateData = {
         ...formData,
         price: parseFloat(formData.price),
         doll_height: parseFloat(formData.doll_height),
@@ -124,7 +136,12 @@ const ModelEdit = () => {
         doll_oral_depth: parseFloat(formData.doll_oral_depth),
         doll_weight: parseFloat(formData.doll_weight),
         doll_gross_weight: parseFloat(formData.doll_gross_weight),
-      });
+        available_regions: formData.available_regions,
+      };
+      
+      console.log('Sending update data:', updateData);
+      
+      await apiService.updateModel(parseInt(id), updateData);
       
       // Remove existing images that were marked for deletion
       if (imagesToRemove.length > 0) {
@@ -454,7 +471,10 @@ const ModelEdit = () => {
                   <div className="md:col-span-2">
                     <RegionSelector
                       selectedRegions={formData.available_regions}
-                      onRegionsChange={(regions) => setFormData({...formData, available_regions: regions})}
+                      onRegionsChange={(regions) => {
+                        console.log('Regions changed to:', regions);
+                        setFormData({...formData, available_regions: regions});
+                      }}
                       label="Available Regions"
                     />
                   </div>

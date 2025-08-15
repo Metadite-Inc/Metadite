@@ -70,9 +70,12 @@ class userApiService {
 
   async updatePassword(data: { current_password: string; new_password: string }): Promise<any> {
     try {
-      const result = await this.request<any>(`/api/auth/change-password/`, {
+      const result = await this.request<any>(`/api/auth/password-update`, {
         method: 'POST',
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          old_password: data.current_password,
+          new_password: data.new_password
+        }),
       });
       toast.success('Password updated successfully');
       return result;
@@ -88,7 +91,7 @@ class userApiService {
 
   async deleteAccount(): Promise<void> {
     try {
-      await this.request<void>(`/api/users/account/`, {
+      await this.request<void>(`/api/auth/me`, {
         method: 'DELETE',
       });
       toast.success('Account deleted successfully');

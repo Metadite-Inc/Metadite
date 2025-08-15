@@ -1,10 +1,16 @@
 import React, { useState } from 'react';
 import { User, Mail, Lock, Bell, Shield } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { userApi } from '../../lib/api/user_api';
+import PasswordInput from '../ui/PasswordInput';
 
 const StaffAccountSettings = ({ user }) => {
   const { theme } = useTheme();
+  const { logout } = useAuth();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     full_name: user?.full_name || '',
     email: user?.email || '',
@@ -24,13 +30,22 @@ const StaffAccountSettings = ({ user }) => {
     }));
   };
 
-  const handleProfileUpdate = (e) => {
+  const handleProfileUpdate = async (e) => {
     e.preventDefault();
-    // Handle profile update logic here
-    toast.success('Profile updated successfully');
+    try {
+      await userApi.updateProfile({
+        full_name: formData.full_name,
+        email: formData.email,
+        region: user?.region || 'Global' // Use existing region or default
+      });
+      toast.success('Profile updated successfully');
+    } catch (error) {
+      console.error('Failed to update profile:', error);
+      // Error handling is done in the API method
+    }
   };
 
-  const handlePasswordChange = (e) => {
+  const handlePasswordChange = async (e) => {
     e.preventDefault();
     
     if (formData.new_password !== formData.confirm_password) {
@@ -43,14 +58,32 @@ const StaffAccountSettings = ({ user }) => {
       return;
     }
 
-    // Handle password change logic here
-    toast.success('Password updated successfully');
-    setFormData(prev => ({
-      ...prev,
-      current_password: '',
-      new_password: '',
-      confirm_password: ''
-    }));
+    try {
+      await userApi.updatePassword({
+        current_password: formData.current_password,
+        new_password: formData.new_password
+      });
+      
+      toast.success('Password updated successfully. You will be logged out for security.');
+      
+      // Clear password fields
+      setFormData(prev => ({
+        ...prev,
+        current_password: '',
+        new_password: '',
+        confirm_password: ''
+      }));
+      
+      // Auto-logout after 2 seconds
+      setTimeout(() => {
+        logout();
+        navigate('/');
+      }, 2000);
+      
+    } catch (error) {
+      console.error('Failed to change password:', error);
+      // Error handling is done in the API method
+    }
   };
 
   const handleNotificationUpdate = (e) => {
@@ -137,57 +170,36 @@ const StaffAccountSettings = ({ user }) => {
         </div>
         
         <form onSubmit={handlePasswordChange} className="space-y-4">
-          <div>
-            <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-              Current Password
-            </label>
-            <input
-              type="password"
-              name="current_password"
-              value={formData.current_password}
-              onChange={handleInputChange}
-              className={`w-full px-3 py-2 border rounded-md ${
-                theme === 'dark' 
-                  ? 'bg-gray-800 border-gray-600 text-white' 
-                  : 'bg-white border-gray-300'
-              } focus:ring-metadite-primary focus:border-metadite-primary`}
-            />
-          </div>
+          <PasswordInput
+            id="current_password"
+            name="current_password"
+            value={formData.current_password}
+            onChange={handleInputChange}
+            label="Current Password"
+            theme={theme}
+            required
+          />
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                New Password
-              </label>
-              <input
-                type="password"
-                name="new_password"
-                value={formData.new_password}
-                onChange={handleInputChange}
-                className={`w-full px-3 py-2 border rounded-md ${
-                  theme === 'dark' 
-                    ? 'bg-gray-800 border-gray-600 text-white' 
-                    : 'bg-white border-gray-300'
-                } focus:ring-metadite-primary focus:border-metadite-primary`}
-              />
-            </div>
+            <PasswordInput
+              id="new_password"
+              name="new_password"
+              value={formData.new_password}
+              onChange={handleInputChange}
+              label="New Password"
+              theme={theme}
+              required
+            />
             
-            <div>
-              <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                Confirm New Password
-              </label>
-              <input
-                type="password"
-                name="confirm_password"
-                value={formData.confirm_password}
-                onChange={handleInputChange}
-                className={`w-full px-3 py-2 border rounded-md ${
-                  theme === 'dark' 
-                    ? 'bg-gray-800 border-gray-600 text-white' 
-                    : 'bg-white border-gray-300'
-                } focus:ring-metadite-primary focus:border-metadite-primary`}
-              />
-            </div>
+            <PasswordInput
+              id="confirm_password"
+              name="confirm_password"
+              value={formData.confirm_password}
+              onChange={handleInputChange}
+              label="Confirm New Password"
+              theme={theme}
+              required
+            />
           </div>
           
           <div className="flex justify-end">

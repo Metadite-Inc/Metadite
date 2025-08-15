@@ -32,6 +32,7 @@ const Admin = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(() => localStorage.getItem('adminActiveTab') || 'dashboard');
   const [isLoaded, setIsLoaded] = useState(false);
+  const [modelsRefreshKey, setModelsRefreshKey] = useState(0);
   
   useEffect(() => {
     const validateAdminAccess = async () => {
@@ -81,6 +82,13 @@ const Admin = () => {
     localStorage.setItem('adminActiveTab', activeTab);
   }, [activeTab]);
 
+  // Trigger models refresh when models tab becomes active
+  useEffect(() => {
+    if (activeTab === 'models') {
+      setModelsRefreshKey(prev => prev + 1);
+    }
+  }, [activeTab]);
+
   return (
     <div className="min-h-screen flex flex-col">
       <StaffNavbar />
@@ -123,7 +131,7 @@ const Admin = () => {
               {activeTab === 'dashboard' && <DashboardTab isLoaded={isLoaded} />}
               
               {/* Models Management */}
-              {activeTab === 'models' && <ModelsTab isLoaded={isLoaded} />}
+              {activeTab === 'models' && <ModelsTab isLoaded={isLoaded} refreshKey={modelsRefreshKey} />}
               
               {/* Videos Management */}
               {activeTab === 'videos' && <VideosTab isLoaded={isLoaded} />}

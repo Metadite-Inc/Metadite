@@ -9,8 +9,8 @@ const regionConfig = {
   mexico: { name: 'Mexico', flag: '🇲🇽', code: 'MX' },
   uk: { name: 'UK', flag: '🇬🇧', code: 'GB' },
   eu: { name: 'EU', flag: '🇪🇺', code: 'EU' },
-  au: { name: 'Australia', flag: '🇦🇺', code: 'AU' },
-  nz: { name: 'New Zealand', flag: '🇳🇿', code: 'NZ' },
+  australia: { name: 'Australia', flag: '🇦🇺', code: 'AU' },
+  new_zealand: { name: 'New Zealand', flag: '🇳🇿', code: 'NZ' },
 };
 
 const RegionSelector = ({ selectedRegions = [], onRegionsChange, label = "Available Regions" }) => {

@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { useTheme } from '../../context/ThemeContext';
 import { adminApiService } from '../../lib/api/admin_api';
 import { moderatorApiService } from '../../lib/api/moderator_api';
+import PasswordInput from '../ui/PasswordInput';
 
 const ModeratorsTab = ({ isLoaded }) => {
   const { theme } = useTheme();
@@ -175,12 +176,9 @@ const ModeratorsTab = ({ isLoaded }) => {
                 />
               </div>
               <div>
-                <label className={`block text-sm font-medium mb-1 
-                  ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
-                  Password
-                </label>
-                <input
-                  type="password"
+                <PasswordInput
+                  id="moderator-password"
+                  name="password"
                   value={newModeratorData.password}
                   onChange={(e) => {
                     setNewModeratorData({...newModeratorData, password: e.target.value});
@@ -190,7 +188,8 @@ const ModeratorsTab = ({ isLoaded }) => {
                       setPasswordError('');
                     }
                   }}
-                  className={`block w-full px-3 py-2 border ${passwordError ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary`}
+                  label="Password"
+                  theme={theme}
                   required
                 />
                 {passwordError && (

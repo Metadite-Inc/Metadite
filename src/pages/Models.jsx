@@ -67,12 +67,21 @@ const Models = () => {
           response = await apiService.getModelsByCategory(categoryFilter, skip, modelsPerPage);
         }
         
-        setModels(response.data);
-        setTotalModels(response.total);
+        if (response && response.data) {
+          setModels(response.data);
+          setTotalModels(response.total || 0);
+        } else {
+          // Handle empty response
+          setModels([]);
+          setTotalModels(0);
+        }
         
         setIsLoaded(true);
       } catch (error) {
         console.error('Failed to fetch models:', error);
+        // Reset state on error
+        setModels([]);
+        setTotalModels(0);
         setIsLoaded(true);
         // Show error toast
         toast.error('Failed to load models. Please try again.');
@@ -82,7 +91,7 @@ const Models = () => {
     // Add a small delay to prevent rapid successive calls
     const timeoutId = setTimeout(fetchModels, 100);
     return () => clearTimeout(timeoutId);
-  }, [currentPage, categoryFilter, userRegion]); // Add categoryFilter to dependencies
+  }, [currentPage, categoryFilter, userRegion, modelsPerPage]); // Add modelsPerPage to dependencies
 
   // Filter models based on search and price filters (category filtering now handled by API)
   const filteredModels = models.filter((model) => {
@@ -101,14 +110,22 @@ const Models = () => {
 
   // Calculate pagination values
   const totalItems = totalModels;
-  const totalPages = Math.ceil(totalItems / modelsPerPage);
+  const totalPages = Math.max(1, Math.ceil(totalItems / modelsPerPage));
 
   // Page change handler
   const handlePageChange = (pageNumber) => {
+    // Validate page number
+    if (pageNumber < 1 || pageNumber > totalPages) {
+      console.warn(`Invalid page number: ${pageNumber}`);
+      return;
+    }
     setCurrentPage(pageNumber);
     // Scroll to top when changing pages
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  // Show loading state during page changes
+  const isPageChanging = !isLoaded;
 
   // Reset filters
   const resetFilters = () => {
@@ -122,6 +139,13 @@ const Models = () => {
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, priceFilter, categoryFilter]);
+
+  // Validate current page when totalPages changes
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(1);
+    }
+  }, [totalPages, currentPage]);
 
   console.log("Pagination info:", { currentPage, totalPages, modelsPerPage, totalItems, filteredModelsCount: filteredModels.length });
 
@@ -168,13 +192,14 @@ const Models = () => {
                     currentPage={currentPage}
                     totalPages={totalPages}
                     handlePageChange={handlePageChange}
+                    isLoading={isPageChanging}
                   />
                 )}
 
                 {/* Display info about pagination */}
                 <div className="text-center text-sm text-gray-500 mt-4">
                   Page {currentPage} of {totalPages} | 
-                  Showing {Math.min((currentPage - 1) * modelsPerPage + 1, totalItems)} - {Math.min(currentPage * modelsPerPage, totalItems)} of {totalItems} models
+                  Showing {totalItems > 0 ? Math.min((currentPage - 1) * modelsPerPage + 1, totalItems) : 0} - {Math.min(currentPage * modelsPerPage, totalItems)} of {totalItems} models
                 </div>
               </>
             ) : (

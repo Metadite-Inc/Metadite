@@ -96,7 +96,7 @@ export const authApi = {
   // Update password
   async updatePassword(currentPassword: string, newPassword: string): Promise<void> {
     await api.post('/api/auth/password-update', {
-      password: currentPassword,
+      old_password: currentPassword,
       new_password: newPassword,
     });
   },
