@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { userApi } from '../../lib/api/user_api';
+import PasswordInput from '../ui/PasswordInput';
 
 const AccountSettings: React.FC = () => {
   const { user, refreshUser, logout } = useAuth();
@@ -69,11 +70,21 @@ const AccountSettings: React.FC = () => {
         current_password: passwordData.current_password,
         new_password: passwordData.new_password
       });
+      
+      toast.success('Password updated successfully. You will be logged out for security.');
+      
       setPasswordData({
         current_password: '',
         new_password: '',
         confirm_password: ''
       });
+      
+      // Auto-logout after 2 seconds
+      setTimeout(() => {
+        logout();
+        navigate('/');
+      }, 2000);
+      
     } catch (error) {
       toast.error('Failed to change password');
     } finally {
@@ -159,27 +170,6 @@ const AccountSettings: React.FC = () => {
           </div>
           
           <Separator />
-{/*}
-         <div className="flex justify-between items-center">
-            <div>
-              <h3 className="text-lg font-medium">Membership Level</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Current plan: <span className={`font-semibold ${getMembershipColor(user?.membership_level || 'free')}`}>
-                  {getMembershipDisplayName(user?.membership_level || 'free')}
-                </span>
-              </p>
-              {user?.video_access_count !== undefined && (
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Video access count: <span className="font-semibold">{user.video_access_count}</span>
-                </p>
-              )}
-            </div>
-            {(user?.membership_level === 'free' || user?.membership_level === 'standard') && (
-              <Button variant="outline" asChild>
-                <a href="/upgrade">Upgrade Plan</a>
-              </Button>
-            )}
-          </div>*/}
           
           <div className="flex justify-end">
             <Button onClick={handleSaveChanges} disabled={isLoading}>
@@ -198,38 +188,35 @@ const AccountSettings: React.FC = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div>
-            <Label htmlFor="currentPassword">Current Password</Label>
-            <Input
-              id="currentPassword"
-              type="password"
-              value={passwordData.current_password}
-              onChange={(e) => handlePasswordChange('current_password', e.target.value)}
-              placeholder="Enter your current password"
-            />
-          </div>
+          <PasswordInput
+            id="currentPassword"
+            name="currentPassword"
+            value={passwordData.current_password}
+            onChange={(e) => handlePasswordChange('current_password', e.target.value)}
+            placeholder="Enter your current password"
+            theme={theme}
+            required
+          />
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="newPassword">New Password</Label>
-              <Input
-                id="newPassword"
-                type="password"
-                value={passwordData.new_password}
-                onChange={(e) => handlePasswordChange('new_password', e.target.value)}
-                placeholder="Enter new password"
-              />
-            </div>
-            <div>
-              <Label htmlFor="confirmPassword">Confirm New Password</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                value={passwordData.confirm_password}
-                onChange={(e) => handlePasswordChange('confirm_password', e.target.value)}
-                placeholder="Confirm new password"
-              />
-            </div>
+            <PasswordInput
+              id="newPassword"
+              name="newPassword"
+              value={passwordData.new_password}
+              onChange={(e) => handlePasswordChange('new_password', e.target.value)}
+              placeholder="Enter new password"
+              theme={theme}
+              required
+            />
+            <PasswordInput
+              id="confirmPassword"
+              name="confirmPassword"
+              value={passwordData.confirm_password}
+              onChange={(e) => handlePasswordChange('confirm_password', e.target.value)}
+              placeholder="Confirm new password"
+              theme={theme}
+              required
+            />
           </div>
           
           <div className="flex justify-end">

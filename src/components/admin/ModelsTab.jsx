@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { PackagePlus, Search, Edit, Trash2, Image, Plus, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { PackagePlus, Search, Edit, Trash2, Image, Plus, X, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -9,7 +9,7 @@ import RegionSelector from './RegionSelector';
 import { useTheme } from '../../context/ThemeContext';
 import { apiService } from '../../lib/api';
 
-const ModelsTab = ({ isLoaded }) => {
+const ModelsTab = ({ isLoaded, refreshKey = 0 }) => {
   const { theme } = useTheme();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
@@ -46,10 +46,15 @@ const ModelsTab = ({ isLoaded }) => {
   const [primaryImagePreview, setPrimaryImagePreview] = useState(null);
   const [additionalImages, setAdditionalImages] = useState([]);
   const [createdModelId, setCreatedModelId] = useState(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
+  // Apply search filter to the fetched models
   const filteredModels = models.filter(model =>
     model.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Update total count for filtered results
+  const filteredTotal = searchTerm ? filteredModels.length : totalModels;
 
   // Fetch models with the new pagination API
   useEffect(() => {
@@ -61,18 +66,57 @@ const ModelsTab = ({ isLoaded }) => {
         const response = await apiService.getAllModels(skip, modelsPerPage);
         console.log('API Response in ModelsTab:', response);
 
-        setModels(response.data || []);
+        if (response && response.data) {
+          setModels(response.data);
         setTotalModels(response.total || 0);
-        setTotalPages(Math.max(1, Math.ceil(response.total / modelsPerPage)));
-        setLoading(false);
+          setTotalPages(Math.max(1, Math.ceil((response.total || 0) / modelsPerPage)));
+        } else {
+          // Handle empty response
+          setModels([]);
+          setTotalModels(0);
+          setTotalPages(1);
+        }
       } catch (error) {
         console.error("Error fetching models:", error);
+        // Reset pagination state on error
+        setModels([]);
+        setTotalModels(0);
+        setTotalPages(1);
+        toast.error('Failed to fetch models');
+      } finally {
         setLoading(false);
       }
     };
 
     fetchModels();
-  }, [currentPage]);
+  }, [currentPage, modelsPerPage, refreshTrigger, refreshKey]);
+
+  // Refresh models when window gains focus (e.g., returning from edit page)
+  useEffect(() => {
+    const handleFocus = () => {
+      // Only refresh if we're not currently loading and we have models
+      if (!loading && models.length > 0) {
+        console.log('Window focused - refreshing models list');
+        // Clear API cache to ensure fresh data
+        apiService.clearCache();
+        setRefreshTrigger(prev => prev + 1);
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [loading, models.length]);
+
+  // Clear cache and refresh when refreshKey changes (e.g., when returning from edit page)
+  useEffect(() => {
+    if (refreshKey > 0) {
+      console.log('Refresh key changed - clearing cache and refreshing models');
+      // Clear API cache to ensure fresh data
+      apiService.clearCache();
+      // Clear any cached data by triggering a fresh fetch
+      setRefreshTrigger(prev => prev + 1);
+    }
+  }, [refreshKey]);
 
   const handleSaveDetails = async (e) => {
     e.preventDefault();
@@ -202,6 +246,7 @@ const ModelsTab = ({ isLoaded }) => {
       doll_gross_weight: 0,
       doll_packing_size: '',
       doll_body_size: '',
+      available_regions: ['usa', 'canada', 'mexico', 'uk', 'eu', 'australia', 'new_zealand'], // Reset regions too
     });
     setPrimaryImageFile(null);
     setPrimaryImagePreview(null);
@@ -213,12 +258,25 @@ const ModelsTab = ({ isLoaded }) => {
     setLoading(true);
     try {
       const skip = 0; // First page
-      const response = await apiService.getModels(skip, modelsPerPage, searchTerm); // Pass searchTerm to the API
-      setModels(response.data);
-      setTotalModels(response.total);
-      setTotalPages(Math.ceil(response.total / modelsPerPage));
+      const response = await apiService.getAllModels(skip, modelsPerPage); // Use getAllModels for consistency
+      
+      if (response && response.data) {
+        setModels(response.data);
+        setTotalModels(response.total || 0);
+        setTotalPages(Math.max(1, Math.ceil((response.total || 0) / modelsPerPage)));
+      } else {
+        // Handle empty response
+        setModels([]);
+        setTotalModels(0);
+        setTotalPages(1);
+      }
     } catch (error) {
-      console.error("Error fetching models:", error);
+      console.error("Error fetching models after creation:", error);
+      // Reset state on error
+      setModels([]);
+      setTotalModels(0);
+      setTotalPages(1);
+      toast.error('Failed to refresh models list');
     } finally {
       setLoading(false);
     }
@@ -234,21 +292,33 @@ const ModelsTab = ({ isLoaded }) => {
       // Refresh the current page
       setLoading(true);
       const skip = (currentPage - 1) * modelsPerPage;
-      const response = await apiService.getModels(skip, modelsPerPage, searchTerm); // Pass searchTerm to the API
+      const response = await apiService.getAllModels(skip, modelsPerPage); // Use getAllModels for consistency
       
-      // If the current page is now empty (except for the last page), go to the previous page
-      if (response.data.length === 0 && currentPage > 1) {
-        setCurrentPage(Math.max(currentPage - 1, 1)); // Ensure currentPage doesn't go below 1
+      if (response && response.data) {
+        // If the current page is now empty (except for the last page), go to the previous page
+        if (response.data.length === 0 && currentPage > 1) {
+          setCurrentPage(Math.max(currentPage - 1, 1)); // Ensure currentPage doesn't go below 1
+        } else {
+          setModels(response.data);
+          setTotalModels(response.total || 0);
+          setTotalPages(Math.max(1, Math.ceil((response.total || 0) / modelsPerPage)));
+        }
       } else {
-        setModels(response.data);
-        setTotalModels(response.total);
-        setTotalPages(Math.ceil(response.total / modelsPerPage));
-        setLoading(false);
+        // Handle empty response
+        setModels([]);
+        setTotalModels(0);
+        setTotalPages(1);
       }
       
       toast.success("Model deleted successfully");
     } catch (error) {
+      console.error("Error fetching models after deletion:", error);
       toast.error("Failed to delete model");
+      // Reset state on error
+      setModels([]);
+      setTotalModels(0);
+      setTotalPages(1);
+    } finally {
       setLoading(false);
     }
   };
@@ -266,34 +336,29 @@ const ModelsTab = ({ isLoaded }) => {
     }
   };
 
+  // Validate current page when totalPages changes
   useEffect(() => {
-    const fetchModelsAndModerators = async () => {
-      try {
-        setLoading(true);
-        const skip = (currentPage - 1) * modelsPerPage;
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(1);
+    }
+  }, [totalPages, currentPage]);
 
-        const response = await apiService.getAllModels(skip, modelsPerPage);
-        console.log('API Response in ModelsTab:', response); // Added for debugging
-
-        setModels(response.data || []);
-        setTotalModels(response.total || 0);
-        setTotalPages(Math.max(1, Math.ceil((response.total || 0) / modelsPerPage)));
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching models in ModelsTab:", error); // More specific error
-        toast.error('Failed to fetch models.', { description: error.message });
-        setLoading(false);
-      }
-    };
-
-    fetchModelsAndModerators();
-  }, [currentPage, searchTerm]);
+  // Remove duplicate useEffect - this was causing conflicts
+  // The main fetchModels useEffect above handles all model fetching
 
   // Handle edit button click
   const handleEditModel = (modelId) => {
     console.log('Edit button clicked for model ID:', modelId);
     console.log('Navigating to:', `/admin/model/edit/${modelId}`);
     navigate(`/admin/model/edit/${modelId}`);
+  };
+
+  // Manual refresh function
+  const refreshModelsList = () => {
+    console.log('Manual refresh triggered');
+    // Clear API cache to ensure fresh data
+    apiService.clearCache();
+    setRefreshTrigger(prev => prev + 1);
   };
 
   return (
@@ -657,18 +722,33 @@ const ModelsTab = ({ isLoaded }) => {
       <div className="glass-card rounded-xl overflow-hidden">
         <div className="p-4 border-b border-gray-100 flex justify-between items-center">
           <h2 className="font-semibold">Manage Models</h2>
-          <div className="relative">
-            <Search className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search models..."
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setCurrentPage(1); // Reset to first page on search
-              }}
-              className="pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary text-sm"
-            />
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={refreshModelsList}
+              disabled={loading}
+              className={`flex items-center px-3 py-2 rounded-md text-sm transition-colors ${
+                loading 
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                  : 'bg-metadite-primary bg-opacity-10 text-metadite-primary hover:bg-opacity-20'
+              }`}
+              title="Refresh models list"
+            >
+              <RefreshCw className={`h-4 w-4 mr-1 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </button>
+            <div className="relative">
+              <Search className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search models..."
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1); // Reset to first page on search
+                }}
+                className="pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary text-sm"
+              />
+            </div>
           </div>
         </div>
         
@@ -755,17 +835,18 @@ const ModelsTab = ({ isLoaded }) => {
         )}
 
         {/* Pagination Controls */}
-        {!loading && models.length > 0 && (
+        {!loading && models.length > 0 && totalPages > 1 && (
           <div className="flex justify-between items-center px-6 py-4 border-t border-gray-100">
             <div className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
-              Showing {totalModels > 0 ? (currentPage - 1) * modelsPerPage + 1 : 0}-{Math.min(currentPage * modelsPerPage, totalModels)} of {totalModels} models
+              Showing {filteredTotal > 0 ? (currentPage - 1) * modelsPerPage + 1 : 0}-{Math.min(currentPage * modelsPerPage, filteredTotal)} of {filteredTotal} models
+              {searchTerm && ` (filtered from ${totalModels} total)`}
             </div>
             <div className="flex space-x-2">
               <button
                 onClick={goToPreviousPage}
-                disabled={currentPage <= 1}
+                disabled={currentPage <= 1 || loading}
                 className={`flex items-center px-3 py-1 rounded-md ${
-                  currentPage <= 1 
+                  currentPage <= 1 || loading
                   ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
                   : 'bg-metadite-primary bg-opacity-10 text-metadite-primary hover:bg-opacity-20'
                 } transition-colors`}
@@ -778,15 +859,21 @@ const ModelsTab = ({ isLoaded }) => {
               </div>
               <button
                 onClick={goToNextPage}
-                disabled={currentPage >= totalPages}
+                disabled={currentPage >= totalPages || loading}
                 className={`flex items-center px-3 py-1 rounded-md ${
-                  currentPage >= totalPages 
+                  currentPage >= totalPages || loading
                   ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
                   : 'bg-metadite-primary bg-opacity-10 text-metadite-primary hover:bg-opacity-20'
                 } transition-colors`}
               >
+                {loading ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-1"></div>
+                ) : (
+                  <>
                 Next
                 <ChevronRight className="h-4 w-4 ml-1" />
+                  </>
+                )}
               </button>
             </div>
           </div>

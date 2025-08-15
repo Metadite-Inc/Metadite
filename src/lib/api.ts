@@ -70,6 +70,11 @@ const cache = new Map();
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 class ApiService {
+  // Clear cache method
+  clearCache(): void {
+    cache.clear();
+  }
+
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${API_URL}${endpoint}`;
     
@@ -139,7 +144,7 @@ class ApiService {
           description: doll.description.substring(0, 100) + "...",
           image: mainImage,
           category: doll.doll_category,
-          available_regions: doll.available_regions || ['usa', 'canada', 'mexico', 'uk', 'eu', 'au', 'nz'],
+          available_regions: doll.available_regions || ['usa', 'canada', 'mexico', 'uk', 'eu', 'australia', 'new_zealand'],
         };
       });
 
@@ -186,7 +191,7 @@ class ApiService {
           description: doll.description.substring(0, 100) + "...", // Truncate for preview
           image: mainImage,
           category: doll.doll_category,
-          available_regions: doll.available_regions || ['usa', 'canada', 'mexico', 'uk', 'eu', 'au', 'nz'],
+          available_regions: doll.available_regions || ['usa', 'canada', 'mexico', 'uk', 'eu', 'australia', 'new_zealand'],
         };
       });
 
@@ -230,7 +235,7 @@ class ApiService {
           description: doll.description.substring(0, 100) + "...",
           image: mainImage,
           category: doll.doll_category,
-          available_regions: doll.available_regions || ['usa', 'canada', 'mexico', 'uk', 'eu', 'au', 'nz'],
+          available_regions: doll.available_regions || ['usa', 'canada', 'mexico', 'uk', 'eu', 'australia', 'new_zealand'],
         };
       });
 
@@ -414,7 +419,7 @@ class ApiService {
         reviews: reviews.length, // Total number of reviews
         inStock: doll.is_available,
         category: doll.doll_category,
-        available_regions: doll.available_regions || ['usa', 'canada', 'mexico', 'uk', 'eu', 'au', 'nz'],
+        available_regions: doll.available_regions || ['usa', 'canada', 'mexico', 'uk', 'eu', 'australia', 'new_zealand'],
         specifications: [
           { name: 'Height', value: `${doll.doll_height} CM` },
           { name: "Material", value: doll.doll_material },
@@ -481,7 +486,7 @@ class ApiService {
             description: doll.description.substring(0, 100) + "...",
             image: mainImage,
             category: doll.doll_category,
-            available_regions: doll.available_regions || ['usa', 'canada', 'mexico', 'uk', 'eu', 'au', 'nz'],
+            available_regions: doll.available_regions || ['usa', 'canada', 'mexico', 'uk', 'eu', 'australia', 'new_zealand'],
           };
         });
     } catch (error) {
