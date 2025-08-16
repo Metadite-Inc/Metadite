@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { userApi } from '../../lib/api/user_api';
+import { newsletterApi } from '../../lib/api/newsletter_api';
 import PasswordInput from '../ui/PasswordInput';
 
 const AccountSettings: React.FC = () => {
@@ -20,6 +21,9 @@ const AccountSettings: React.FC = () => {
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isNewsletterSubscribed, setIsNewsletterSubscribed] = useState(false);
+  const [isCheckingNewsletter, setIsCheckingNewsletter] = useState(true);
+  const [isTogglingNewsletter, setIsTogglingNewsletter] = useState(false);
   
   const [profileData, setProfileData] = useState({
     full_name: user?.full_name || '',
@@ -39,6 +43,49 @@ const AccountSettings: React.FC = () => {
 
   const handlePasswordChange = (field: string, value: string) => {
     setPasswordData(prev => ({ ...prev, [field]: value }));
+  };
+
+  // Check newsletter subscription status on component mount
+  React.useEffect(() => {
+    const checkNewsletterStatus = async () => {
+      if (user?.email) {
+        try {
+          setIsCheckingNewsletter(true);
+          const status = await newsletterApi.checkSubscriptionStatus(user.email);
+          setIsNewsletterSubscribed(status.is_subscribed);
+        } catch (error) {
+          console.error('Failed to check newsletter status:', error);
+        } finally {
+          setIsCheckingNewsletter(false);
+        }
+      } else {
+        setIsCheckingNewsletter(false);
+      }
+    };
+
+    checkNewsletterStatus();
+  }, [user?.email]);
+
+  const handleToggleNewsletter = async () => {
+    if (!user?.email) {
+      toast.error('Please log in to manage newsletter subscription');
+      return;
+    }
+
+    setIsTogglingNewsletter(true);
+    try {
+      if (isNewsletterSubscribed) {
+        await newsletterApi.unsubscribeFromNewsletter(user.email);
+        setIsNewsletterSubscribed(false);
+      } else {
+        await newsletterApi.subscribeToNewsletter(user.email);
+        setIsNewsletterSubscribed(true);
+      }
+    } catch (error) {
+      console.error('Failed to toggle newsletter subscription:', error);
+    } finally {
+      setIsTogglingNewsletter(false);
+    }
   };
 
   const handleSaveChanges = async () => {
@@ -227,6 +274,61 @@ const AccountSettings: React.FC = () => {
               {isChangingPassword ? 'Changing...' : 'Change Password'}
             </Button>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Newsletter Subscription */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Newsletter Subscription</CardTitle>
+          <CardDescription>
+            Manage your newsletter subscription preferences
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {!user?.email ? (
+            <div className="text-center py-4">
+              <p className="text-gray-600 dark:text-gray-400">
+                Please log in to manage your newsletter subscription.
+              </p>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-medium">Email Newsletter</h4>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {isNewsletterSubscribed 
+                    ? "You are currently subscribed to our newsletter and will receive updates about new features, promotions, and announcements."
+                    : "Subscribe to our newsletter to receive updates about new features, promotions, and announcements."
+                  }
+                </p>
+              </div>
+              <div className="flex items-center space-x-3">
+                {isCheckingNewsletter ? (
+                  <div className="animate-spin h-5 w-5 border-2 border-metadite-primary border-t-transparent rounded-full"></div>
+                ) : (
+                  <Button 
+                    onClick={handleToggleNewsletter}
+                    disabled={isTogglingNewsletter}
+                    variant={isNewsletterSubscribed ? "outline" : "default"}
+                    className={isNewsletterSubscribed 
+                      ? "border-red-500 text-red-500 hover:bg-red-500 hover:text-white" 
+                      : "bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white"
+                    }
+                  >
+                    {isTogglingNewsletter ? (
+                      <>
+                        <div className="animate-spin h-4 w-4 mr-2 border-2 border-white border-t-transparent rounded-full"></div>
+                        {isNewsletterSubscribed ? 'Unsubscribing...' : 'Subscribing...'}
+                      </>
+                    ) : (
+                      isNewsletterSubscribed ? 'Unsubscribe' : 'Subscribe'
+                    )}
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

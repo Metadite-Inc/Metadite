@@ -27,7 +27,9 @@ const Index = () => {
   useEffect(() => {
     const loadFeaturedModels = async () => {
       try {
-        const models = await fetchFeaturedModels();
+        // If user is admin, show all featured models. Otherwise, filter by user's region
+        const userRegion = user && user.role !== 'admin' ? user.region : null;
+        const models = await fetchFeaturedModels(userRegion);
         setFeaturedModels(models || []);
       } catch (error) {
         console.error('Error fetching featured models:', error);
@@ -38,7 +40,7 @@ const Index = () => {
     };
 
     loadFeaturedModels();
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     // Only redirect if user is logged in and is staff

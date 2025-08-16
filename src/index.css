@@ -337,3 +337,56 @@
     rgba(139, 92, 246, 0.2) 75%
   );
 }
+
+/* Featured Models Carousel */
+.featured-carousel-container {
+  position: relative;
+  width: 100%;
+}
+
+/* Smooth carousel navigation */
+.carousel-nav-button {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform, opacity;
+}
+
+.carousel-nav-button:hover {
+  transform: scale(1.1);
+}
+
+.carousel-nav-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: scale(1);
+}
+
+/* Carousel dots with smooth transitions */
+.carousel-dot {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform, background-color;
+}
+
+.carousel-dot.active {
+  transform: scale(1.25);
+  background-color: rgb(139, 92, 246);
+}
+
+.carousel-dot:hover:not(.active) {
+  transform: scale(1.1);
+}
+
+/* Prevent layout shift during transitions */
+.featured-models-grid {
+  min-height: 400px;
+  display: flex;
+  align-items: stretch;
+}
+
+/* Smooth image transitions */
+.model-card-image {
+  transition: transform 0.3s ease-in-out;
+}
+
+.model-card:hover .model-card-image {
+  transform: scale(1.05);
+}

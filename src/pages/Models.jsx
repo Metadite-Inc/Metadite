@@ -22,7 +22,7 @@ const Models = () => {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [totalModels, setTotalModels] = useState(0);
-  const modelsPerPage = 24;
+  const modelsPerPage = 16; // Show 16 models per page for public view
   
   // Categories derived from fetched models
   const [categories, setCategories] = useState(['all']);
@@ -108,7 +108,7 @@ const Models = () => {
     return matchesSearch && matchesPrice;
   });
 
-  // Calculate pagination values
+  // Calculate pagination values - use totalModels for pagination, filteredModels for display
   const totalItems = totalModels;
   const totalPages = Math.max(1, Math.ceil(totalItems / modelsPerPage));
 
@@ -199,7 +199,8 @@ const Models = () => {
                 {/* Display info about pagination */}
                 <div className="text-center text-sm text-gray-500 mt-4">
                   Page {currentPage} of {totalPages} | 
-                  Showing {totalItems > 0 ? Math.min((currentPage - 1) * modelsPerPage + 1, totalItems) : 0} - {Math.min(currentPage * modelsPerPage, totalItems)} of {totalItems} models
+                  Showing {filteredModels.length} of {totalItems} models
+                  {(searchTerm || priceFilter !== 'all') && ` (filtered results)`}
                 </div>
               </>
             ) : (

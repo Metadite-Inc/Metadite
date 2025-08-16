@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
 import { toast } from 'sonner';
 import { 
   Download, 
@@ -34,6 +35,7 @@ import {
 
 const NewsletterTab = () => {
   const { theme } = useTheme();
+  const { user } = useAuth();
   const [subscriptions, setSubscriptions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -80,11 +82,18 @@ const NewsletterTab = () => {
   };
 
   const handleExport = async () => {
+    // Check if user is admin
+    if (!user || user.role !== 'admin') {
+      toast.error('Access denied. Admin privileges required to export newsletter subscriptions.');
+      return;
+    }
+    
     try {
       setIsExporting(true);
       await adminNewsletterApi.exportSubscriptions();
     } catch (error) {
       console.error('Error exporting subscriptions:', error);
+      toast.error('Failed to export newsletter subscriptions. Please make sure you are logged in as an admin.');
     } finally {
       setIsExporting(false);
     }
@@ -153,8 +162,13 @@ const NewsletterTab = () => {
         <div className="flex gap-2">
           <Button
             onClick={handleExport}
-            disabled={isExporting}
-            className="bg-metadite-accent hover:bg-opacity-90"
+            disabled={isExporting || !user || user.role !== 'admin'}
+            className={`${
+              user && user.role === 'admin' 
+                ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                : 'bg-gray-500 text-gray-300 cursor-not-allowed'
+            }`}
+            title={!user || user.role !== 'admin' ? 'Admin privileges required' : 'Export newsletter subscriptions'}
           >
             <Download className="h-4 w-4 mr-2" />
             {isExporting ? 'Exporting...' : 'Export CSV'}
