@@ -28,6 +28,7 @@ const ModelEdit = () => {
     description: '',
     price: '',
     is_available: true,
+    is_featured: false, // Add featured field
     doll_category: 'standard',
     doll_height: '',
     doll_vaginal_depth: '',
@@ -65,6 +66,7 @@ const ModelEdit = () => {
             description: modelDetails.longDescription,
             price: modelDetails.price.toString(),
             is_available: modelDetails.inStock,
+            is_featured: modelDetails.is_featured || false, // Add featured status
             doll_category: modelDetails.category,
             doll_height: modelDetails.specifications.find(s => s.name === 'Height')?.value.replace(' CM', '') || '',
             doll_material: modelDetails.specifications.find(s => s.name === 'Material')?.value || '',
@@ -464,6 +466,20 @@ const ModelEdit = () => {
                       />
                       <span className={`text-sm ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
                         Available for purchase
+                      </span>
+                    </label>
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input 
+                        type="checkbox"
+                        checked={formData.is_featured}
+                        onChange={(e) => setFormData({...formData, is_featured: e.target.checked})}
+                        className="rounded text-metadite-primary focus:ring-metadite-primary h-4 w-4"
+                      />
+                      <span className={`text-sm ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
+                        Featured on homepage (shows in featured models section)
                       </span>
                     </label>
                   </div>

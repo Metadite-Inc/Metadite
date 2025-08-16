@@ -47,6 +47,13 @@ const Checkout = () => {
   const { user } = useAuth();
   const handleNowpaymentsCheckout = async (e) => {
     e.preventDefault();
+    
+    // Check if user is logged in
+    if (!user || !user.id) {
+      toast.error('Please log in to complete your purchase');
+      return;
+    }
+    
     setIsProcessing(true);
     try {
       const order_id = 'order_' + Date.now();
@@ -55,7 +62,7 @@ const Checkout = () => {
         price_currency: 'usd', // or allow user to select
         wallet_address: walletAddress, // Include wallet address for crypto payments
         order_id,
-        user_id: user?.id,
+        user_id: user.id, // Ensure user_id is always provided
         doll_id: items[0]?.id, // MVP: use first item only, or adapt for multi-item
         success_url: window.location.origin + '/success',
         cancel_url: window.location.origin + '/cancel',

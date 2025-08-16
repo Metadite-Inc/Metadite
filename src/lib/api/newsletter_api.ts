@@ -74,6 +74,20 @@ class NewsletterApiService {
       throw error;
     }
   }
+
+  async checkSubscriptionStatus(email: string): Promise<{ is_subscribed: boolean; email: string; created_at?: string }> {
+    try {
+      const result = await this.request<{ is_subscribed: boolean; email: string; created_at?: string }>(`/api/newsletter/check-subscription/${encodeURIComponent(email)}`, {
+        method: 'GET',
+      });
+      
+      return result;
+    } catch (error: any) {
+      console.error('Failed to check subscription status:', error);
+      // Return default state if check fails
+      return { is_subscribed: false, email };
+    }
+  }
 }
 
 export const newsletterApi = new NewsletterApiService(); 

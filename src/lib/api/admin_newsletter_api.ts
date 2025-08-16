@@ -85,7 +85,12 @@ class AdminNewsletterApiService {
 
   async exportSubscriptions(): Promise<string> {
     try {
-      const subscriptions = await this.getAllSubscriptions(0, 10000); // Get all subscriptions
+      const subscriptions = await this.request<NewsletterSubscription[]>('/api/newsletter/admin/export');
+      
+      if (!subscriptions || subscriptions.length === 0) {
+        toast.info('No newsletter subscriptions to export');
+        return '';
+      }
       
       // Create CSV content
       const csvContent = [
@@ -106,10 +111,15 @@ class AdminNewsletterApiService {
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
 
-      toast.success('Newsletter subscriptions exported successfully');
+      toast.success(`Successfully exported ${subscriptions.length} newsletter subscriptions`);
       return csvContent;
     } catch (error: any) {
-      toast.error('Failed to export newsletter subscriptions');
+      console.error('Export error:', error);
+      if (error.message?.includes('401') || error.message?.includes('403')) {
+        toast.error('Access denied. Please make sure you are logged in as an admin.');
+      } else {
+        toast.error('Failed to export newsletter subscriptions. Please try again.');
+      }
       throw error;
     }
   }

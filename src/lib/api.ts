@@ -9,6 +9,7 @@ export interface ModelBasic {
   image: string;
   category: string;
   available_regions?: string[];
+  is_featured?: boolean;
 }
 
 export interface CreateModelRequest {
@@ -34,6 +35,7 @@ export interface CreateModelRequest {
   doll_origin?: string;
   doll_hair_type?: string;
   available_regions?: string[];
+  is_featured?: boolean;
 }
 
 export interface ModelDetail extends ModelBasic {
@@ -45,6 +47,7 @@ export interface ModelDetail extends ModelBasic {
   specifications: { name: string; value: string }[];
   detailedDescription: string;
   available_regions?: string[];
+  is_featured?: boolean;
   shippingInfo: {
     dimensions: string;
     weight: string;
@@ -145,6 +148,7 @@ class ApiService {
           image: mainImage,
           category: doll.doll_category,
           available_regions: doll.available_regions || ['usa', 'canada', 'mexico', 'uk', 'eu', 'australia', 'new_zealand'],
+          is_featured: doll.is_featured || false,
         };
       });
 
@@ -212,6 +216,43 @@ class ApiService {
         skip: skip,
         limit: limit
       };
+    }
+  }
+
+  // Get featured models for homepage - filtered by user region
+  async getFeaturedModels(limit = 10, userRegion?: string): Promise<ModelBasic[]> {
+    try {
+      const response = await this.request<any[]>(`/api/dolls/featured?limit=${limit}`);
+      const backendUrl = import.meta.env.VITE_API_BASE_URL;
+
+      const transformedData = response.map(doll => {
+        let mainImage = '';
+        if (Array.isArray(doll.images)) {
+          const primary = doll.images.find((img: any) => img.is_primary);
+          mainImage = primary ? `${backendUrl}${primary.image_url}` : '';
+        }
+        return {
+          id: doll.id,
+          name: doll.name,
+          price: doll.price,
+          description: doll.description.substring(0, 100) + "...",
+          image: mainImage,
+          category: doll.doll_category,
+          available_regions: doll.available_regions || ['usa', 'canada', 'mexico', 'uk', 'eu', 'australia', 'new_zealand'],
+        };
+      });
+
+      // Filter by user region if provided and user is not admin
+      if (userRegion) {
+        return transformedData.filter(model => 
+          model.available_regions && model.available_regions.includes(userRegion)
+        );
+      }
+
+      return transformedData;
+    } catch (error) {
+      console.error('Failed to fetch featured models:', error);
+      return [];
     }
   }
 
@@ -420,6 +461,7 @@ class ApiService {
         inStock: doll.is_available,
         category: doll.doll_category,
         available_regions: doll.available_regions || ['usa', 'canada', 'mexico', 'uk', 'eu', 'australia', 'new_zealand'],
+        is_featured: doll.is_featured || false,
         specifications: [
           { name: 'Height', value: `${doll.doll_height} CM` },
           { name: "Material", value: doll.doll_material },
@@ -574,6 +616,33 @@ class ApiService {
     } catch (error) {
       toast.error('Failed to update model');
       throw error;
+    }
+  }
+
+  // Toggle featured status of a model
+  async toggleFeaturedStatus(id: number, isFeatured: boolean): Promise<void> {
+    try {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        toast.error('Authentication required', {
+          description: 'You must be logged in as an admin to update featured status.',
+        });
+        return;
+      }
+      
+      await this.request(`/api/dolls/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ is_featured: isFeatured }),
+      });
+      
+      toast.success(`Model ${isFeatured ? 'featured' : 'unfeatured'} successfully!`);
+    } catch (error) {
+      toast.error('Failed to update featured status');
+      console.error(error);
     }
   }
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { PackagePlus, Search, Edit, Trash2, Image, Plus, X, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
+import { PackagePlus, Search, Edit, Trash2, Image, Plus, X, ChevronLeft, ChevronRight, RefreshCw, Star } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -39,6 +39,7 @@ const ModelsTab = ({ isLoaded, refreshKey = 0 }) => {
     doll_body_size: '',
     in_stock: true,
     assigned: false,
+    is_featured: false, // Default to not featured
           available_regions: ['usa', 'canada', 'mexico', 'uk', 'eu', 'australia', 'new_zealand'], // Default to all regions
   });
 
@@ -53,8 +54,8 @@ const ModelsTab = ({ isLoaded, refreshKey = 0 }) => {
     model.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Update total count for filtered results
-  const filteredTotal = searchTerm ? filteredModels.length : totalModels;
+  // Update total count for filtered results - use totalModels for pagination, filteredModels for display
+  const filteredTotal = totalModels; // Use totalModels for pagination calculations
 
   // Fetch models with the new pagination API
   useEffect(() => {
@@ -246,6 +247,8 @@ const ModelsTab = ({ isLoaded, refreshKey = 0 }) => {
       doll_gross_weight: 0,
       doll_packing_size: '',
       doll_body_size: '',
+      is_featured: false, // Reset featured status
+
       available_regions: ['usa', 'canada', 'mexico', 'uk', 'eu', 'australia', 'new_zealand'], // Reset regions too
     });
     setPrimaryImageFile(null);
@@ -282,6 +285,35 @@ const ModelsTab = ({ isLoaded, refreshKey = 0 }) => {
     }
 
     toast.success("Model added successfully!");
+  };
+
+  // Handle toggle featured status
+  const handleToggleFeatured = async (modelId, isFeatured) => {
+    try {
+      await apiService.toggleFeaturedStatus(modelId, isFeatured);
+      
+      // Clear API cache to ensure fresh data
+      apiService.clearCache();
+      
+      // Small delay to ensure backend has processed the update
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Refresh the current page to show updated status
+      setLoading(true);
+      const skip = (currentPage - 1) * modelsPerPage;
+      const response = await apiService.getAllModels(skip, modelsPerPage);
+      
+      if (response && response.data) {
+        setModels(response.data);
+        setTotalModels(response.total || 0);
+        setTotalPages(Math.max(1, Math.ceil((response.total || 0) / modelsPerPage)));
+      }
+    } catch (error) {
+      console.error("Error toggling featured status:", error);
+      toast.error("Failed to update featured status");
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Handle model deletion
@@ -594,6 +626,20 @@ const ModelsTab = ({ isLoaded, refreshKey = 0 }) => {
                 </div>
 
                 <div className="md:col-span-2">
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input 
+                      type="checkbox"
+                      checked={newModelData.is_featured}
+                      onChange={(e) => setNewModelData({...newModelData, is_featured: e.target.checked})}
+                      className="rounded text-metadite-primary focus:ring-metadite-primary h-4 w-4"
+                    />
+                    <span className={`text-sm ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
+                      Featured on homepage (shows in featured models section)
+                    </span>
+                  </label>
+                </div>
+
+                <div className="md:col-span-2">
                   <RegionSelector
                     selectedRegions={newModelData.available_regions}
                     onRegionsChange={(regions) => setNewModelData({...newModelData, available_regions: regions})}
@@ -767,7 +813,7 @@ const ModelsTab = ({ isLoaded, refreshKey = 0 }) => {
                   <th className="px-6 py-3">Name</th>
                   <th className="px-6 py-3">Price</th>
                   <th className="px-6 py-3">Category</th>
-                  <th className="px-6 py-3">Assigned Moderator</th> 
+                  <th className="px-6 py-3">Featured</th>
                   <th className="px-6 py-3">Actions</th>
                 </tr>
               </thead>
@@ -796,8 +842,14 @@ const ModelsTab = ({ isLoaded, refreshKey = 0 }) => {
                         {model.category.charAt(0).toUpperCase() + model.category.slice(1)}
                       </span>
                     </td>
-                    <td className={`px-6 py-4 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
-                      {/* Removed assigned moderator display */}
+                    <td className="px-6 py-4">
+                      <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
+                        model.is_featured 
+                          ? 'bg-green-100 text-green-700' 
+                          : 'bg-gray-100 text-gray-600'
+                      }`}>
+                        {model.is_featured ? 'Featured' : 'Not Featured'}
+                      </span>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex space-x-2">
@@ -810,6 +862,17 @@ const ModelsTab = ({ isLoaded, refreshKey = 0 }) => {
                           title="Edit Model"
                         >
                           <Edit className="h-4 w-4" />
+                        </button>
+                        <button 
+                          className={`transition-colors ${
+                            model.is_featured 
+                              ? 'text-metadite-primary hover:text-metadite-secondary' 
+                              : 'text-gray-400 hover:text-gray-600'
+                          }`}
+                          onClick={() => handleToggleFeatured(model.id, !model.is_featured)}
+                          title={model.is_featured ? 'Unfeature Model' : 'Feature Model'}
+                        >
+                          <Star className={`h-4 w-4 ${model.is_featured ? 'fill-current' : ''}`} />
                         </button>
                         <button 
                           className="text-red-500 hover:text-red-700 transition-colors"
@@ -838,8 +901,9 @@ const ModelsTab = ({ isLoaded, refreshKey = 0 }) => {
         {!loading && models.length > 0 && totalPages > 1 && (
           <div className="flex justify-between items-center px-6 py-4 border-t border-gray-100">
             <div className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
-              Showing {filteredTotal > 0 ? (currentPage - 1) * modelsPerPage + 1 : 0}-{Math.min(currentPage * modelsPerPage, filteredTotal)} of {filteredTotal} models
-              {searchTerm && ` (filtered from ${totalModels} total)`}
+              Showing {filteredModels.length > 0 ? (currentPage - 1) * modelsPerPage + 1 : 0}-{Math.min(currentPage * modelsPerPage, totalModels)} of {totalModels} models
+              {searchTerm && filteredModels.length !== models.length && ` (${filteredModels.length} matching search)`}
+
             </div>
             <div className="flex space-x-2">
               <button

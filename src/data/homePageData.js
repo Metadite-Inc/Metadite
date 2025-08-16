@@ -3,37 +3,15 @@
 import { apiService } from '../lib/api';
 
 /**
- * Fetches up to 3 featured models from the backend with category 'limited_edition'.
- * @returns {Promise<Array>} Array of featured models
+ * Fetches featured models from the backend, filtered by user region if provided.
+ * @param {string} userRegion - The user's region to filter models by
+ * @returns {Promise<Array>} Array of featured models available in user's region
  */
-export async function fetchFeaturedModels() {
-  const API_URL = import.meta.env.VITE_API_BASE_URL;
-  const url = `${API_URL}/api/dolls/category/limited_edition`;
-
+export async function fetchFeaturedModels(userRegion = null) {
   try {
-    const res = await fetch(url);
-    if (!res.ok) {
-      console.error(`Failed to fetch featured models: ${res.status}`);
-      return [];
-    }
-    const dolls = await res.json();
-    const backendUrl = import.meta.env.VITE_API_BASE_URL;
-    return (dolls || []).slice(0, 3).map(doll => {
-      let mainImage = '';
-      if (Array.isArray(doll.images)) {
-        const primary = doll.images.find(img => img.is_primary);
-        mainImage = primary ? `${backendUrl}${primary.image_url}` : '';
-      }
-      return {
-        id: doll.id,
-        name: doll.name,
-        price: doll.price,
-        description: doll.description.substring(0, 100) + "...",
-        image: mainImage,
-        category: doll.doll_category,
-        available_regions: doll.available_regions || ['usa', 'canada', 'mexico', 'uk', 'eu', 'australia', 'new_zealand'],
-      };
-    });
+    const { apiService } = await import('../lib/api');
+    return await apiService.getFeaturedModels(10, userRegion); // Fetch up to 10 featured models for carousel
+
   } catch (error) {
     console.error('Error in fetchFeaturedModels:', error);
     return [];
