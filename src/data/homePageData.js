@@ -11,7 +11,6 @@ export async function fetchFeaturedModels(userRegion = null) {
   try {
     const { apiService } = await import('../lib/api');
     return await apiService.getFeaturedModels(10, userRegion); // Fetch up to 10 featured models for carousel
-
   } catch (error) {
     console.error('Error in fetchFeaturedModels:', error);
     return [];

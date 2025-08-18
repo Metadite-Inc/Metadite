@@ -23,6 +23,7 @@ import VideosTab from '../components/admin/VideosTab'; // Import the new VideosT
 // import ImagesTab from '../components/admin/ImagesTab'; // Import the new ImagesTab component - Temporarily disabled
 import SlideshowTab from '../components/admin/SlideshowTab';
 import NewsletterTab from '../components/admin/NewsletterTab'; // Import the new NewsletterTab component
+import BlogTab from '../components/admin/BlogTab.jsx'; // Import the new BlogTab component
 
 // Removed mock data - AdminSidebar now fetches real data
 
@@ -159,6 +160,9 @@ const Admin = () => {
               
               {/* Newsletter Management */}
               {activeTab === 'newsletter' && <NewsletterTab isLoaded={isLoaded} />}
+              
+              {/* Blog Management */}
+              {activeTab === 'blog' && <BlogTab />}
             </div>
           </div>
         </div>

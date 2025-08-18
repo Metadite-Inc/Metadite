@@ -248,7 +248,6 @@ const ModelsTab = ({ isLoaded, refreshKey = 0 }) => {
       doll_packing_size: '',
       doll_body_size: '',
       is_featured: false, // Reset featured status
-
       available_regions: ['usa', 'canada', 'mexico', 'uk', 'eu', 'australia', 'new_zealand'], // Reset regions too
     });
     setPrimaryImageFile(null);
@@ -903,7 +902,6 @@ const ModelsTab = ({ isLoaded, refreshKey = 0 }) => {
             <div className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
               Showing {filteredModels.length > 0 ? (currentPage - 1) * modelsPerPage + 1 : 0}-{Math.min(currentPage * modelsPerPage, totalModels)} of {totalModels} models
               {searchTerm && filteredModels.length !== models.length && ` (${filteredModels.length} matching search)`}
-
             </div>
             <div className="flex space-x-2">
               <button

@@ -11,7 +11,6 @@ import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { userApi } from '../../lib/api/user_api';
 import { newsletterApi } from '../../lib/api/newsletter_api';
-
 import PasswordInput from '../ui/PasswordInput';
 
 const AccountSettings: React.FC = () => {
