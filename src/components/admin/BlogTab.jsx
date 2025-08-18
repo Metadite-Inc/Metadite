@@ -420,7 +420,7 @@ const BlogTab = () => {
           />
           
           {/* Modal Content */}
-          <div className="relative bg-white rounded-lg p-4 max-w-4xl w-full mx-4 shadow-xl max-h-[90vh] overflow-y-auto mt-4">
+          <div className="relative bg-white rounded-lg p-4 max-w-4xl w-full mx-0 shadow-xl max-h-[70vh] overflow-y-auto mt-0">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold text-gray-900">
                 Create New Blog Post
