@@ -50,9 +50,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
     console.log('Logging out user');
-    authApi.logout();
+    await authApi.logout();
     setUser(null);
   };
 
@@ -83,39 +83,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const updateMembership = async (membershipLevel: string) => {
+  const checkSession = async () => {
     try {
-      // Update user membership level via API
-      // This would need to be implemented with the actual API endpoint
-      console.log('Updating membership to:', membershipLevel);
-      
-      // For now, just update the local user state
-      if (user) {
-        setUser({ ...user, membership_level: membershipLevel as any });
+      const sessionResponse = await authApi.checkSession();
+      if (sessionResponse.authenticated) {
+        // If we have a valid session, get the full user data
+        const userResponse = await authApi.getCurrentUser();
+        setUser(userResponse);
+      } else {
+        setUser(null);
       }
     } catch (error) {
-      console.error('Failed to update membership:', error);
-      throw error;
+      console.error('Session check failed:', error);
+      setUser(null);
+    } finally {
+      setLoading(false);
     }
   };
 
-  useEffect(() => {
-    const initializeAuth = async () => {
-      const token = localStorage.getItem('access_token');
-      if (token) {
-        console.log('Found existing token, refreshing user...');
-        try {
-          await refreshUser();
-        } catch (error) {
-          console.error('Failed to initialize auth:', error);
-        }
-      } else {
-        console.log('No token found');
-      }
-      setLoading(false);
-    };
+  const updateMembership = async (membershipLevel: string) => {
+    if (user) {
+      setUser({ ...user, membership_level: membershipLevel as any });
+    }
+  };
 
-    initializeAuth();
+  // Check for existing session on mount
+  useEffect(() => {
+    checkSession();
   }, []);
 
   // Add effect to log user role changes

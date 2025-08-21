@@ -1,0 +1,29 @@
+User-agent: *
+Allow: /
+
+# Disallow private/admin areas
+Disallow: /dashboard/
+Disallow: /admin/
+Disallow: /staff-dashboard/
+Disallow: /moderator/
+Disallow: /api/
+Disallow: /login
+Disallow: /checkout/
+Disallow: /success/
+Disallow: /cancel/
+
+# Allow important pages
+Allow: /models
+Allow: /vip-content
+Allow: /blog
+Allow: /contact
+Allow: /terms
+Allow: /privacy
+Allow: /help
+Allow: /faq
+
+# Sitemap location
+Sitemap: https://metadite.com/sitemap.xml
+
+# Crawl delay (optional)
+Crawl-delay: 1

@@ -8,6 +8,7 @@ import ScrollToTop from "./components/ScrollToTop";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { CartProvider } from "./context/CartContext";
+import { useGoogleAnalytics } from "./hooks/useGoogleAnalytics";
 import Index from "./pages/Index";
 import AgeVerificationGate from "./components/AgeVerificationGate";
 import UnderAge from "./pages/UnderAge";
@@ -48,12 +49,19 @@ import BlogPost from './pages/BlogPost';
 // Create a client
 const queryClient = new QueryClient();
 
+// Google Analytics Wrapper Component
+const GoogleAnalyticsWrapper = () => {
+  useGoogleAnalytics();
+  return null;
+};
+
 const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <ThemeProvider>
           <BrowserRouter>
+            <GoogleAnalyticsWrapper />
             <ScrollToTop />
             <AgeVerificationGate>
               <AuthProvider>
