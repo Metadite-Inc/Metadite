@@ -42,12 +42,22 @@ interface TokenResponse {
   token_type: string;
 }
 
+interface SessionResponse {
+  authenticated: boolean;
+  user_id?: number;
+  email?: string;
+  role?: string;
+  user_type?: string;
+  message?: string;
+}
+
 // Create axios instance with base config
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true, // Enable cookies
 });
 
 // Add request interceptor to include auth token
@@ -63,9 +73,18 @@ export const authApi = {
   // Login user
   async login(data: LoginRequest): Promise<TokenResponse> {
     console.log('Attempting login with payload:', data); // Added for debugging
-    const response = await api.post<TokenResponse>('/api/auth/login', data);
-    localStorage.setItem('access_token', response.data.access_token);
-    return response.data;
+    console.log('API Base URL:', API_BASE_URL); // Debug API URL
+    console.log('With credentials:', true); // Debug credentials setting
+    
+    try {
+      const response = await api.post<TokenResponse>('/api/auth/login', data);
+      console.log('Login response:', response.data); // Debug response
+      localStorage.setItem('access_token', response.data.access_token);
+      return response.data;
+    } catch (error) {
+      console.error('Login error details:', error); // Enhanced error logging
+      throw error;
+    }
   },
 
   // Register new user
@@ -77,6 +96,12 @@ export const authApi = {
   // Get current user info
   async getCurrentUser(): Promise<UserResponse> {
     const response = await api.get<UserResponse>('/api/auth/me');
+    return response.data;
+  },
+
+  // Check session status using cookies
+  async checkSession(): Promise<SessionResponse> {
+    const response = await api.get<SessionResponse>('/api/auth/session');
     return response.data;
   },
 
@@ -106,8 +131,14 @@ export const authApi = {
     await api.post('/api/auth/verify-email/request', { email });
   },
 
-  // Logout (clear token)
-  logout(): void {
-    localStorage.removeItem('access_token');
+  // Logout (clear token and cookies)
+  async logout(): Promise<void> {
+    try {
+      await api.post('/api/auth/logout');
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      localStorage.removeItem('access_token');
+    }
   },
 };

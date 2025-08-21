@@ -9,6 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { useTheme } from '../context/ThemeContext';
+import { contactApi } from '../lib/api/contact_api';
+import { useGoogleAnalytics } from '../hooks/useGoogleAnalytics';
 
 interface FormData {
   name: string;
@@ -19,35 +21,69 @@ interface FormData {
 
 const Contact = () => {
   const { theme } = useTheme();
+  const { trackFormSubmission } = useGoogleAnalytics();
   const [formData, setFormData] = useState<FormData>({
     name: '',
     email: '',
     subject: '',
     message: ''
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // In a real app, this would send data to a server
-    console.log('Form submitted:', formData);
+    if (isSubmitting) return;
     
-    toast.success('Message sent!', {
-      description: 'We will get back to you shortly.',
-    });
+    setIsSubmitting(true);
     
-    // Reset form
-    setFormData({
-      name: '',
-      email: '',
-      subject: '',
-      message: ''
-    });
+    try {
+      const response = await contactApi.submitContactForm(formData);
+      
+      if (response.success) {
+        // Track successful form submission
+        trackFormSubmission('contact_form', true);
+        
+        toast.success('Message sent successfully!', {
+          description: response.message,
+        });
+        
+        // Reset form
+        setFormData({
+          name: '',
+          email: '',
+          subject: '',
+          message: ''
+        });
+      } else {
+        // Track failed form submission
+        trackFormSubmission('contact_form', false);
+        
+        toast.error('Failed to send message', {
+          description: 'Please try again later.',
+        });
+      }
+    } catch (error: any) {
+      console.error('Contact form error:', error);
+      
+      // Track failed form submission
+      trackFormSubmission('contact_form', false);
+      
+      const errorMessage = error.response?.data?.detail || 
+                          error.message || 
+                          'An error occurred while sending your message.';
+      
+      toast.error('Failed to send message', {
+        description: errorMessage,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -89,12 +125,12 @@ const Contact = () => {
                 <h2 className={`text-xl font-semibold mb-2 ${theme === 'dark' ? 'text-white' : ''}`}>Call Us</h2>
                 <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} mb-4`}>Mon-Fri from 8am to 5pm.</p>
                 <a href="tel:+1-555-123-4567" className="text-metadite-primary hover:underline">
-                  +1 (555) 123-4567
+                  +1 (747) 374-4044
                 </a>
               </CardContent>
             </Card>
             
-            <Card className={`hover:shadow-lg transition-shadow ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : ''}`}>
+            {/*<Card className={`hover:shadow-lg transition-shadow ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : ''}`}>
               <CardContent className="flex flex-col items-center text-center p-6">
                 <div className={`${theme === 'dark' ? 'bg-gray-700' : 'bg-metadite-light'} p-4 rounded-full mb-4`}>
                   <MapPin className="h-8 w-8 text-metadite-primary" />
@@ -106,7 +142,7 @@ const Contact = () => {
                   San Francisco, CA 94103
                 </address>
               </CardContent>
-            </Card>
+            </Card>*/}
           </div>
 
           <br /><br />
@@ -179,16 +215,17 @@ const Contact = () => {
                 
                 <button
                   type="submit"
-                  className="w-full flex items-center justify-center bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white py-3 px-4 rounded-md hover:opacity-90 transition-opacity"
+                  disabled={isSubmitting}
+                  className="w-full flex items-center justify-center bg-gradient-to-r from-metadite-primary to-metadite-secondary text-white py-3 px-4 rounded-md hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <span>Send Message</span>
+                  <span>{isSubmitting ? 'Sending...' : 'Send Message'}</span>
                   <Send className="ml-2 h-4 w-4" />
                 </button>
               </form>
             </div>
           </div>
           
-          <div className="mt-16">
+          {/*<div className="mt-16">
             <Separator className={`mb-8 ${theme === 'dark' ? 'bg-gray-700' : ''}`} />
             <h2 className={`text-2xl font-bold text-center mb-8 ${theme === 'dark' ? 'text-white' : ''}`}>Frequently Asked Questions</h2>
             
@@ -208,7 +245,7 @@ const Contact = () => {
                 <p className={theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>Yes, our technical support team is available to help with any issues you may encounter while using our services.</p>
               </div>
             </div>
-          </div>
+          </div>*/}
         </div>
       </div>
       

@@ -101,6 +101,7 @@ class ApiService {
       const response = await fetch(url, {
         ...options,
         headers,
+        credentials: 'include', // Enable cookies
       });
 
       if (!response.ok) {
@@ -129,7 +130,7 @@ class ApiService {
   // Get all models (dolls) with pagination - removed category parameter
     async getAllModels(skip = 0, limit = 50): Promise<PaginationResponse<ModelBasic>> {
     try {
-      const response = await this.request<PaginationResponse<any> | any[]>(`/api/dolls/?skip=${skip}&limit=${limit}`);
+      const response = await this.request<PaginationResponse<any> | any[]>(`/api/dolls?skip=${skip}&limit=${limit}`);
       const backendUrl = import.meta.env.VITE_API_BASE_URL;
 
       const dolls = Array.isArray(response) ? response : response.data;
@@ -177,7 +178,7 @@ class ApiService {
       let queryParams = `region=${region}&skip=${skip}&limit=${limit}`;
       
       // Add pagination parameters to the API request
-      const response = await this.request<PaginationResponse<any> | any[]>(`/api/dolls/?${queryParams}`);
+      const response = await this.request<PaginationResponse<any> | any[]>(`/api/dolls?${queryParams}`);
       const dolls = Array.isArray(response) ? response : response.data;
       const backendUrl = import.meta.env.VITE_API_BASE_URL;
 
@@ -259,7 +260,7 @@ class ApiService {
   // Get models filtered by category with pagination
   async getModelsByCategory(category: string, skip = 0, limit = 50): Promise<PaginationResponse<ModelBasic>> {
     try {
-      const dolls = await this.request<any[]>(`/api/dolls/category/${encodeURIComponent(category)}/`);
+      const dolls = await this.request<any[]>(`/api/dolls/category/${encodeURIComponent(category)}`);
       const backendUrl = import.meta.env.VITE_API_BASE_URL;
 
       // Transform the API response to match our ModelBasic interface
@@ -314,7 +315,7 @@ class ApiService {
       console.log("API: Creating model with data:", model);
       console.log("API: Available regions:", model.available_regions);
       
-      const response = await this.request<any>('/api/dolls/', {
+      const response = await this.request<any>('/api/dolls', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -547,7 +548,7 @@ class ApiService {
         return null;
       }
 
-      return await this.request<any>(`/api/dolls/moderator/${modelId}/`, {
+      return await this.request<any>(`/api/dolls/moderator/${modelId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

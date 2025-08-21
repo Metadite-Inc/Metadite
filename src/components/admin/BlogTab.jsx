@@ -420,7 +420,7 @@ const BlogTab = () => {
           />
           
           {/* Modal Content */}
-          <div className="relative bg-white rounded-lg p-4 max-w-4xl w-full mx-4 shadow-xl max-h-[90vh] overflow-y-auto mt-4">
+          <div className="relative bg-white rounded-lg p-4 max-w-4xl w-full mx-0 shadow-xl max-h-[70vh] overflow-y-auto mt-0">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold text-gray-900">
                 Create New Blog Post
@@ -538,8 +538,8 @@ const BlogTab = () => {
                 />
               </div>
               
-                             <div className="flex items-center space-x-4">
-                                   <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2">
                     <input
                       type="checkbox"
                       id="is_published"
@@ -622,7 +622,7 @@ const BlogTab = () => {
           />
           
           {/* Modal Content */}
-          <div className="relative bg-white rounded-lg p-6 max-w-4xl w-full mx-4 shadow-xl max-h-[90vh] overflow-y-auto mt-4">
+          <div className="relative bg-white rounded-lg p-6 max-w-4xl w-full mx-0 shadow-xl max-h-[80vh] overflow-y-auto mt-0">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold text-gray-900">
                 Edit Blog Post
