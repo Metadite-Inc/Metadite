@@ -111,6 +111,7 @@ export const detectUserRegion = async (): Promise<string> => {
           console.log('Detected region from IP API:', detectedRegion);
           // Store the detected region for future use
           localStorage.setItem('user_region', detectedRegion);
+
           return detectedRegion;
         }
       }

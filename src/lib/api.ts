@@ -186,6 +186,7 @@ class ApiService {
       
       // Add pagination parameters to the API request
       const response = await this.request<PaginationResponse<any> | any[]>(`/api/dolls?${queryParams}`);
+
       const backendUrl = import.meta.env.VITE_API_BASE_URL;
 
       const dolls = Array.isArray(response) ? response : response.data;
@@ -273,6 +274,43 @@ class ApiService {
       console.error('Failed to fetch doll categories:', error);
       // Return default categories as fallback
       return ['standard', 'premium', 'limited_edition'];
+    }
+  }
+
+  // Get featured models for homepage - filtered by user region
+  async getFeaturedModels(limit = 10, userRegion?: string): Promise<ModelBasic[]> {
+    try {
+      const response = await this.request<any[]>(`/api/dolls/featured?limit=${limit}`);
+      const backendUrl = import.meta.env.VITE_API_BASE_URL;
+
+      const transformedData = response.map(doll => {
+        let mainImage = '';
+        if (Array.isArray(doll.images)) {
+          const primary = doll.images.find((img: any) => img.is_primary);
+          mainImage = primary ? `${backendUrl}${primary.image_url}` : '';
+        }
+        return {
+          id: doll.id,
+          name: doll.name,
+          price: doll.price,
+          description: doll.description.substring(0, 100) + "...",
+          image: mainImage,
+          category: doll.doll_category,
+          available_regions: doll.available_regions || ['usa', 'canada', 'mexico', 'uk', 'eu', 'australia', 'new_zealand'],
+        };
+      });
+
+      // Filter by user region if provided and user is not admin
+      if (userRegion) {
+        return transformedData.filter(model => 
+          model.available_regions && model.available_regions.includes(userRegion)
+        );
+      }
+
+      return transformedData;
+    } catch (error) {
+      console.error('Failed to fetch featured models:', error);
+      return [];
     }
   }
 

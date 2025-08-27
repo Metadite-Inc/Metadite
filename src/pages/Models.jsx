@@ -145,6 +145,7 @@ const Models = () => {
         setIsLoaded(true);
       } catch (error) {
         console.error('❌ Failed to fetch models:', error);
+
         // Reset state on error
         setModels([]);
         setTotalModels(0);

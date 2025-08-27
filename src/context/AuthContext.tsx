@@ -20,6 +20,9 @@ interface AuthContextType {
   loading: boolean;
   login: (email: string, password: string, region?: string) => Promise<{ success: boolean; isTempPassword?: boolean; message?: string }>;
   logout: () => Promise<void>;
+
+  //logout: () => void;
+  //refreshUser: () => Promise<void>;
   register: (email: string, password: string, name: string, region: string) => Promise<void>;
   refreshUser: () => Promise<void>;
   updateMembership: (membershipLevel: string) => Promise<void>;
@@ -132,6 +135,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             });
           }
         }
+      }
+    } catch (error) {
+      console.error('Session check failed:', error);
+      
+      // Don't immediately logout on network errors or temporary failures
+      // Only logout if it's a clear authentication error
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        setUser(null);
+        localStorage.removeItem('access_token');
       } else {
         // Check if we have a JWT token in localStorage
         const token = localStorage.getItem('access_token');
