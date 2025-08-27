@@ -7,7 +7,7 @@ import { useTheme } from '../../context/ThemeContext';
 import FormInput from './FormInput';
 import SocialLoginButtons from './SocialLoginButtons';
 import RegionSelect from './RegionSelect';
-import { detectUserRegion } from '../../lib/utils';
+import { detectUserRegion, setUserRegion, getStoredUserRegion } from '../../lib/utils';
 
 const LoginForm = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -29,6 +29,14 @@ const LoginForm = () => {
   useEffect(() => {
     const autoDetectRegion = async () => {
       try {
+        // First try to get stored region
+        const storedRegion = getStoredUserRegion();
+        if (storedRegion) {
+          setRegion(storedRegion);
+          return;
+        }
+        
+        // If no stored region, detect it
         const detectedRegion = await detectUserRegion();
         setRegion(detectedRegion);
       } catch (error) {
@@ -61,26 +69,23 @@ const LoginForm = () => {
     if (!/[a-z]/.test(password)) {
       return "Password must contain at least one lowercase letter";
     }
-    if (!/[0-9]/.test(password)) {
-      return "Password must contain at least one digit";
+    if (!/\d/.test(password)) {
+      return "Password must contain at least one number";
     }
-    return "";
+    return null;
   };
   
   const handlePasswordChange = (e) => {
-    const newPassword = e.target.value;
-    setPassword(newPassword);
-    
-    if (!isLogin && newPassword) {
-      setPasswordError(validatePassword(newPassword));
-    } else {
+    setPassword(e.target.value);
+    if (passwordError) {
       setPasswordError('');
     }
   };
   
   const handlePasswordBlur = () => {
-    if (!isLogin && password) {
-      setPasswordError(validatePassword(password));
+    if (password && !isLogin) {
+      const error = validatePassword(password);
+      setPasswordError(error || '');
     }
   };
   
@@ -102,6 +107,11 @@ const LoginForm = () => {
       if (isLogin) {
         const result = await login(email, password, region);
         if (result.success) {
+          // Store region preference for future use
+          if (region) {
+            setUserRegion(region);
+          }
+          
           if (result.isTempPassword) {
             // Show temporary password message and redirect to password change
             toast.warning(result.message || "Please change your password immediately.");
@@ -125,6 +135,12 @@ const LoginForm = () => {
         }
         
         await register(email, password, name, region);
+        
+        // Store region preference for future use
+        if (region) {
+          setUserRegion(region);
+        }
+        
         toast.success("Registration successful! Please log in.");
         setIsLogin(true);
       }

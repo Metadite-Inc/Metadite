@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { Search, Filter, Tag, Grid } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
+import { getCategoryDisplayName } from '../../lib/utils';
 
 const ModelFilters = ({ 
   searchTerm, 
@@ -13,6 +14,19 @@ const ModelFilters = ({
   categories
 }) => {
   const { theme } = useTheme();
+
+  // Debug logging
+  console.log('🔧 ModelFilters props:', {
+    categoryFilter,
+    categories,
+    priceFilter
+  });
+
+  const handleCategoryChange = (e) => {
+    const newCategory = e.target.value;
+    console.log('🎯 Category filter changed:', newCategory);
+    setCategoryFilter(newCategory);
+  };
 
   return (
     <>
@@ -67,14 +81,14 @@ const ModelFilters = ({
                     : 'border-gray-200 bg-white text-gray-800'
                 } focus:outline-none focus:ring-2 focus:ring-metadite-primary`}
                 value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
+                onChange={handleCategoryChange}
               >
                 <option value="all">All Categories</option>
                 {categories
                   .filter((cat) => cat !== 'all')
                   .map((category) => (
                     <option key={category} value={category}>
-                      {category}
+                      {getCategoryDisplayName(category)}
                     </option>
                   ))}
               </select>
@@ -95,7 +109,7 @@ const ModelFilters = ({
 
             {categoryFilter !== 'all' && (
               <span className="inline-flex items-center bg-metadite-primary/10 text-metadite-primary text-xs px-2 py-1 rounded-full mr-2">
-                Category: {categoryFilter}
+                Category: {getCategoryDisplayName(categoryFilter)}
                 <button
                   onClick={() => setCategoryFilter('all')}
                   className="ml-1 hover:text-metadite-secondary"

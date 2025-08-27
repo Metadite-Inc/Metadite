@@ -12,9 +12,20 @@ const regionConfig = {
   new_zealand: { name: 'New Zealand', flag: '🇳🇿', code: 'NZ' },
 };
 
-const RegionDisplay = ({ regions = [], showFlags = true, showNames = false, maxDisplay = 3 }) => {
+const RegionDisplay = ({ regions = [], showFlags = true, showNames = false, maxDisplay = 3, currentRegion = null }) => {
   const { theme } = useTheme();
   
+  // If currentRegion is provided, show it prominently
+  if (currentRegion && regionConfig[currentRegion]) {
+    const config = regionConfig[currentRegion];
+    return (
+      <div className="flex items-center space-x-1">
+        {showFlags && <span className="text-lg">{config.flag}</span>}
+        {showNames && <span className="text-xs text-gray-600 dark:text-gray-400">{config.name}</span>}
+      </div>
+    );
+  }
+
   if (!regions || regions.length === 0) {
     return null;
   }
@@ -42,15 +53,17 @@ const RegionDisplay = ({ regions = [], showFlags = true, showNames = false, maxD
         if (!config) return null;
         
         return (
-          <div key={region} className="flex items-center space-x-1" title={config.name}>
-            {showFlags && <span className="text-sm">{config.flag}</span>}
+          <div key={region} className="flex items-center space-x-1">
+            {showFlags && <span className="text-lg">{config.flag}</span>}
             {showNames && <span className="text-xs text-gray-600 dark:text-gray-400">{config.name}</span>}
-            {!showFlags && !showNames && <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{config.code}</span>}
+            {index < displayRegions.length - 1 && <span className="text-gray-400">•</span>}
           </div>
         );
       })}
       {remainingCount > 0 && (
-        <span className="text-xs text-gray-500 dark:text-gray-400">+{remainingCount}</span>
+        <span className="text-xs text-gray-500 dark:text-gray-400">
+          +{remainingCount} more
+        </span>
       )}
     </div>
   );

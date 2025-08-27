@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { authApi } from '../lib/api/auth_api';
+import { getStoredUserRegion } from '../lib/utils';
 
 interface User {
   id: number;
@@ -18,9 +19,9 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string, region?: string) => Promise<{ success: boolean; isTempPassword?: boolean; message?: string }>;
-  logout: () => void;
-  refreshUser: () => Promise<void>;
+  logout: () => Promise<void>;
   register: (email: string, password: string, name: string, region: string) => Promise<void>;
+  refreshUser: () => Promise<void>;
   updateMembership: (membershipLevel: string) => Promise<void>;
 }
 
@@ -59,6 +60,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     console.log('Logging out user');
+    
+    // Store the current user's region before logout for future use
+    if (user && user.region) {
+      localStorage.setItem('user_region', user.region);
+      console.log('Preserved user region on logout:', user.region);
+    }
+    
     await authApi.logout();
     setUser(null);
   };
