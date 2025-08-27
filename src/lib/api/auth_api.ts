@@ -40,6 +40,17 @@ interface UserResponse {
 interface TokenResponse {
   access_token: string;
   token_type: string;
+  is_temp_password?: boolean;
+  message?: string;
+}
+
+interface SessionResponse {
+  authenticated: boolean;
+  user_id?: number;
+  email?: string;
+  role?: string;
+  user_type?: string;
+  message?: string;
 }
 
 interface SessionResponse {
@@ -95,7 +106,36 @@ export const authApi = {
 
   // Get current user info
   async getCurrentUser(): Promise<UserResponse> {
-    const response = await api.get<UserResponse>('/api/auth/me');
+    try {
+      const response = await api.get<UserResponse>('/api/auth/me');
+      return response.data;
+    } catch (error) {
+      // If JWT token is expired, try to refresh it using session
+      if (error.response?.status === 401) {
+        console.warn('JWT token expired, attempting to refresh...');
+        try {
+          await this.refreshToken();
+          // Retry the request with new token
+          const response = await api.get<UserResponse>('/api/auth/me');
+          return response.data;
+        } catch (refreshError) {
+          console.error('Token refresh failed:', refreshError);
+          throw refreshError;
+        }
+      }
+      throw error;
+    }
+  },
+
+  // Refresh JWT token using session
+  async refreshToken(): Promise<void> {
+    const response = await api.post<{access_token: string}>('/api/auth/refresh-token');
+    localStorage.setItem('access_token', response.data.access_token);
+  },
+
+  // Check session status using cookies
+  async checkSession(): Promise<SessionResponse> {
+    const response = await api.get<SessionResponse>('/api/auth/session');
     return response.data;
   },
 

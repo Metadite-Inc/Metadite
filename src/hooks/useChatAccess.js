@@ -9,11 +9,23 @@ export const useChatAccess = () => {
     can_send_messages: false,
     can_watch_videos: false
   });
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // Start with false since we don't need to load if no user
 
   useEffect(() => {
     const fetchAccessStatus = async () => {
-      if (!user) {
+      // Check if user exists and has required properties
+      if (!user || !user.id || !user.email) {
+        setAccessStatus({
+          can_send_messages: false,
+          can_watch_videos: false
+        });
+        setLoading(false);
+        return;
+      }
+
+      // Check if we have a valid token
+      const token = localStorage.getItem('access_token');
+      if (!token) {
         setAccessStatus({
           can_send_messages: false,
           can_watch_videos: false
@@ -28,6 +40,8 @@ export const useChatAccess = () => {
         setAccessStatus(status);
       } catch (error) {
         console.error('Error fetching chat access status:', error);
+        // Don't throw the error, just set default restricted access
+        // This prevents the error from bubbling up and causing logout
         setAccessStatus({
           can_send_messages: false,
           can_watch_videos: false

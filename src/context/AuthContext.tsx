@@ -17,7 +17,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string, region?: string) => Promise<boolean>;
+  login: (email: string, password: string, region?: string) => Promise<{ success: boolean; isTempPassword?: boolean; message?: string }>;
   logout: () => void;
   refreshUser: () => Promise<void>;
   register: (email: string, password: string, name: string, region: string) => Promise<void>;
@@ -30,21 +30,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const login = async (email: string, password: string, region?: string): Promise<boolean> => {
+  const login = async (email: string, password: string, region?: string): Promise<{ success: boolean; isTempPassword?: boolean; message?: string }> => {
     try {
       setLoading(true);
-      await authApi.login({ email, password, region });
+      const loginResponse = await authApi.login({ email, password, region });
       
       // Get user info after successful login
       const userResponse = await authApi.getCurrentUser();
       console.log('Login successful, user data:', userResponse);
       setUser(userResponse);
       
-      return true;
+      // Check if this was a temporary password login
+      const isTempPassword = loginResponse.is_temp_password || false;
+      const message = loginResponse.message || undefined;
+      
+      return { 
+        success: true, 
+        isTempPassword,
+        message
+      };
     } catch (error) {
       console.error('Login failed:', error);
-      // Remove the toast from here - let the component handle notifications
-      return false;
+      return { success: false };
     } finally {
       setLoading(false);
     }
@@ -88,14 +95,65 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const sessionResponse = await authApi.checkSession();
       if (sessionResponse.authenticated) {
         // If we have a valid session, get the full user data
-        const userResponse = await authApi.getCurrentUser();
-        setUser(userResponse);
+        try {
+          const userResponse = await authApi.getCurrentUser();
+          setUser(userResponse);
+        } catch (jwtError) {
+          console.warn('JWT token expired, but session is valid. Refreshing token...');
+          // The getCurrentUser method will now automatically refresh the token
+          // If it still fails, we'll fall back to session data
+          try {
+            await authApi.refreshToken();
+            const userResponse = await authApi.getCurrentUser();
+            setUser(userResponse);
+          } catch (refreshError) {
+            console.error('Token refresh failed, using session data:', refreshError);
+            // Fallback to session data
+            setUser({
+              id: sessionResponse.user_id,
+              email: sessionResponse.email,
+              role: sessionResponse.role as "admin" | "moderator" | "user",
+              // Add other required fields with defaults
+              uuid: '',
+              full_name: '',
+              membership_level: 'free',
+              region: 'usa',
+              is_active: true,
+              video_access_count: 0,
+              created_at: new Date().toISOString()
+            });
+          }
+        }
       } else {
-        setUser(null);
+        // Check if we have a JWT token in localStorage
+        const token = localStorage.getItem('access_token');
+        if (token) {
+          // Try to use the JWT token to get user data
+          try {
+            const userResponse = await authApi.getCurrentUser();
+            setUser(userResponse);
+          } catch (jwtError) {
+            console.warn('JWT token is invalid, clearing it');
+            setUser(null);
+            localStorage.removeItem('access_token');
+          }
+        } else {
+          setUser(null);
+        }
       }
     } catch (error) {
       console.error('Session check failed:', error);
-      setUser(null);
+      
+      // Don't immediately logout on network errors or temporary failures
+      // Only logout if it's a clear authentication error
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        setUser(null);
+        localStorage.removeItem('access_token');
+      } else {
+        // For other errors (network, server issues), keep the current state
+        // and let the user continue with their current session if they have one
+        console.warn('Session check failed due to network/server issue, keeping current state');
+      }
     } finally {
       setLoading(false);
     }

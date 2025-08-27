@@ -41,32 +41,78 @@ export const isValidId = (id: string | number): boolean => {
 // Region detection utility
 export const detectUserRegion = async (): Promise<string> => {
   try {
-    // Use a free IP geolocation service
-    const response = await fetch('https://ipapi.co/json/');
-    const data = await response.json();
+    // Primary method: Use browser locale (no CORS issues)
+    const browserLocale = navigator.language || navigator.languages?.[0] || 'en-US';
+    const countryCode = browserLocale.split('-')[1]?.toLowerCase();
     
-    const countryCode = data.country_code?.toLowerCase();
+    if (countryCode) {
+      const regionMapping: { [key: string]: string } = {
+        'us': 'usa',
+        'ca': 'canada',
+        'mx': 'mexico',
+        'gb': 'uk',
+        'au': 'australia',
+        'nz': 'new_zealand',
+        // EU countries
+        'de': 'eu', 'fr': 'eu', 'it': 'eu', 'es': 'eu', 'nl': 'eu', 'be': 'eu',
+        'at': 'eu', 'se': 'eu', 'dk': 'eu', 'fi': 'eu', 'no': 'eu', 'ch': 'eu',
+        'ie': 'eu', 'pt': 'eu', 'gr': 'eu', 'pl': 'eu', 'cz': 'eu', 'hu': 'eu',
+        'ro': 'eu', 'bg': 'eu', 'hr': 'eu', 'sk': 'eu', 'si': 'eu', 'lt': 'eu',
+        'lv': 'eu', 'ee': 'eu', 'cy': 'eu', 'mt': 'eu', 'lu': 'eu'
+      };
+      
+      const detectedRegion = regionMapping[countryCode];
+      if (detectedRegion) {
+        console.log('Detected region from browser locale:', detectedRegion);
+        return detectedRegion;
+      }
+    }
     
-    // Map country codes to our region format
-    const regionMapping: { [key: string]: string } = {
-      'us': 'usa',
-      'ca': 'canada',
-      'mx': 'mexico',
-      'gb': 'uk',
-      'au': 'australia',
-      'nz': 'new_zealand',
-      // EU countries
-      'de': 'eu', 'fr': 'eu', 'it': 'eu', 'es': 'eu', 'nl': 'eu', 'be': 'eu',
-      'at': 'eu', 'se': 'eu', 'dk': 'eu', 'fi': 'eu', 'no': 'eu', 'ch': 'eu',
-      'ie': 'eu', 'pt': 'eu', 'gr': 'eu', 'pl': 'eu', 'cz': 'eu', 'hu': 'eu',
-      'ro': 'eu', 'bg': 'eu', 'hr': 'eu', 'sk': 'eu', 'si': 'eu', 'lt': 'eu',
-      'lv': 'eu', 'ee': 'eu', 'cy': 'eu', 'mt': 'eu', 'lu': 'eu'
-    };
+    // Fallback: Try external API (with better error handling)
+    try {
+      const response = await fetch('https://ipapi.co/json/', {
+        method: 'GET',
+        mode: 'cors',
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        const countryCode = data.country_code?.toLowerCase();
+        
+        const regionMapping: { [key: string]: string } = {
+          'us': 'usa',
+          'ca': 'canada',
+          'mx': 'mexico',
+          'gb': 'uk',
+          'au': 'australia',
+          'nz': 'new_zealand',
+          // EU countries
+          'de': 'eu', 'fr': 'eu', 'it': 'eu', 'es': 'eu', 'nl': 'eu', 'be': 'eu',
+          'at': 'eu', 'se': 'eu', 'dk': 'eu', 'fi': 'eu', 'no': 'eu', 'ch': 'eu',
+          'ie': 'eu', 'pt': 'eu', 'gr': 'eu', 'pl': 'eu', 'cz': 'eu', 'hu': 'eu',
+          'ro': 'eu', 'bg': 'eu', 'hr': 'eu', 'sk': 'eu', 'si': 'eu', 'lt': 'eu',
+          'lv': 'eu', 'ee': 'eu', 'cy': 'eu', 'mt': 'eu', 'lu': 'eu'
+        };
+        
+        const detectedRegion = regionMapping[countryCode];
+        if (detectedRegion) {
+          console.log('Detected region from IP API:', detectedRegion);
+          return detectedRegion;
+        }
+      }
+    } catch (apiError) {
+      console.warn('IP API failed, using browser locale fallback:', apiError);
+    }
     
-    return regionMapping[countryCode] || 'usa'; // Default to USA if region not found
+    // Final fallback: return default region
+    console.log('Using default region: usa');
+    return 'usa';
   } catch (error) {
-    console.error('Error detecting user region:', error);
-    return 'usa'; // Default to USA on error
+    console.error('Error in region detection:', error);
+    return 'usa'; // Default to USA on any error
   }
 };
 

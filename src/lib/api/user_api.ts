@@ -114,6 +114,7 @@ class userApiService {
     } catch (error) {
       console.error("Failed to fetch chat access status:", error);
       // Return default restricted access on error
+      // Don't throw the error to prevent it from causing logout
       return {
         can_send_messages: false,
         can_watch_videos: false

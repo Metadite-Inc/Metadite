@@ -6,12 +6,10 @@ import { useCart } from '../context/CartContext';
 import { toast } from 'sonner';
 import { favoriteApiService } from '../lib/api/favorite_api';
 import { createChatRoom } from '../services/ChatService';
-import { useAuth } from '../context/AuthContext';
 import { useChatAccess } from '../hooks/useChatAccess';
 
 const ModelCard = ({ model, user, isFavorite: initialIsFavorite, onRemoveFavorite }) => {
   const navigate = useNavigate();
-  const { user: authUser } = useAuth();
   const { addToCart } = useCart();
   const { canSendMessages } = useChatAccess();
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -102,13 +100,13 @@ const ModelCard = ({ model, user, isFavorite: initialIsFavorite, onRemoveFavorit
   };
   
   const handleChatButtonClick = async () => {
-    if (!authUser) {
+    if (!user) {
       toast.error("Please log in to start a chat");
       return;
     }
     
     // Check if user has free membership - redirect to upgrade page
-    if (authUser.membership_level === 'free') {
+    if (user.membership_level === 'free') {
       navigate('/upgrade');
       toast.info("Upgrade your membership to chat with models");
       return;

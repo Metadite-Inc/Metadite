@@ -39,7 +39,7 @@ const ModelGrid = ({ models, isLoaded }) => {
         <ModelCard 
           key={model.id} 
           model={model} 
-          user={user}
+          user={user || null} // Pass null if no user is authenticated
         />
       ))}
     </div>
