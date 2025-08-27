@@ -100,11 +100,17 @@ const LoginForm = () => {
       }
       
       if (isLogin) {
-        const success = await login(email, password, region);
-        if (success) {
-          toast.success("Login successful!");
-          // Navigate to dashboard - server-side will handle role-based access
-          navigate('/#home');
+        const result = await login(email, password, region);
+        if (result.success) {
+          if (result.isTempPassword) {
+            // Show temporary password message and redirect to password change
+            toast.warning(result.message || "Please change your password immediately.");
+            navigate('/dashboard?tab=settings');
+          } else {
+            toast.success("Login successful!");
+            // Navigate to dashboard - server-side will handle role-based access
+            navigate('/#home');
+          }
         } else {
           // Only show error notification if login failed
           toast.error("Login failed. Please check your credentials and try again.");

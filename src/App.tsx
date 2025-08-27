@@ -45,6 +45,9 @@ import Help from './pages/Help';
 import FAQ from './pages/FAQ';
 import Blog from './pages/Blog';
 import BlogPost from './pages/BlogPost';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
+import TempPasswordRedirect from './components/TempPasswordRedirect';
 
 // Create a client
 const queryClient = new QueryClient();
@@ -86,6 +89,9 @@ const App = () => {
                     <Route path="/" element={<Index />} />
                     <Route path="/underage" element={<UnderAge />} />
                     <Route path="/login" element={<Login />} />
+                    <Route path="/forgot-password" element={<ForgotPassword />} />
+                    <Route path="/reset-password" element={<ResetPassword />} />
+                    <Route path="/temp-password-redirect" element={<TempPasswordRedirect />} />
                     <Route 
                       path="/dashboard" 
                       element={

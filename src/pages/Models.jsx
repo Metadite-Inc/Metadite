@@ -31,14 +31,14 @@ const Models = () => {
   // Fetch categories on component mount
   useEffect(() => {
     const fetchInitialData = async () => {
-      const token = localStorage.getItem('access_token');
-      if (token) {
-        try {
-          const region = await detectUserRegion();
-          setUserRegion(region);
-        } catch (error) {
-          console.error('Failed to detect region:', error);
-        }
+      // Always try to detect region, regardless of authentication status
+      try {
+        const region = await detectUserRegion();
+        setUserRegion(region);
+      } catch (error) {
+        console.error('Failed to detect region:', error);
+        // Set default region on error
+        setUserRegion('usa');
       }
 
       try {
