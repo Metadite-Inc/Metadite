@@ -53,6 +53,15 @@ interface SessionResponse {
   message?: string;
 }
 
+interface SessionResponse {
+  authenticated: boolean;
+  user_id?: number;
+  email?: string;
+  role?: string;
+  user_type?: string;
+  message?: string;
+}
+
 // Create axios instance with base config
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -122,6 +131,12 @@ export const authApi = {
   async refreshToken(): Promise<void> {
     const response = await api.post<{access_token: string}>('/api/auth/refresh-token');
     localStorage.setItem('access_token', response.data.access_token);
+  },
+
+  // Check session status using cookies
+  async checkSession(): Promise<SessionResponse> {
+    const response = await api.get<SessionResponse>('/api/auth/session');
+    return response.data;
   },
 
   // Check session status using cookies
