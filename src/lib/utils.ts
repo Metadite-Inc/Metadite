@@ -41,6 +41,13 @@ export const isValidId = (id: string | number): boolean => {
 // Region detection utility
 export const detectUserRegion = async (): Promise<string> => {
   try {
+    // First, check if we have a stored region preference
+    const storedRegion = localStorage.getItem('user_region');
+    if (storedRegion) {
+      console.log('Using stored region preference:', storedRegion);
+      return storedRegion;
+    }
+
     // Primary method: Use browser locale (no CORS issues)
     const browserLocale = navigator.language || navigator.languages?.[0] || 'en-US';
     const countryCode = browserLocale.split('-')[1]?.toLowerCase();
@@ -64,6 +71,8 @@ export const detectUserRegion = async (): Promise<string> => {
       const detectedRegion = regionMapping[countryCode];
       if (detectedRegion) {
         console.log('Detected region from browser locale:', detectedRegion);
+        // Store the detected region for future use
+        localStorage.setItem('user_region', detectedRegion);
         return detectedRegion;
       }
     }
@@ -100,6 +109,9 @@ export const detectUserRegion = async (): Promise<string> => {
         const detectedRegion = regionMapping[countryCode];
         if (detectedRegion) {
           console.log('Detected region from IP API:', detectedRegion);
+          // Store the detected region for future use
+          localStorage.setItem('user_region', detectedRegion);
+
           return detectedRegion;
         }
       }
@@ -109,11 +121,29 @@ export const detectUserRegion = async (): Promise<string> => {
     
     // Final fallback: return default region
     console.log('Using default region: usa');
+    localStorage.setItem('user_region', 'usa');
     return 'usa';
   } catch (error) {
     console.error('Error in region detection:', error);
+    localStorage.setItem('user_region', 'usa');
     return 'usa'; // Default to USA on any error
   }
+};
+
+// Function to set user region preference
+export const setUserRegion = (region: string): void => {
+  localStorage.setItem('user_region', region);
+  console.log('Region preference set to:', region);
+};
+
+// Function to get stored user region
+export const getStoredUserRegion = (): string | null => {
+  return localStorage.getItem('user_region');
+};
+
+// Function to clear stored user region
+export const clearStoredUserRegion = (): void => {
+  localStorage.removeItem('user_region');
 };
 
 // Region name mapping for display
@@ -129,4 +159,15 @@ export const getRegionDisplayName = (regionCode: string): string => {
   };
   
   return regionNames[regionCode] || regionCode;
+};
+
+// Category name mapping for display
+export const getCategoryDisplayName = (categoryCode: string): string => {
+  const categoryNames: { [key: string]: string } = {
+    'standard': 'Standard',
+    'premium': 'Premium',
+    'limited_edition': 'Limited Edition'
+  };
+  
+  return categoryNames[categoryCode] || categoryCode;
 };

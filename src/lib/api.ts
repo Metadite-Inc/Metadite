@@ -174,15 +174,23 @@ class ApiService {
 
   async getModels(region: string, skip = 0, limit = 50): Promise<PaginationResponse<ModelBasic>> {
     try {
-      // Build query parameters without category
-      let queryParams = `region=${region}&skip=${skip}&limit=${limit}`;
+      // Build query parameters - only include region if it's provided
+      let queryParams = `skip=${skip}&limit=${limit}`;
+      if (region && region.trim() !== '') {
+        queryParams = `region=${region}&${queryParams}`;
+      }
+      
+      // Clear cache for models requests to ensure fresh data
+      const cacheKey = `${API_URL}/api/dolls?${queryParams}`;
+      cache.delete(cacheKey);
       
       // Add pagination parameters to the API request
       const response = await this.request<PaginationResponse<any> | any[]>(`/api/dolls?${queryParams}`);
-      const dolls = Array.isArray(response) ? response : response.data;
+
       const backendUrl = import.meta.env.VITE_API_BASE_URL;
 
-      // Transform the API response to match our ModelBasic interface
+      const dolls = Array.isArray(response) ? response : response.data;
+
       const transformedData = dolls.map(doll => {
         let mainImage = '';
         if (Array.isArray(doll.images)) {
@@ -193,10 +201,11 @@ class ApiService {
           id: doll.id,
           name: doll.name,
           price: doll.price,
-          description: doll.description.substring(0, 100) + "...", // Truncate for preview
+          description: doll.description.substring(0, 100) + "...",
           image: mainImage,
           category: doll.doll_category,
           available_regions: doll.available_regions || ['usa', 'canada', 'mexico', 'uk', 'eu', 'australia', 'new_zealand'],
+          is_featured: doll.is_featured || false,
         };
       });
 
@@ -209,14 +218,62 @@ class ApiService {
         };
       }
 
-      return { ...response, data: transformedData };
-    } catch (error) {
       return {
-        data: [],
-        total: 0,
-        skip: skip,
-        limit: limit
+        ...response,
+        data: transformedData,
       };
+    } catch (error) {
+      console.error('Failed to fetch models:', error);
+      throw error;
+    }
+  }
+
+  // Get featured models for homepage - filtered by user region
+  async getFeaturedModels(limit = 10, userRegion?: string): Promise<ModelBasic[]> {
+    try {
+      const response = await this.request<any[]>(`/api/dolls/featured?limit=${limit}`);
+      const backendUrl = import.meta.env.VITE_API_BASE_URL;
+
+      const transformedData = response.map(doll => {
+        let mainImage = '';
+        if (Array.isArray(doll.images)) {
+          const primary = doll.images.find((img: any) => img.is_primary);
+          mainImage = primary ? `${backendUrl}${primary.image_url}` : '';
+        }
+        return {
+          id: doll.id,
+          name: doll.name,
+          price: doll.price,
+          description: doll.description.substring(0, 100) + "...",
+          image: mainImage,
+          category: doll.doll_category,
+          available_regions: doll.available_regions || ['usa', 'canada', 'mexico', 'uk', 'eu', 'australia', 'new_zealand'],
+        };
+      });
+
+      // Filter by user region if provided and user is not admin
+      if (userRegion) {
+        return transformedData.filter(model => 
+          model.available_regions && model.available_regions.includes(userRegion)
+        );
+      }
+
+      return transformedData;
+    } catch (error) {
+      console.error('Failed to fetch featured models:', error);
+      return [];
+    }
+  }
+
+  // Get all available doll categories
+  async getDollCategories(): Promise<string[]> {
+    try {
+      const response = await this.request<{ categories: string[] }>('/api/dolls/categories/list');
+      return response.categories;
+    } catch (error) {
+      console.error('Failed to fetch doll categories:', error);
+      // Return default categories as fallback
+      return ['standard', 'premium', 'limited_edition'];
     }
   }
 
@@ -260,11 +317,16 @@ class ApiService {
   // Get models filtered by category with pagination
   async getModelsByCategory(category: string, skip = 0, limit = 50): Promise<PaginationResponse<ModelBasic>> {
     try {
-      const dolls = await this.request<any[]>(`/api/dolls/category/${encodeURIComponent(category)}`);
+      // Clear cache for category requests to ensure fresh data
+      const cacheKey = `${API_URL}/api/dolls/category/${encodeURIComponent(category)}?skip=${skip}&limit=${limit}`;
+      cache.delete(cacheKey);
+      
+      // Pass skip and limit as query parameters
+      const response = await this.request<PaginationResponse<any>>(`/api/dolls/category/${encodeURIComponent(category)}?skip=${skip}&limit=${limit}`);
       const backendUrl = import.meta.env.VITE_API_BASE_URL;
 
       // Transform the API response to match our ModelBasic interface
-      const transformedData = dolls.map(doll => {
+      const transformedData = response.data.map(doll => {
         let mainImage = '';
         if (Array.isArray(doll.images)) {
           const primary = doll.images.find((img: any) => img.is_primary);
@@ -281,16 +343,14 @@ class ApiService {
         };
       });
 
-      // Apply pagination to the filtered results
-      const paginatedData = transformedData.slice(skip, skip + limit);
-
       return {
-        data: paginatedData,
-        total: transformedData.length,
-        skip: skip,
-        limit: limit
+        data: transformedData,
+        total: response.total,
+        skip: response.skip,
+        limit: response.limit
       };
     } catch (error) {
+      console.error('Failed to fetch models by category:', error);
       return {
         data: [],
         total: 0,

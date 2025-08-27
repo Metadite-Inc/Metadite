@@ -49,7 +49,6 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import TempPasswordRedirect from './components/TempPasswordRedirect';
 
-
 // Create a client
 const queryClient = new QueryClient();
 

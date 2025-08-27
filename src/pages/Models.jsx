@@ -7,9 +7,12 @@ import ModelFilters from '../components/models/ModelFilters';
 import ModelPagination from '../components/models/ModelPagination';
 import NoResults from '../components/models/NoResults';
 import { useTheme } from '../context/ThemeContext';
-import { detectUserRegion } from '../lib/utils';
+import { detectUserRegion, getStoredUserRegion, setUserRegion } from '../lib/utils';
 import { apiService } from '../lib/api';
 import { toast } from 'sonner';
+import { useAuth } from '../context/AuthContext';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { Globe } from 'lucide-react';
 
 const Models = () => {
   const [models, setModels] = useState([]);
@@ -18,6 +21,7 @@ const Models = () => {
   const [priceFilter, setPriceFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const { theme } = useTheme();
+  const { user } = useAuth();
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -26,31 +30,72 @@ const Models = () => {
   
   // Categories derived from fetched models
   const [categories, setCategories] = useState(['all']);
-  const [userRegion, setUserRegion] = useState('usa'); // Default to 'usa'
+  const [userRegion, setUserRegionState] = useState('usa'); // Default to 'usa'
 
-  // Fetch categories on component mount
+  // Region options for non-authenticated users
+  const regionOptions = [
+    { value: 'usa', label: 'USA' },
+    { value: 'canada', label: 'Canada' },
+    { value: 'mexico', label: 'Mexico' },
+    { value: 'uk', label: 'UK' },
+    { value: 'eu', label: 'EU' },
+    { value: 'australia', label: 'Australia' },
+    { value: 'new_zealand', label: 'New Zealand' },
+  ];
+
+  // Handle region change for non-authenticated users
+  const handleRegionChange = (newRegion) => {
+    setUserRegionState(newRegion);
+    setUserRegion(newRegion);
+    setCurrentPage(1); // Reset to first page when region changes
+    toast.success(`Region changed to ${regionOptions.find(r => r.value === newRegion)?.label}`);
+  };
+
+  // Fetch categories and region on component mount
   useEffect(() => {
     const fetchInitialData = async () => {
-      // Always try to detect region, regardless of authentication status
-      try {
-        const region = await detectUserRegion();
-        setUserRegion(region);
-      } catch (error) {
-        console.error('Failed to detect region:', error);
-        // Set default region on error
-        setUserRegion('usa');
+      // Determine region: use user's region if logged in, otherwise use stored/detected region
+      let region = 'usa'; // Default fallback
+      
+      if (user && user.region) {
+        // Use authenticated user's region
+        region = user.region;
+        console.log('Using authenticated user region:', region);
+      } else {
+        // For non-authenticated users, try stored region first, then detect
+        const storedRegion = getStoredUserRegion();
+        if (storedRegion) {
+          region = storedRegion;
+          console.log('Using stored region preference:', region);
+        } else {
+          // Detect region if no stored preference
+          try {
+            region = await detectUserRegion();
+            console.log('Detected region:', region);
+          } catch (error) {
+            console.error('Failed to detect region:', error);
+            // Keep default region
+          }
+        }
       }
+      
+      setUserRegionState(region);
 
+      // Fetch categories from API
       try {
-        const predefinedCategories = ['all', 'limited_edition', 'standard', 'premium'];
-        setCategories(predefinedCategories);
+        const fetchedCategories = await apiService.getDollCategories();
+        // Add 'all' as the first option
+        const categoriesWithAll = ['all', ...fetchedCategories];
+        setCategories(categoriesWithAll);
+        console.log('Fetched categories:', categoriesWithAll);
       } catch (error) {
         console.error('Failed to fetch categories:', error);
-        setCategories(['all', 'limited_edition', 'standard']);
+        // Fallback to default categories
+        setCategories(['all', 'standard', 'premium', 'limited_edition']);
       }
     };
     fetchInitialData();
-  }, []); // Only run once on mount
+  }, [user]); // Re-run when user changes
 
   useEffect(() => {
     const fetchModels = async () => {
@@ -58,14 +103,35 @@ const Models = () => {
         setIsLoaded(false);
         const skip = (currentPage - 1) * modelsPerPage;
         
+        console.log('🔍 Fetching models with filters:', {
+          categoryFilter,
+          userRegion,
+          skip,
+          modelsPerPage,
+          user: user ? 'logged in' : 'not logged in'
+        });
+        
         let response;
         if (categoryFilter === 'all') {
-          // Fetch all models with pagination
-          response = await apiService.getModels(userRegion, skip, modelsPerPage);
+          // For non-authenticated users, don't pass region to show all models
+          // For authenticated users, pass their region
+          if (user && user.region) {
+            response = await apiService.getModels(userRegion, skip, modelsPerPage);
+          } else {
+            // Don't pass region parameter to show all models for non-authenticated users
+            response = await apiService.getModels('', skip, modelsPerPage);
+          }
         } else {
           // Fetch filtered models by category
+          console.log('🎯 Fetching models by category:', categoryFilter);
           response = await apiService.getModelsByCategory(categoryFilter, skip, modelsPerPage);
         }
+        
+        console.log('📊 API Response:', {
+          hasData: !!response?.data,
+          dataLength: response?.data?.length || 0,
+          total: response?.total || 0
+        });
         
         if (response && response.data) {
           setModels(response.data);
@@ -78,7 +144,8 @@ const Models = () => {
         
         setIsLoaded(true);
       } catch (error) {
-        console.error('Failed to fetch models:', error);
+        console.error('❌ Failed to fetch models:', error);
+
         // Reset state on error
         setModels([]);
         setTotalModels(0);
@@ -91,7 +158,7 @@ const Models = () => {
     // Add a small delay to prevent rapid successive calls
     const timeoutId = setTimeout(fetchModels, 100);
     return () => clearTimeout(timeoutId);
-  }, [currentPage, categoryFilter, userRegion, modelsPerPage]); // Add modelsPerPage to dependencies
+  }, [currentPage, categoryFilter, userRegion, modelsPerPage, user]); // Add user to dependencies
 
   // Filter models based on search and price filters (category filtering now handled by API)
   const filteredModels = models.filter((model) => {
@@ -161,16 +228,42 @@ const Models = () => {
         }`}
       >
         <div className="container mx-auto max-w-6xl">
-          <h1
-            className={`text-3xl font-bold mb-2 ${
-              theme === 'dark' ? 'text-white' : 'text-gray-900'
-            }`}
-          >
-            Our Model Collection
-          </h1>
-          <p className={`mb-8 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
-            Explore our premium selection of beautifully crafted model dolls
-          </p>
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+            <div>
+              <h1
+                className={`text-3xl font-bold mb-2 ${
+                  theme === 'dark' ? 'text-white' : 'text-gray-900'
+                }`}
+              >
+                Our Model Collection
+              </h1>
+              <p className={`mb-4 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                Explore our premium selection of beautifully crafted model dolls
+              </p>
+            </div>
+            
+            {/* Region selector for non-authenticated users */}
+            {!user && (
+              <div className="flex items-center space-x-2 mb-4 md:mb-0">
+                <Globe className={`h-5 w-5 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`} />
+                <span className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                  Region:
+                </span>
+                <Select value={userRegion} onValueChange={handleRegionChange}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {regionOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
 
           <ModelFilters
             searchTerm={searchTerm}
