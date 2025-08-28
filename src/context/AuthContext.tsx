@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { authApi } from '../lib/api/auth_api';
+import { getStoredUserRegion } from '../lib/utils';
 
 interface User {
   id: number;
@@ -114,6 +115,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           } catch (refreshError) {
             console.error('Token refresh failed, using session data:', refreshError);
             // Fallback to session data without forcing a default region
+
             setUser({
               id: sessionResponse.user_id,
               email: sessionResponse.email,

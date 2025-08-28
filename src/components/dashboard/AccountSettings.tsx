@@ -14,7 +14,7 @@ import { newsletterApi } from '../../lib/api/newsletter_api';
 import PasswordInput from '../ui/PasswordInput';
 import RegionDisplay from '../RegionDisplay';
 
-const AccountSettings: React.FC = () => {
+  const AccountSettings: React.FC = () => {
   const { user, refreshUser, logout } = useAuth();
   const { theme } = useTheme();
   const navigate = useNavigate();
