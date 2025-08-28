@@ -111,7 +111,6 @@ export const detectUserRegion = async (): Promise<string> => {
           console.log('Detected region from IP API:', detectedRegion);
           // Store the detected region for future use
           localStorage.setItem('user_region', detectedRegion);
-
           return detectedRegion;
         }
       }
@@ -119,13 +118,11 @@ export const detectUserRegion = async (): Promise<string> => {
       console.warn('IP API failed, using browser locale fallback:', apiError);
     }
     
-    // Final fallback: return default region
+    // Final fallback: return default region without storing it
     console.log('Using default region: usa');
-    localStorage.setItem('user_region', 'usa');
     return 'usa';
   } catch (error) {
     console.error('Error in region detection:', error);
-    localStorage.setItem('user_region', 'usa');
     return 'usa'; // Default to USA on any error
   }
 };

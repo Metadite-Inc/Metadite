@@ -20,9 +20,6 @@ interface AuthContextType {
   loading: boolean;
   login: (email: string, password: string, region?: string) => Promise<{ success: boolean; isTempPassword?: boolean; message?: string }>;
   logout: () => Promise<void>;
-
-  //logout: () => void;
-  //refreshUser: () => Promise<void>;
   register: (email: string, password: string, name: string, region: string) => Promise<void>;
   refreshUser: () => Promise<void>;
   updateMembership: (membershipLevel: string) => Promise<void>;
@@ -64,11 +61,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = async () => {
     console.log('Logging out user');
     
-    // Store the current user's region before logout for future use
-    if (user && user.region) {
-      localStorage.setItem('user_region', user.region);
-      console.log('Preserved user region on logout:', user.region);
-    }
+    // Clear any manual region selections on logout
+    // Registration region will be used when user logs back in
+    localStorage.removeItem('user_region');
     
     await authApi.logout();
     setUser(null);
@@ -119,7 +114,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setUser(userResponse);
           } catch (refreshError) {
             console.error('Token refresh failed, using session data:', refreshError);
-            // Fallback to session data
+            // Fallback to session data without forcing a default region
+
             setUser({
               id: sessionResponse.user_id,
               email: sessionResponse.email,
@@ -128,22 +124,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               uuid: '',
               full_name: '',
               membership_level: 'free',
-              region: 'usa',
+              // region intentionally left undefined here to avoid overriding server-provided value
               is_active: true,
               video_access_count: 0,
               created_at: new Date().toISOString()
             });
           }
         }
-      }
-    } catch (error) {
-      console.error('Session check failed:', error);
-      
-      // Don't immediately logout on network errors or temporary failures
-      // Only logout if it's a clear authentication error
-      if (error.response?.status === 401 || error.response?.status === 403) {
-        setUser(null);
-        localStorage.removeItem('access_token');
       } else {
         // Check if we have a JWT token in localStorage
         const token = localStorage.getItem('access_token');

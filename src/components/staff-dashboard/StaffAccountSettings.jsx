@@ -35,8 +35,7 @@ const StaffAccountSettings = ({ user }) => {
     try {
       await userApi.updateProfile({
         full_name: formData.full_name,
-        email: formData.email,
-        region: user?.region || 'Global' // Use existing region or default
+        email: formData.email
       });
       toast.success('Profile updated successfully');
     } catch (error) {

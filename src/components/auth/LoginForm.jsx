@@ -25,28 +25,30 @@ const LoginForm = () => {
   const { theme } = useTheme();
   const navigate = useNavigate();
   
-  // Auto-detect user region on component mount
+  // Auto-detect user region only for registration, not for login
   useEffect(() => {
-    const autoDetectRegion = async () => {
-      try {
-        // First try to get stored region
-        const storedRegion = getStoredUserRegion();
-        if (storedRegion) {
-          setRegion(storedRegion);
-          return;
+    if (!isLogin) {
+      const autoDetectRegion = async () => {
+        try {
+          // First try to get stored region
+          const storedRegion = getStoredUserRegion();
+          if (storedRegion) {
+            setRegion(storedRegion);
+            return;
+          }
+          
+          // If no stored region, detect it
+          const detectedRegion = await detectUserRegion();
+          setRegion(detectedRegion);
+        } catch (error) {
+          console.error('Failed to detect region:', error);
+          // Keep default empty state, user can select manually
         }
-        
-        // If no stored region, detect it
-        const detectedRegion = await detectUserRegion();
-        setRegion(detectedRegion);
-      } catch (error) {
-        console.error('Failed to detect region:', error);
-        // Keep default empty state, user can select manually
-      }
-    };
-    
-    autoDetectRegion();
-  }, []);
+      };
+      
+      autoDetectRegion();
+    }
+  }, [isLogin]);
   
   const handleToggleView = () => {
     setIsLogin(!isLogin);
@@ -57,6 +59,7 @@ const LoginForm = () => {
     setName('');
     setRole('user');
     setRegion('');
+    setRegionError('');
   };
   
   const validatePassword = (password) => {
@@ -105,12 +108,9 @@ const LoginForm = () => {
       }
       
       if (isLogin) {
-        const result = await login(email, password, region);
+        // Don't send region during login - let the server use the user's registration region
+        const result = await login(email, password);
         if (result.success) {
-          // Store region preference for future use
-          if (region) {
-            setUserRegion(region);
-          }
           
           if (result.isTempPassword) {
             // Show temporary password message and redirect to password change
