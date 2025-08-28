@@ -50,7 +50,7 @@ class userApiService {
     }
   }
 
-  async updateProfile(data: { full_name: string; email: string; region: string }): Promise<any> {
+  async updateProfile(data: { full_name: string; email: string }): Promise<any> {
     try {
       const result = await this.request<any>(`/api/auth/me/`, {
         method: 'PATCH',

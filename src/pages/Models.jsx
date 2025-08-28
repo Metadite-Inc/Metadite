@@ -7,12 +7,8 @@ import ModelFilters from '../components/models/ModelFilters';
 import ModelPagination from '../components/models/ModelPagination';
 import NoResults from '../components/models/NoResults';
 import { useTheme } from '../context/ThemeContext';
-import { detectUserRegion, getStoredUserRegion, setUserRegion } from '../lib/utils';
 import { apiService } from '../lib/api';
-import { toast } from 'sonner';
 import { useAuth } from '../context/AuthContext';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Globe } from 'lucide-react';
 
 const Models = () => {
   const [models, setModels] = useState([]);
@@ -32,53 +28,13 @@ const Models = () => {
   const [categories, setCategories] = useState(['all']);
   const [userRegion, setUserRegionState] = useState('usa'); // Default to 'usa'
 
-  // Region options for non-authenticated users
-  const regionOptions = [
-    { value: 'usa', label: 'USA' },
-    { value: 'canada', label: 'Canada' },
-    { value: 'mexico', label: 'Mexico' },
-    { value: 'uk', label: 'UK' },
-    { value: 'eu', label: 'EU' },
-    { value: 'australia', label: 'Australia' },
-    { value: 'new_zealand', label: 'New Zealand' },
-  ];
 
-  // Handle region change for non-authenticated users
-  const handleRegionChange = (newRegion) => {
-    setUserRegionState(newRegion);
-    setUserRegion(newRegion);
-    setCurrentPage(1); // Reset to first page when region changes
-    toast.success(`Region changed to ${regionOptions.find(r => r.value === newRegion)?.label}`);
-  };
 
   // Fetch categories and region on component mount
   useEffect(() => {
     const fetchInitialData = async () => {
-      // Determine region: use user's region if logged in, otherwise use stored/detected region
-      let region = 'usa'; // Default fallback
-      
-      if (user && user.region) {
-        // Use authenticated user's region
-        region = user.region;
-        console.log('Using authenticated user region:', region);
-      } else {
-        // For non-authenticated users, try stored region first, then detect
-        const storedRegion = getStoredUserRegion();
-        if (storedRegion) {
-          region = storedRegion;
-          console.log('Using stored region preference:', region);
-        } else {
-          // Detect region if no stored preference
-          try {
-            region = await detectUserRegion();
-            console.log('Detected region:', region);
-          } catch (error) {
-            console.error('Failed to detect region:', error);
-            // Keep default region
-          }
-        }
-      }
-      
+      // Use user's registration region or default to 'usa' for non-authenticated users
+      const region = user?.region || 'usa';
       setUserRegionState(region);
 
       // Fetch categories from API
@@ -113,12 +69,13 @@ const Models = () => {
         
         let response;
         if (categoryFilter === 'all') {
-          // For non-authenticated users, don't pass region to show all models
-          // For authenticated users, pass their region
+          // For authenticated users, show models from their registration region by default
+          // For non-authenticated users, show all models
           if (user && user.region) {
-            response = await apiService.getModels(userRegion, skip, modelsPerPage);
+            // Use the user's registration region as the default filter
+            response = await apiService.getModels(user.region, skip, modelsPerPage);
           } else {
-            // Don't pass region parameter to show all models for non-authenticated users
+            // For non-authenticated users, don't pass region parameter to show all models
             response = await apiService.getModels('', skip, modelsPerPage);
           }
         } else {
@@ -239,29 +196,11 @@ const Models = () => {
               <p className={`mb-4 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
                 Explore our premium selection of beautifully crafted model dolls
               </p>
+              
+
             </div>
             
-            {/* Region selector for non-authenticated users */}
-            {!user && (
-              <div className="flex items-center space-x-2 mb-4 md:mb-0">
-                <Globe className={`h-5 w-5 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`} />
-                <span className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
-                  Region:
-                </span>
-                <Select value={userRegion} onValueChange={handleRegionChange}>
-                  <SelectTrigger className="w-32">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {regionOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+
           </div>
 
           <ModelFilters

@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { authApi } from '../lib/api/auth_api';
-import { getStoredUserRegion } from '../lib/utils';
 
 interface User {
   id: number;
@@ -61,11 +60,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = async () => {
     console.log('Logging out user');
     
-    // Store the current user's region before logout for future use
-    if (user && user.region) {
-      localStorage.setItem('user_region', user.region);
-      console.log('Preserved user region on logout:', user.region);
-    }
+    // Clear any manual region selections on logout
+    // Registration region will be used when user logs back in
+    localStorage.removeItem('user_region');
     
     await authApi.logout();
     setUser(null);
@@ -116,7 +113,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setUser(userResponse);
           } catch (refreshError) {
             console.error('Token refresh failed, using session data:', refreshError);
-            // Fallback to session data
+            // Fallback to session data without forcing a default region
             setUser({
               id: sessionResponse.user_id,
               email: sessionResponse.email,
@@ -125,7 +122,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               uuid: '',
               full_name: '',
               membership_level: 'free',
-              region: 'usa',
+              // region intentionally left undefined here to avoid overriding server-provided value
               is_active: true,
               video_access_count: 0,
               created_at: new Date().toISOString()

@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { userApi } from '../../lib/api/user_api';
 import { newsletterApi } from '../../lib/api/newsletter_api';
 import PasswordInput from '../ui/PasswordInput';
+import RegionDisplay from '../RegionDisplay';
 
 const AccountSettings: React.FC = () => {
   const { user, refreshUser, logout } = useAuth();
@@ -27,8 +28,7 @@ const AccountSettings: React.FC = () => {
   
   const [profileData, setProfileData] = useState({
     full_name: user?.full_name || '',
-    email: user?.email || '',
-    region: user?.region || ''
+    email: user?.email || ''
   });
 
   const [passwordData, setPasswordData] = useState({
@@ -91,10 +91,14 @@ const AccountSettings: React.FC = () => {
   const handleSaveChanges = async () => {
     setIsLoading(true);
     try {
-      await userApi.updateProfile(profileData);
+      await userApi.updateProfile({
+        full_name: profileData.full_name,
+        email: profileData.email
+      });
       await refreshUser();
+      toast.success('Profile updated successfully');
     } catch (error) {
-      toast.error('Failed to save settings');
+      console.error('Failed to update profile:', error);
     } finally {
       setIsLoading(false);
     }
@@ -204,16 +208,13 @@ const AccountSettings: React.FC = () => {
                 placeholder="Enter your full name"
               />
             </div>
-          </div>
-          
-          <div>
-            <Label htmlFor="region">Region</Label>
-            <Input
-              id="region"
-              value={profileData.region}
-              onChange={(e) => handleProfileChange('region', e.target.value)}
-              placeholder="Enter your region"
-            />
+            <div>
+              <Label htmlFor="region">Region</Label>
+              <div className="flex items-center h-10 px-3 rounded-md border bg-gray-50 dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-300">
+                <RegionDisplay currentRegion={user?.region} showFlags={true} showNames={true} />
+              </div>
+              {/*<p className="text-xs text-gray-500 mt-1">Registration region is permanent and cannot be changed.</p>*/}
+            </div>
           </div>
           
           <Separator />
