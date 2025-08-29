@@ -66,6 +66,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     
     await authApi.logout();
     setUser(null);
+    
+    // Force a page refresh and redirect to home
+    window.location.href = '/';
   };
 
   const register = async (email: string, password: string, name: string, region: string) => {

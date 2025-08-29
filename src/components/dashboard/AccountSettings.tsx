@@ -133,7 +133,7 @@ const AccountSettings: React.FC = () => {
       // Auto-logout after 2 seconds
       setTimeout(() => {
         logout();
-        navigate('/');
+        // Navigation is now handled in the logout function
       }, 2000);
       
     } catch (error) {
@@ -148,7 +148,7 @@ const AccountSettings: React.FC = () => {
     try {
       await userApi.deleteAccount();
       logout();
-      navigate('/');
+      // Navigation is now handled in the logout function
     } catch (error) {
       toast.error('Failed to delete account');
     } finally {

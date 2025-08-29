@@ -27,8 +27,7 @@ const UserMenu = () => {
 
   const handleLogout = () => {
     logout();
-    // Always navigate to home page after logout, regardless of user role
-    navigate('/', { replace: true });
+    // Navigation is now handled in the logout function
   };
 
   if (!user) {

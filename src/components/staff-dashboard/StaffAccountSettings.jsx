@@ -76,7 +76,7 @@ const StaffAccountSettings = ({ user }) => {
       // Auto-logout after 2 seconds
       setTimeout(() => {
         logout();
-        navigate('/');
+        // Navigation is now handled in the logout function
       }, 2000);
       
     } catch (error) {
