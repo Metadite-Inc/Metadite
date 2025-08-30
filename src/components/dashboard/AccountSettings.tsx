@@ -14,7 +14,7 @@ import { newsletterApi } from '../../lib/api/newsletter_api';
 import PasswordInput from '../ui/PasswordInput';
 import RegionDisplay from '../RegionDisplay';
 
-const AccountSettings: React.FC = () => {
+  const AccountSettings: React.FC = () => {
   const { user, refreshUser, logout } = useAuth();
   const { theme } = useTheme();
   const navigate = useNavigate();
@@ -133,7 +133,6 @@ const AccountSettings: React.FC = () => {
       // Auto-logout after 2 seconds
       setTimeout(() => {
         logout();
-        // Navigation is now handled in the logout function
       }, 2000);
       
     } catch (error) {

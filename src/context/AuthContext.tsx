@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { authApi } from '../lib/api/auth_api';
+import { getStoredUserRegion } from '../lib/utils';
 
 interface User {
   id: number;

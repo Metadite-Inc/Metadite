@@ -27,9 +27,6 @@ const Models = () => {
   // Categories derived from fetched models
   const [categories, setCategories] = useState(['all']);
   const [userRegion, setUserRegionState] = useState('usa'); // Default to 'usa'
-
-
-
   // Fetch categories and region on component mount
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -196,11 +193,7 @@ const Models = () => {
               <p className={`mb-4 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
                 Explore our premium selection of beautifully crafted model dolls
               </p>
-              
-
             </div>
-            
-
           </div>
 
           <ModelFilters
