@@ -10,7 +10,6 @@ import { useTheme } from '../context/ThemeContext';
 import { apiService } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 
-
 const Models = () => {
   const [models, setModels] = useState([]);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -28,7 +27,6 @@ const Models = () => {
   // Categories derived from fetched models
   const [categories, setCategories] = useState(['all']);
   const [userRegion, setUserRegionState] = useState('usa'); // Default to 'usa'
-
   // Fetch categories and region on component mount
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -194,8 +192,7 @@ const Models = () => {
               </h1>
               <p className={`mb-4 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
                 Explore our premium selection of beautifully crafted model dolls
-              </p>              
-
+              </p>
             </div>
           </div>
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../../context/ThemeContext';
-import { BookmarkX } from 'lucide-react';
+import { BookmarkX, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import ModelCard from '../ModelCard';
 import { favoriteApiService } from '../../lib/api/favorite_api';
@@ -10,75 +10,73 @@ const FavoritesTab = ({ user }) => {
   const [favorites, setFavorites] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    // Fetch user favorites from API
-    const fetchFavorites = async () => {
-      try {
-        setIsLoading(true);
-        const favoriteModels = await favoriteApiService.getUserFavorites();
-        console.log('Raw favorites data:', favoriteModels);
-        
-        // Check if favorites already include doll data
-        const favoritesWithDollData = favoriteModels.filter(fav => fav.doll);
-        const favoritesWithoutDollData = favoriteModels.filter(fav => !fav.doll);
-        
-        console.log('Favorites with doll data:', favoritesWithDollData.length);
-        console.log('Favorites without doll data:', favoritesWithoutDollData.length);
-        
-        // Process favorites - use doll data if available, otherwise fetch it
-        const detailedModels = await Promise.all(
-          favoriteModels.map(async (favorite) => {
-            // Skip favorites with invalid doll_id
-            if (!favorite.doll_id || favorite.doll_id === 0) {
-              console.warn('Skipping favorite with invalid doll_id:', favorite);
-              return null;
+  // Fetch user favorites from API
+  const fetchFavorites = async () => {
+    try {
+      setIsLoading(true);
+      const favoriteModels = await favoriteApiService.getUserFavorites();
+      console.log('Raw favorites data:', favoriteModels);
+      
+      // Process favorites - now the API includes doll data
+      const detailedModels = favoriteModels
+        .filter(favorite => favorite.doll_id && favorite.doll_id !== 0 && favorite.doll)
+        .map(favorite => {
+          console.log('Processing favorite with doll data:', favorite.id);
+          
+          // Construct the proper image URL
+          let mainImage = '';
+          const backendUrl = import.meta.env.VITE_API_BASE_URL;
+          
+          if (Array.isArray(favorite.doll.images)) {
+            // If images array exists, find the primary image
+            const primary = favorite.doll.images.find((img) => img.is_primary);
+            mainImage = primary ? `${backendUrl}${primary.image_url}` : '';
+          } else if (favorite.doll.image) {
+            // If direct image field exists, use it (might already be full URL)
+            mainImage = favorite.doll.image.startsWith('http') 
+              ? favorite.doll.image 
+              : `${backendUrl}${favorite.doll.image}`;
+          }
+          
+          return {
+            favoriteId: favorite.id,
+            model: {
+              id: favorite.doll.id,
+              name: favorite.doll.name,
+              price: favorite.doll.price,
+              description: favorite.doll.description,
+              image: mainImage,
+              category: favorite.doll.category,
+              available_regions: favorite.doll.available_regions || ['usa', 'canada', 'mexico', 'uk', 'eu', 'australia', 'new_zealand']
             }
+          };
+        });
+      
+      setFavorites(detailedModels);
+    } catch (error) {
+      console.error('Error fetching favorites:', error);
+      toast.error("Failed to load your favorites");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-            try {
-              let modelDetail;
-              
-              // If doll data is already included in the favorite, use it
-              if (favorite.doll) {
-                console.log('Using existing doll data for favorite:', favorite.id);
-                modelDetail = {
-                  id: favorite.doll.id,
-                  name: favorite.doll.name,
-                  price: favorite.doll.price,
-                  description: favorite.doll.description,
-                  image: favorite.doll.image,
-                  category: favorite.doll.category,
-                  available_regions: favorite.doll.available_regions || ['usa', 'canada', 'mexico', 'uk', 'eu', 'australia', 'new_zealand']
-                };
-              } else {
-                // Otherwise fetch the full model details
-                console.log('Fetching model details for favorite:', favorite.id, 'doll_id:', favorite.doll_id);
-                modelDetail = await import('../../lib/api').then(m => m.apiService.getModelDetails(favorite.doll_id));
-              }
-              
-              return {
-                favoriteId: favorite.id,
-                model: modelDetail
-              };
-            } catch (error) {
-              console.error(`Failed to fetch model details for doll_id ${favorite.doll_id}:`, error);
-              return null;
-            }
-          })
-        );
-        
-        // Filter out null results (failed fetches)
-        const validFavorites = detailedModels.filter(fav => fav !== null);
-        setFavorites(validFavorites);
-      } catch (error) {
-        console.error('Error fetching favorites:', error);
-        toast.error("Failed to load your favorites");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
+  useEffect(() => {
     fetchFavorites();
   }, [user?.id]);
+
+  // Refresh favorites when window gains focus (e.g., returning from model edit)
+  useEffect(() => {
+    const handleFocus = () => {
+      if (!isLoading && user?.id) {
+        console.log('Window focused - refreshing favorites');
+        fetchFavorites();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [isLoading, user?.id]);
 
   const removeFromFavorites = async (favoriteId) => {
     try {
@@ -126,9 +124,23 @@ const FavoritesTab = ({ user }) => {
 
   return (
     <div className={`glass-card rounded-xl p-6 ${theme === 'dark' ? 'bg-gray-800/70' : ''}`}>
-      <h2 className={`text-xl font-semibold mb-6 ${theme === 'dark' ? 'text-white' : ''}`}>
-        Your Favorites
-      </h2>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className={`text-xl font-semibold ${theme === 'dark' ? 'text-white' : ''}`}>
+          Your Favorites
+        </h2>
+        <button
+          onClick={fetchFavorites}
+          disabled={isLoading}
+          className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+            theme === 'dark'
+              ? 'bg-gray-700 text-gray-300 hover:bg-gray-600 disabled:opacity-50'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50'
+          }`}
+        >
+          <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+          Refresh
+        </button>
+      </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {favorites.map(({ favoriteId, model }) => (

@@ -27,7 +27,7 @@ const StaffNavbar = () => {
 
   const handleLogout = () => {
     logout();
-    navigate('/');
+    // Navigation is now handled in the logout function
     toggleMobileMenu();
   };
 

@@ -67,6 +67,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     
     await authApi.logout();
     setUser(null);
+    
+    // Force a page refresh and redirect to home
+    window.location.href = '/';
   };
 
   const register = async (email: string, password: string, name: string, region: string) => {
@@ -115,7 +118,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           } catch (refreshError) {
             console.error('Token refresh failed, using session data:', refreshError);
             // Fallback to session data without forcing a default region
-
             setUser({
               id: sessionResponse.user_id,
               email: sessionResponse.email,

@@ -133,7 +133,6 @@ import RegionDisplay from '../RegionDisplay';
       // Auto-logout after 2 seconds
       setTimeout(() => {
         logout();
-        navigate('/');
       }, 2000);
       
     } catch (error) {
@@ -148,7 +147,7 @@ import RegionDisplay from '../RegionDisplay';
     try {
       await userApi.deleteAccount();
       logout();
-      navigate('/');
+      // Navigation is now handled in the logout function
     } catch (error) {
       toast.error('Failed to delete account');
     } finally {

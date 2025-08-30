@@ -165,6 +165,11 @@ const ModelEdit = () => {
         const additionalFiles = additionalImages.map(img => img.file);
         await apiService.uploadModelImages(parseInt(id), additionalFiles);
       }
+      
+      // Clear API cache to ensure fresh data across all pages
+      apiService.clearCache();
+      
+      toast.success("Model updated successfully!");
       navigate('/admin');
     } catch (error) {
       toast.error("Failed to update model");
