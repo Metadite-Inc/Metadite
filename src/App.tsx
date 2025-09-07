@@ -48,6 +48,8 @@ import BlogPost from './pages/BlogPost';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import TempPasswordRedirect from './components/TempPasswordRedirect';
+import CookieConsentBanner from "./components/CookieConsentBanner";
+import CookieConsentGate from "./components/CookieConsentGate";
 
 // Create a client
 const queryClient = new QueryClient();
@@ -67,25 +69,27 @@ const App = () => {
             <GoogleAnalyticsWrapper />
             <ScrollToTop />
             <AgeVerificationGate>
-              <AuthProvider>
-                <CartProvider>
-                  <Toaster />
-                  <Sonner 
-                    position="bottom-center"
-                    toastOptions={{
-                      duration: 1000,
-                      style: {
-                        marginBottom: '20px',
-                        maxWidth: '90vw',
-                        width: 'auto',
-                        padding: '8px 16px',
-                        fontSize: '14px',
-                        borderRadius: '8px',
-                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
-                      }
-                    }}
-                  />
-                  <Routes>
+              <CookieConsentGate>
+                <AuthProvider>
+                  <CartProvider>
+                    <Toaster />
+                    <Sonner 
+                      position="bottom-center"
+                      toastOptions={{
+                        duration: 1000,
+                        style: {
+                          marginBottom: '20px',
+                          maxWidth: '90vw',
+                          width: 'auto',
+                          padding: '8px 16px',
+                          fontSize: '14px',
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
+                        }
+                      }}
+                    />
+                    <CookieConsentBanner />
+                    <Routes>
                     <Route path="/" element={<Index />} />
                     <Route path="/underage" element={<UnderAge />} />
                     <Route path="/login" element={<Login />} />
@@ -257,8 +261,9 @@ const App = () => {
                     <Route path="/blog/:slug" element={<BlogPost />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
-                </CartProvider>
-              </AuthProvider>
+                  </CartProvider>
+                </AuthProvider>
+              </CookieConsentGate>
             </AgeVerificationGate>
           </BrowserRouter>
         </ThemeProvider>

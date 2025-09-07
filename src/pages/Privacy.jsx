@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Shield, Lock, Eye, Globe, FileText, Users, Settings, AlertTriangle } from 'lucide-react';
+import { Shield, Lock, Eye, Globe, FileText, Users, Settings, AlertTriangle, ArrowLeft } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -26,6 +26,21 @@ const Privacy = () => {
             <p className={`text-lg ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
               Your privacy is our priority. Learn how we protect your data.
             </p>
+          </div>
+
+          {/* Back Button */}
+          <div className="mb-8">
+            <Link 
+              to="/"
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
+                isDark 
+                  ? 'border-metadite-primary text-metadite-primary hover:bg-metadite-primary hover:text-white' 
+                  : 'border-metadite-primary text-metadite-primary hover:bg-metadite-primary hover:text-white'
+              }`}
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back
+            </Link>
           </div>
 
           {/* Last Updated */}
