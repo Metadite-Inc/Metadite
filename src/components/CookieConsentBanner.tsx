@@ -47,9 +47,9 @@ const CookieConsentBanner: React.FC = () => {
             // Light theme (default)
             "border-metadite-primary bg-metadite-light text-gray-900 " +
             // Dark theme overrides
-            "dark:border-metadite-primary dark:bg-metadite-dark/95 dark:text-white " +
+            "dark:border-metadite-primary dark:bg-metadite-dark dark:text-white " +
             // Common styles
-            "shadow-2xl backdrop-blur px-4 py-3 sm:px-6 sm:py-4 " +
+            "shadow-2xl px-4 py-3 sm:px-6 sm:py-4 " +
             "transition-all duration-300 ease-out transform " +
             (mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6")
           }
@@ -61,7 +61,7 @@ const CookieConsentBanner: React.FC = () => {
         <div className="mx-auto w-full max-w-6xl">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-center sm:text-left">
             <div className="flex-1">
-              <p className="text-sm leading-relaxed text-gray-1000 dark:text-white/90">
+              <p className="text-lg leading-relaxed text-gray-1000 dark:text-white/90">
                 We use cookies to enhance your experience, analyze traffic, and remember preferences. See our {" "}
                 <Link
                   to="/privacy"

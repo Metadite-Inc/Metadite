@@ -21,7 +21,7 @@ export class GoogleAnalyticsService {
   public initialize(measurementId: string): void {
     if (this.isInitialized) return;
 
-    // Initialize gtag if not already done
+    // Check if gtag is available (GA script loaded)
     if (typeof window !== 'undefined' && window.gtag) {
       window.gtag('config', measurementId, {
         page_title: document.title,
@@ -29,12 +29,22 @@ export class GoogleAnalyticsService {
         send_page_view: true
       });
       this.isInitialized = true;
+    } else {
+      // If gtag is not available, trigger the consent event to load GA
+      window.dispatchEvent(new Event('cookie-consent-accepted'));
     }
+  }
+
+  // Check if GA is properly loaded and ready
+  public isReady(): boolean {
+    return typeof window !== 'undefined' && 
+           typeof window.gtag === 'function' && 
+           this.isInitialized;
   }
 
   // Track page views
   public trackPageView(pageTitle: string, pagePath: string): void {
-    if (typeof window !== 'undefined' && window.gtag) {
+    if (this.isReady()) {
       window.gtag('config', 'G-PSMDG8L1MK', {
         page_title: pageTitle,
         page_location: pagePath,
@@ -45,7 +55,7 @@ export class GoogleAnalyticsService {
 
   // Track custom events
   public trackEvent(eventName: string, parameters: Record<string, any> = {}): void {
-    if (typeof window !== 'undefined' && window.gtag) {
+    if (this.isReady()) {
       window.gtag('event', eventName, parameters);
     }
   }
