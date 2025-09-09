@@ -27,4 +27,5 @@ pnpm-lock.yaml
 
 dist/
 package-lock.json
+package.json
 vite.config.ts.timestamp-1746912704623-3ffbe436f448a.mjs

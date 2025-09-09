@@ -22,7 +22,7 @@ const Models = () => {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [totalModels, setTotalModels] = useState(0);
-  const modelsPerPage = 16; // Show 16 models per page for public view
+  const modelsPerPage = 15; // Show 15 models per page
   
   // Categories derived from fetched models
   const [categories, setCategories] = useState(['all']);
@@ -61,7 +61,8 @@ const Models = () => {
           userRegion,
           skip,
           modelsPerPage,
-          user: user ? 'logged in' : 'not logged in'
+          user: user ? 'logged in' : 'not logged in',
+          userRegionFromUser: user?.region
         });
         
         let response;
@@ -78,13 +79,24 @@ const Models = () => {
         } else {
           // Fetch filtered models by category
           console.log('🎯 Fetching models by category:', categoryFilter);
-          response = await apiService.getModelsByCategory(categoryFilter, skip, modelsPerPage);
+          if (user && user.region) {
+            // For authenticated users, pass their region
+            response = await apiService.getModelsByCategory(categoryFilter, skip, modelsPerPage, user.region);
+          } else {
+            // For non-authenticated users, don't pass region to show all models
+            response = await apiService.getModelsByCategory(categoryFilter, skip, modelsPerPage);
+          }
         }
         
         console.log('📊 API Response:', {
           hasData: !!response?.data,
           dataLength: response?.data?.length || 0,
-          total: response?.total || 0
+          total: response?.total || 0,
+          skip: response?.skip || 0,
+          limit: response?.limit || 0,
+          currentPage,
+          modelsPerPage,
+          expectedTotalPages: Math.ceil((response?.total || 0) / modelsPerPage)
         });
         
         if (response && response.data) {

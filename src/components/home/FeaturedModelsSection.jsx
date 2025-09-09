@@ -7,12 +7,13 @@ import { useState, useEffect } from 'react';
 const FeaturedModelsSection = ({ models = [], loading = false, theme, user }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
   
   // Responsive models per view
   const getModelsPerView = () => {
     if (typeof window !== 'undefined') {
-      if (window.innerWidth < 768) return 1; // Mobile: 1 model
-      if (window.innerWidth < 1024) return 2; // Tablet: 2 models
+      if (window.innerWidth < 1024) return 1; // Mobile/Tablet: 1 model (for carousel)
       return 3; // Desktop: 3 models
     }
     return 3; // Default for SSR
@@ -20,6 +21,9 @@ const FeaturedModelsSection = ({ models = [], loading = false, theme, user }) =>
 
   const [modelsPerView, setModelsPerView] = useState(getModelsPerView());
   const totalSlides = Math.ceil(models.length / modelsPerView);
+  
+  // Desktop carousel state (separate from mobile)
+  const [desktopCurrentSlide, setDesktopCurrentSlide] = useState(0);
 
   // Handle window resize
   useEffect(() => {
@@ -27,7 +31,8 @@ const FeaturedModelsSection = ({ models = [], loading = false, theme, user }) =>
       const newModelsPerView = getModelsPerView();
       if (newModelsPerView !== modelsPerView) {
         setModelsPerView(newModelsPerView);
-        setCurrentSlide(0); // Reset to first slide when screen size changes
+        setCurrentSlide(0); // Reset mobile slide
+        setDesktopCurrentSlide(0); // Reset desktop slide
       }
     };
 
@@ -35,40 +40,99 @@ const FeaturedModelsSection = ({ models = [], loading = false, theme, user }) =>
     return () => window.removeEventListener('resize', handleResize);
   }, [modelsPerView]);
 
-  // Auto-scroll functionality with smooth transitions
+  // Auto-scroll functionality for mobile only
   useEffect(() => {
-    if (models.length > modelsPerView && totalSlides > 1) {
+    if (models.length > 0 && modelsPerView === 1) {
       const interval = setInterval(() => {
         if (!isTransitioning) {
-          setCurrentSlide((prev) => (prev + 1) % totalSlides);
+          setCurrentSlide((prev) => (prev + 1) % models.length);
         }
-      }, 6000); // 6 seconds for slower transitions
+      }, 4000); // 4 seconds for mobile carousel
 
       return () => clearInterval(interval);
     }
-  }, [models.length, totalSlides, isTransitioning, modelsPerView]);
+  }, [models.length, isTransitioning, modelsPerView]);
+
+  // Auto-scroll functionality for desktop carousel
+  useEffect(() => {
+    if (models.length > 0 && modelsPerView > 1 && totalSlides > 1) {
+      const interval = setInterval(() => {
+        if (!isTransitioning) {
+          setDesktopCurrentSlide((prev) => (prev + 1) % totalSlides);
+        }
+      }, 6000); // 6 seconds for desktop carousel
+
+      return () => clearInterval(interval);
+    }
+  }, [models.length, isTransitioning, modelsPerView, totalSlides]);
 
   const nextSlide = () => {
-    if (!isTransitioning && totalSlides > 1) {
+    if (!isTransitioning && models.length > 0) {
       setIsTransitioning(true);
-      setCurrentSlide((prev) => (prev + 1) % totalSlides);
-      setTimeout(() => setIsTransitioning(false), 800); // Match transition duration
+      if (modelsPerView === 1) {
+        // Mobile: cycle through individual models
+        setCurrentSlide((prev) => (prev + 1) % models.length);
+      } else {
+        // Desktop: cycle through slides
+        setDesktopCurrentSlide((prev) => (prev + 1) % totalSlides);
+      }
+      setTimeout(() => setIsTransitioning(false), 500); // Match transition duration
     }
   };
 
   const prevSlide = () => {
-    if (!isTransitioning && totalSlides > 1) {
+    if (!isTransitioning && models.length > 0) {
       setIsTransitioning(true);
-      setCurrentSlide((prev) => (prev - 1 + totalSlides) % totalSlides);
-      setTimeout(() => setIsTransitioning(false), 800); // Match transition duration
+      if (modelsPerView === 1) {
+        // Mobile: cycle through individual models
+        setCurrentSlide((prev) => (prev - 1 + models.length) % models.length);
+      } else {
+        // Desktop: cycle through slides
+        setDesktopCurrentSlide((prev) => (prev - 1 + totalSlides) % totalSlides);
+      }
+      setTimeout(() => setIsTransitioning(false), 500); // Match transition duration
     }
   };
 
   const goToSlide = (index) => {
-    if (!isTransitioning && index !== currentSlide && index < totalSlides) {
+    if (!isTransitioning && models.length > 0) {
       setIsTransitioning(true);
-      setCurrentSlide(index);
-      setTimeout(() => setIsTransitioning(false), 800); // Match transition duration
+      if (modelsPerView === 1) {
+        // Mobile: go to specific model
+        if (index < models.length) {
+          setCurrentSlide(index);
+        }
+      } else {
+        // Desktop: go to specific slide
+        if (index < totalSlides) {
+          setDesktopCurrentSlide(index);
+        }
+      }
+      setTimeout(() => setIsTransitioning(false), 500); // Match transition duration
+    }
+  };
+
+  // Touch handlers for mobile swipe
+  const handleTouchStart = (e) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+
+    if (isLeftSwipe) {
+      nextSlide();
+    } else if (isRightSwipe) {
+      prevSlide();
     }
   };
 
@@ -79,11 +143,25 @@ const FeaturedModelsSection = ({ models = [], loading = false, theme, user }) =>
     return 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3';
   };
 
-  // Get current slide models
+  // Get current slide models for desktop carousel
   const getCurrentSlideModels = () => {
-    const startIndex = currentSlide * modelsPerView;
+    const slideIndex = modelsPerView === 1 ? currentSlide : desktopCurrentSlide;
+    const startIndex = slideIndex * modelsPerView;
     const endIndex = startIndex + modelsPerView;
-    return models.slice(startIndex, endIndex);
+    const slideModels = models.slice(startIndex, endIndex);
+    
+    // Debug logging
+    console.log('Carousel Debug:', {
+      modelsPerView,
+      slideIndex,
+      startIndex,
+      endIndex,
+      totalModels: models.length,
+      slideModels: slideModels.length,
+      isMobile: modelsPerView === 1
+    });
+    
+    return slideModels;
   };
 
   return (
@@ -118,13 +196,13 @@ const FeaturedModelsSection = ({ models = [], loading = false, theme, user }) =>
           </div>
         ) : models && models.length > 0 ? (
           <div className="featured-carousel-container">
-            {/* Navigation Arrows - Only show if there are more models than can fit in one view */}
-            {models.length > modelsPerView && totalSlides > 1 && (
+            {/* Navigation Arrows - Only show on desktop screens (lg and above) */}
+            {models.length > 0 && (
               <>
                 <button
                   onClick={prevSlide}
                   disabled={isTransitioning}
-                  className={`carousel-nav-button absolute left-0 top-1/2 transform -translate-y-1/2 z-10 p-2 rounded-full shadow-lg ${
+                  className={`carousel-nav-button absolute left-0 top-1/2 transform -translate-y-1/2 z-10 p-2 rounded-full shadow-lg hidden lg:block ${
                     theme === 'dark' 
                       ? 'bg-gray-800 text-white hover:bg-gray-700 disabled:opacity-50' 
                       : 'bg-white text-gray-800 hover:bg-gray-100 disabled:opacity-50'
@@ -136,7 +214,7 @@ const FeaturedModelsSection = ({ models = [], loading = false, theme, user }) =>
                 <button
                   onClick={nextSlide}
                   disabled={isTransitioning}
-                  className={`carousel-nav-button absolute right-0 top-1/2 transform -translate-y-1/2 z-10 p-2 rounded-full shadow-lg ${
+                  className={`carousel-nav-button absolute right-0 top-1/2 transform -translate-y-1/2 z-10 p-2 rounded-full shadow-lg hidden lg:block ${
                     theme === 'dark' 
                       ? 'bg-gray-800 text-white hover:bg-gray-700 disabled:opacity-50' 
                       : 'bg-white text-gray-800 hover:bg-gray-100 disabled:opacity-50'
@@ -148,35 +226,38 @@ const FeaturedModelsSection = ({ models = [], loading = false, theme, user }) =>
               </>
             )}
 
-            {/* Models Container - Simplified approach */}
+            {/* Models Container - Auto-scroll carousel on mobile, grid carousel on desktop */}
             <div className="relative overflow-hidden">
-              <div className={`grid ${getGridCols()} gap-8`}>
+              {/* Mobile: Auto-scrolling carousel with manual scroll support */}
+              <div 
+                className="lg:hidden overflow-x-auto scrollbar-hide"
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+              >
+                <div 
+                  className="flex gap-4 pb-4 transition-transform duration-500 ease-in-out"
+                  style={{ 
+                    width: 'max-content',
+                    transform: `translateX(-${currentSlide * (320 + 16)}px)` // 320px card width + 16px gap
+                  }}
+                >
+                  {models.map((model) => (
+                    <div key={model.id} className="flex-shrink-0 w-80">
+                      <ModelCard model={model} user={user} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Desktop: Grid carousel */}
+              <div className={`hidden lg:grid ${getGridCols()} gap-8`}>
                 {getCurrentSlideModels().map((model) => (
                   <ModelCard key={model.id} model={model} user={user} />
                 ))}
               </div>
             </div>
 
-            {/* Dots Indicator - Only show if there are multiple slides */}
-            {models.length > modelsPerView && totalSlides > 1 && (
-              <div className="flex justify-center mt-8 space-x-2">
-                {Array.from({ length: totalSlides }, (_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => goToSlide(index)}
-                    disabled={isTransitioning}
-                    className={`carousel-dot w-3 h-3 rounded-full transition-all duration-300 ${
-                      index === currentSlide
-                        ? 'active'
-                        : theme === 'dark'
-                        ? 'bg-gray-600 hover:bg-gray-500'
-                        : 'bg-gray-300 hover:bg-gray-400'
-                    } ${isTransitioning ? 'pointer-events-none' : ''}`}
-                    aria-label={`Go to slide ${index + 1}`}
-                  />
-                ))}
-              </div>
-            )}
           </div>
         ) : (
           <div className="text-center py-12">

@@ -87,6 +87,20 @@ const SubscriptionsTab = ({ isLoaded }) => {
     return `$${parseFloat(amount).toFixed(2)}`;
   };
 
+  const handleViewSubscription = (payment) => {
+    // TODO: Implement subscription details modal or navigation
+    console.log('View subscription payment:', payment);
+    alert(`Subscription Payment Details:\nID: ${payment.payment_id || payment.id}\nUser: ${payment.user_email}\nPlan: ${payment.plan || payment.membership_level || 'VIP'}\nAmount: ${formatAmount(payment.amount)}\nStatus: ${payment.status}`);
+  };
+
+  const handleDeleteSubscription = (payment) => {
+    // TODO: Implement delete confirmation and API call
+    console.log('Delete subscription payment:', payment);
+    if (confirm(`Are you sure you want to delete this subscription payment?\nID: ${payment.payment_id || payment.id}\nUser: ${payment.user_email}`)) {
+      alert('Delete functionality will be implemented');
+    }
+  };
+
   return (
     <div className={`transition-opacity duration-300 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>
       <div className="glass-card rounded-xl overflow-hidden">
@@ -113,15 +127,15 @@ const SubscriptionsTab = ({ isLoaded }) => {
             <>
               <table className="min-w-full">
                 <thead>
-                  <tr className={`text-left text-gray-500 text-sm 
+                  <tr className={`text-left text-gray-500 text-xs 
                     ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}`}>
-                    <th className="px-6 py-3">Payment ID</th>
-                    <th className="px-6 py-3">User</th>
-                    <th className="px-6 py-3">Plan</th>
-                    <th className="px-6 py-3">Amount</th>
-                    <th className="px-6 py-3">Status</th>
-                    <th className="px-6 py-3">Payment Date</th>
-                    <th className="px-6 py-3">Actions</th>
+                    <th className="px-4 py-2">Payment ID</th>
+                    <th className="px-4 py-2">User</th>
+                    <th className="px-4 py-2">Plan</th>
+                    <th className="px-4 py-2">Amount</th>
+                    <th className="px-4 py-2">Status</th>
+                    <th className="px-4 py-2">Payment Date</th>
+                    <th className="px-4 py-2">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -136,37 +150,39 @@ const SubscriptionsTab = ({ isLoaded }) => {
                       <tr key={payment.id} className={`border-t border-gray-100 transition-colors 
                         ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}
                         >
-                        <td className="px-6 py-4 font-medium text-sm">
+                        <td className="px-4 py-2 font-medium text-xs">
                           {payment.payment_id || payment.id}
                         </td>
-                        <td className="px-6 py-4 font-medium">
+                        <td className="px-4 py-2 font-medium text-xs">
                           {payment.user_email || payment.user || 'N/A'}
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-4 py-2">
                           <span className="bg-metadite-primary/10 text-metadite-primary px-2 py-1 rounded-full text-xs font-medium">
                             {payment.plan || payment.membership_level || 'VIP'}
                           </span>
                         </td>
-                        <td className={`px-6 py-4 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                        <td className={`px-4 py-2 font-medium text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
                           {formatAmount(payment.amount)}
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-4 py-2">
                           <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(payment.status)}`}>
                             {payment.status?.replace('_', ' ').toUpperCase() || 'UNKNOWN'}
                           </span>
                         </td>
-                        <td className={`px-6 py-4 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                        <td className={`px-4 py-2 text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
                           {formatDate(payment.created_at || payment.payment_date)}
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-4 py-2">
                           <div className="flex space-x-2">
                             <button 
+                              onClick={() => handleViewSubscription(payment)}
                               className="text-blue-500 hover:text-blue-700 transition-colors"
                               title="View Details"
                             >
                               <Edit className="h-4 w-4" />
                             </button>
                             <button 
+                              onClick={() => handleDeleteSubscription(payment)}
                               className="text-red-500 hover:text-red-700 transition-colors"
                               title="Delete Payment"
                             >
@@ -182,8 +198,8 @@ const SubscriptionsTab = ({ isLoaded }) => {
 
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="px-6 py-4 border-t border-gray-100 flex justify-between items-center">
-                  <div className="text-sm text-gray-500">
+                <div className="px-4 py-3 border-t border-gray-100 flex justify-between items-center">
+                  <div className="text-xs text-gray-500">
                     Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, totalPayments)} of {totalPayments} payments
                   </div>
                   <div className="flex space-x-2">
@@ -198,7 +214,7 @@ const SubscriptionsTab = ({ isLoaded }) => {
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </button>
-                    <span className="px-3 py-2 text-sm text-gray-600">
+                    <span className="px-3 py-2 text-xs text-gray-600">
                       Page {currentPage} of {totalPages}
                     </span>
                     <button

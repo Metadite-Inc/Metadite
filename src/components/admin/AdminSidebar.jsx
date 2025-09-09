@@ -72,7 +72,7 @@ const AdminSidebar = ({ activeTab, setActiveTab }) => {
               <span>Models</span>
             </button>
           </li>
-          <li>
+          {/* <li>
             <button 
               onClick={() => setActiveTab('videos')}
               className={`flex items-center w-full px-4 py-3 rounded-lg transition-colors ${
@@ -86,7 +86,7 @@ const AdminSidebar = ({ activeTab, setActiveTab }) => {
               <FileVideo className="h-5 w-5 mr-3" />
               <span>Videos</span>
             </button>
-          </li>
+          </li> */}
 
           <li>
             <button 
@@ -148,7 +148,7 @@ const AdminSidebar = ({ activeTab, setActiveTab }) => {
               <span>Admins</span>
             </button>
           </li>
-          <li>
+          {/* <li>
             <button 
               onClick={() => setActiveTab('moderators')}
               className={`flex items-center w-full px-4 py-3 rounded-lg transition-colors ${
@@ -162,8 +162,8 @@ const AdminSidebar = ({ activeTab, setActiveTab }) => {
               <Users className="h-5 w-5 mr-3" />
               <span>Moderators</span>
             </button>
-          </li>
-          <li>
+          </li> */}
+          {/* <li>
             <button 
               onClick={() => setActiveTab('subscriptions')}
               className={`flex items-center w-full px-4 py-3 rounded-lg transition-colors ${
@@ -177,7 +177,7 @@ const AdminSidebar = ({ activeTab, setActiveTab }) => {
               <CreditCard className="h-5 w-5 mr-3" />
               <span>Subscriptions</span>
             </button>
-          </li>
+          </li> */}
           <li>
             <button 
               onClick={() => setActiveTab('payments')}
@@ -193,7 +193,7 @@ const AdminSidebar = ({ activeTab, setActiveTab }) => {
               <span>Payments</span>
             </button>
           </li>
-          <li>
+          {/* <li>
             <button 
               onClick={() => setActiveTab('flagged')}
               className={`flex items-center w-full px-4 py-3 rounded-lg transition-colors ${
@@ -212,7 +212,7 @@ const AdminSidebar = ({ activeTab, setActiveTab }) => {
                 </span>
               )}
             </button>
-          </li>
+          </li> */}
         </ul>
       </div>
     </div>

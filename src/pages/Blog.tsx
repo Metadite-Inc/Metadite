@@ -19,10 +19,10 @@ import {
   BookOpen,
   Clock,
   Facebook,
-  Twitter,
   Linkedin,
   Share2
 } from 'lucide-react';
+import { FaXTwitter } from 'react-icons/fa6';
 import { toast } from 'sonner';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -347,6 +347,7 @@ const Blog = () => {
                         style={{ backgroundColor: '#1877F2', color: 'white' }}
                         onMouseOver={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#166FE5'}
                         onMouseOut={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#1877F2'}
+                        title="Share on Facebook"
                       >
                         <Facebook className="h-3 w-3" />
                       </button>
@@ -356,8 +357,9 @@ const Blog = () => {
                         style={{ backgroundColor: '#000000', color: 'white' }}
                         onMouseOver={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#374151'}
                         onMouseOut={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#000000'}
+                        title="Share on X (Twitter)"
                       >
-                        <Twitter className="h-3 w-3" />
+                        <FaXTwitter className="h-3 w-3" />
                       </button>
                       <button
                         onClick={() => sharePost('linkedin', post)}
@@ -365,6 +367,7 @@ const Blog = () => {
                         style={{ backgroundColor: '#0A66C2', color: 'white' }}
                         onMouseOver={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#004182'}
                         onMouseOut={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#0A66C2'}
+                        title="Share on LinkedIn"
                       >
                         <Linkedin className="h-3 w-3" />
                       </button>
@@ -374,6 +377,7 @@ const Blog = () => {
                         style={{ backgroundColor: '#4B5563', color: 'white' }}
                         onMouseOver={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#374151'}
                         onMouseOut={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#4B5563'}
+                        title="Copy Link"
                       >
                         <Share2 className="h-3 w-3" />
                       </button>
