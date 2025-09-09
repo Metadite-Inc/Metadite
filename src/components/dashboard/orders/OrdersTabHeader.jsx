@@ -7,13 +7,14 @@ import {
   X, 
   Wallet,
   ArrowDown,
+  RefreshCw,
 } from 'lucide-react';
 import { ToggleGroup, ToggleGroupItem } from '../../ui/toggle-group';
 import { Button } from '../../ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '../../ui/popover';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-const OrdersTabHeader = ({ theme, activeFilter, setActiveFilter }) => {
+const OrdersTabHeader = ({ theme, activeFilter, setActiveFilter, onRefresh, isLoading }) => {
   const isMobile = useIsMobile();
   
   // Map for getting display name and icon for a filter value
@@ -99,8 +100,22 @@ const OrdersTabHeader = ({ theme, activeFilter, setActiveFilter }) => {
         Your Orders
       </h2>
       
-      <div className="w-full md:w-auto">
-        {isMobile ? mobileFilter : desktopFilter}
+      <div className="flex items-center gap-3 w-full md:w-auto">
+        <div className="flex-1 md:flex-none">
+          {isMobile ? mobileFilter : desktopFilter}
+        </div>
+        {onRefresh && (
+          <Button
+            onClick={onRefresh}
+            disabled={isLoading}
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        )}
       </div>
     </div>
   );

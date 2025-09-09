@@ -7,7 +7,7 @@ export interface AdminOrder {
   user_id: number;
   user?: {
     id: number;
-    name: string;
+    full_name: string;
     email: string;
   };
   items: Array<{
