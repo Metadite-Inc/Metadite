@@ -17,17 +17,37 @@
     <!-- Favicons -->
     <link href="./logo.png" rel="icon">
 
-    <!-- Google Analytics 4 -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PSMDG8L1MK"></script>
+    <!-- Google Analytics 4 - Load only after consent -->
     <script>
+      // Initialize dataLayer but don't load GA until consent is given
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-PSMDG8L1MK', {
-        page_title: document.title,
-        page_location: window.location.href,
-        send_page_view: true
-      });
+      
+      // Check for existing consent
+      function initializeGA() {
+        const consent = localStorage.getItem('cookie_consent_v2');
+        if (consent === 'accepted') {
+          // Load GA script
+          const script = document.createElement('script');
+          script.async = true;
+          script.src = 'https://www.googletagmanager.com/gtag/js?id=G-PSMDG8L1MK';
+          document.head.appendChild(script);
+          
+          // Configure GA
+          gtag('js', new Date());
+          gtag('config', 'G-PSMDG8L1MK', {
+            page_title: document.title,
+            page_location: window.location.href,
+            send_page_view: true
+          });
+        }
+      }
+      
+      // Try to initialize on page load
+      initializeGA();
+      
+      // Listen for consent acceptance
+      window.addEventListener('cookie-consent-accepted', initializeGA);
     </script>
     
     <!-- Google Search Console Verification -->
