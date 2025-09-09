@@ -9,7 +9,8 @@ import {
   Calendar,
   User,
   DollarSign,
-  ArrowUpDown
+  ArrowUpDown,
+  RefreshCw
 } from 'lucide-react';
 import { toast } from 'sonner';
 import StaffNavbar from '../components/StaffNavbar';
@@ -140,7 +141,7 @@ const AdminOrders = () => {
     if (searchTerm) {
       filtered = filtered.filter(order => 
         order.order_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (order.user?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (order.user?.full_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         (order.user?.email || '').toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
@@ -167,6 +168,11 @@ const AdminOrders = () => {
     setStatusFilter(status);
     setAppliedStatusFilter(status);
     setCurrentPage(1);
+  };
+
+  const handleRefresh = () => {
+    fetchOrders(currentPage);
+    toast.success('Orders refreshed');
   };
 
   const handleUpdateStatus = async () => {
@@ -346,9 +352,21 @@ const AdminOrders = () => {
           {/* Orders Table */}
           <Card className={theme === 'dark' ? 'bg-gray-800/70 border-gray-700' : ''}>
             <CardHeader>
-              <CardTitle className={`${theme === 'dark' ? 'text-white' : ''}`}>
-                Orders ({totalOrders} total, showing {orders.length} on this page)
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className={`${theme === 'dark' ? 'text-white' : ''}`}>
+                  Orders ({totalOrders} total, showing {orders.length} on this page)
+                </CardTitle>
+                <Button
+                  onClick={handleRefresh}
+                  disabled={isLoading}
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2"
+                >
+                  <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+                  Refresh
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               {isLoading ? (
@@ -387,7 +405,7 @@ const AdminOrders = () => {
                            </TableCell>
                            <TableCell>
                              <div>
-                               <div className="font-medium">{order.user?.name || `User ${order.user_id}`}</div>
+                               <div className="font-medium">{order.user?.full_name || `User ${order.user_id}`}</div>
                                <div className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                                  {order.user?.email || 'No email'}
                                </div>

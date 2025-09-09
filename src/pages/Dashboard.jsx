@@ -180,7 +180,7 @@ const Dashboard = () => {
               
               {/* Other tabs */}
               {activeTab !== 'overview' && (
-                <OtherTabs activeTab={activeTab} />
+                <OtherTabs activeTab={activeTab} user={user} />
               )}
             </div>
           </div>

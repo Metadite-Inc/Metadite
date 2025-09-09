@@ -4,12 +4,25 @@ const API_URL = import.meta.env.VITE_API_BASE_URL;
 
 // Define types for the API
 
+export interface OrderItem {
+  name: string;
+  price: number;
+  quantity: number;
+}
+
 export interface Order {
-  id: string;
-  date: string;
-  items: number;
+  id: number;
+  order_number: string;
+  user_id: number;
+  items: OrderItem[];
   total: number;
   status: string;
+  shipping_address?: any;
+  payment_method?: string;
+  tracking_number?: string;
+  notes?: string;
+  date: string;
+  updated_at: string;
 }
 
 interface ModelReview {
@@ -35,12 +48,15 @@ export interface ChatAccessStatus {
 class userApiService {
   async getUserOrders(): Promise<Order[]> {
     try {
+      console.log('Fetching user orders...');
       // Fetches the authenticated user's orders
       const result = await this.request<Order[]>(`/api/orders/`, {
         method: 'GET',
       });
+      console.log('Orders fetched successfully:', result);
       return result;
     } catch (error) {
+      console.error('Error fetching orders:', error);
       if (error.message?.includes('401') || error.message?.includes('403')) {
         toast.error('Authentication failed. Please log in again.');
       } else {

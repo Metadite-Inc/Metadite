@@ -2,9 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { useTheme } from '../../context/ThemeContext';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
-import { ShoppingBag } from 'lucide-react';
+import { ShoppingBag, RefreshCw } from 'lucide-react';
 import OrdersTabHeader from './orders/OrdersTabHeader';
 import { userApi } from '../../lib/api/user_api';
+
+// Helper function to format order items
+const formatOrderItems = (items) => {
+  if (!items || !Array.isArray(items)) return 'No items';
+  
+  if (items.length === 1) {
+    return items[0].name || 'Unknown item';
+  } else if (items.length > 1) {
+    return `${items[0].name} +${items.length - 1} more`;
+  }
+  
+  return 'No items';
+};
 
 const OrdersTab = ({ user }) => {
   const { theme } = useTheme();
@@ -13,27 +26,37 @@ const OrdersTab = ({ user }) => {
   const [orders, setOrders] = useState([]);
   const [error, setError] = useState(null);
 
+  const fetchOrders = async () => {
+    try {
+      console.log('OrdersTab: Fetching orders for user:', user?.id);
+      const userOrders = await userApi.getUserOrders();
+      console.log('OrdersTab: Orders received:', userOrders);
+      setOrders(userOrders || []); // Ensure we always have an array
+      setError(null);
+    } catch (error) {
+      console.error('OrdersTab: Error fetching orders:', error);
+      setError('Failed to load orders');
+      toast.error('Failed to load orders');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const userOrders = await userApi.getUserOrders();
-        setOrders(userOrders || []); // Ensure we always have an array
-        setError(null);
-      } catch (error) {
-        console.error('Error fetching orders:', error);
-        setError('Failed to load orders');
-        toast.error('Failed to load orders');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
     if (user?.id) {
+      console.log('OrdersTab: User ID found, fetching orders...');
       fetchOrders();
     } else {
+      console.log('OrdersTab: No user ID, stopping loading');
       setIsLoading(false); // Stop loading if no user
     }
   }, [user?.id]);
+
+  const handleRefresh = () => {
+    setIsLoading(true);
+    fetchOrders();
+    toast.success('Orders refreshed');
+  };
 
   // Filter orders based on active filter
   const filteredOrders = activeFilter === 'all' 
@@ -82,7 +105,9 @@ const OrdersTab = ({ user }) => {
       <OrdersTabHeader 
         theme={theme} 
         activeFilter={activeFilter} 
-        setActiveFilter={setActiveFilter} 
+        setActiveFilter={setActiveFilter}
+        onRefresh={handleRefresh}
+        isLoading={isLoading}
       />
       
       <div className="overflow-x-auto">
@@ -100,19 +125,27 @@ const OrdersTab = ({ user }) => {
           <tbody>
             {filteredOrders.map((order) => (
               <tr key={order.id} className={`border-t ${theme === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
-                <td className={`px-4 py-3 font-medium ${theme === 'dark' ? 'text-white' : ''}`}>ORD-{order.id}</td>
-                <td className={`px-4 py-3 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>{order.date}</td>
-                <td className={`px-4 py-3 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>{order.items}</td>
-                <td className={`px-4 py-3 font-medium ${theme === 'dark' ? 'text-white' : ''}`}>${order.total.toFixed(2)}</td>
+                <td className={`px-4 py-3 font-medium ${theme === 'dark' ? 'text-white' : ''}`}>
+                  {order.order_number || `ORD-${order.id}`}
+                </td>
+                <td className={`px-4 py-3 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                  {order.date ? new Date(order.date).toLocaleDateString() : 'N/A'}
+                </td>
+                <td className={`px-4 py-3 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                  {formatOrderItems(order.items)}
+                </td>
+                <td className={`px-4 py-3 font-medium ${theme === 'dark' ? 'text-white' : ''}`}>
+                  ${order.total ? order.total.toFixed(2) : '0.00'}
+                </td>
                 <td className="px-4 py-3">
                   <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
-                    order.status === 'completed' 
+                    order.status === 'completed' || order.status === 'delivered'
                       ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
-                      : order.status === 'cancelled'
+                      : order.status === 'cancelled' || order.status === 'refunded'
                       ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
                       : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
                   }`}>
-                    {order.status}
+                    {order.status || 'Unknown'}
                   </span>
                 </td>
                 <td className="px-4 py-3">

@@ -10,7 +10,7 @@ import FavoritesTab from './FavoritesTab';
 import OrdersTab from './OrdersTab';
 import NotificationService from '../../services/NotificationService';
 
-const OtherTabs = ({ activeTab }) => {
+const OtherTabs = ({ activeTab, user }) => {
   const { theme } = useTheme();
   const [notificationPermission, setNotificationPermission] = useState('default');
   const [isRequesting, setIsRequesting] = useState(false);
@@ -70,7 +70,7 @@ const OtherTabs = ({ activeTab }) => {
   if (activeTab === 'favorites') {
     return (
       <div className={`glass-card rounded-xl ${theme === 'dark' ? 'bg-gray-800/70' : ''}`}>
-        <FavoritesTab />
+        <FavoritesTab user={user} />
       </div>
     );
   }
@@ -78,7 +78,7 @@ const OtherTabs = ({ activeTab }) => {
   if (activeTab === 'orders') {
     return (
       <div className={`glass-card rounded-xl ${theme === 'dark' ? 'bg-gray-800/70' : ''}`}>
-        <OrdersTab />
+        <OrdersTab user={user} />
       </div>
     );
   }

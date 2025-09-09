@@ -1,26 +1,41 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { User, Mail, Calendar, CreditCard, ShoppingBag } from 'lucide-react';
+import { User, Mail, Calendar, CreditCard } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 
-import { useEffect, useState } from 'react';
-import { userApi } from '../../lib/api/user_api';
+// import { useEffect, useState } from 'react';
+// import { userApi } from '../../lib/api/user_api';
+
+// Helper function to format order items - commented out since recent orders section is hidden
+// const formatOrderItems = (items) => {
+//   if (!items || !Array.isArray(items)) return 'No items';
+//   
+//   if (items.length === 1) {
+//     return items[0].name || 'Unknown item';
+//   } else if (items.length > 1) {
+//     return `${items[0].name} +${items.length - 1} more`;
+//   }
+//   
+//   return 'No items';
+// };
 
 const AccountOverview = ({ user, isLoaded }) => {
   const { theme } = useTheme();
-  const [orders, setOrders] = useState([]);
-  const [ordersLoading, setOrdersLoading] = useState(false);
-  const [ordersError, setOrdersError] = useState(null);
+  // Order-related state commented out since recent orders section is hidden
+  // const [orders, setOrders] = useState([]);
+  // const [ordersLoading, setOrdersLoading] = useState(false);
+  // const [ordersError, setOrdersError] = useState(null);
 
-  useEffect(() => {
-    if (!user) return;
-    setOrdersLoading(true);
-    setOrdersError(null);
-    userApi.getUserOrders()
-      .then(data => setOrders(data))
-      .catch(err => setOrdersError(err.message || 'Failed to load orders'))
-      .finally(() => setOrdersLoading(false));
-  }, [user]);
+  // useEffect(() => {
+  //   if (!user) return;
+  //   setOrdersLoading(true);
+  //   setOrdersError(null);
+  //   userApi.getUserOrders()
+  //     .then(data => setOrders(data))
+  //     .catch(err => setOrdersError(err.message || 'Failed to load orders'))
+  //     .finally(() => setOrdersLoading(false));
+  // }, [user]);
+
 
   return (
     <div className={`space-y-6 transition-opacity duration-300 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>
@@ -60,6 +75,7 @@ const AccountOverview = ({ user, isLoaded }) => {
         </div>
       </div>
       
+      {/* Recent Orders Section - Commented out as requested
       {user?.role !== 'admin' && user?.role !== 'moderator' && (
         <div className={`glass-card rounded-xl p-6 ${theme === 'dark' ? 'bg-gray-800/70' : ''}`}>
           <div className="flex justify-between items-center mb-4">
@@ -101,17 +117,27 @@ const AccountOverview = ({ user, isLoaded }) => {
                 <tbody>
                   {orders.map((order) => (
                     <tr key={order.id} className={`border-t ${theme === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
-                      <td className={`px-4 py-3 font-medium ${theme === 'dark' ? 'text-white' : ''}`}>{order.id}</td>
-                      <td className={`px-4 py-3 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>{order.date}</td>
-                      <td className={`px-4 py-3 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>{order.items}</td>
-                      <td className={`px-4 py-3 font-medium ${theme === 'dark' ? 'text-white' : ''}`}>${order.total.toFixed(2)}</td>
+                      <td className={`px-4 py-3 font-medium ${theme === 'dark' ? 'text-white' : ''}`}>
+                        {order.order_number || `ORD-${order.id}`}
+                      </td>
+                      <td className={`px-4 py-3 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                        {order.date ? new Date(order.date).toLocaleDateString() : 'N/A'}
+                      </td>
+                      <td className={`px-4 py-3 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                        {formatOrderItems(order.items)}
+                      </td>
+                      <td className={`px-4 py-3 font-medium ${theme === 'dark' ? 'text-white' : ''}`}>
+                        ${order.total ? order.total.toFixed(2) : '0.00'}
+                      </td>
                       <td className="px-4 py-3">
                         <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
-                          order.status === 'Delivered' 
+                          order.status === 'completed' || order.status === 'delivered'
                             ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
+                            : order.status === 'cancelled' || order.status === 'refunded'
+                            ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
                             : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
                         }`}>
-                          {order.status}
+                          {order.status || 'Unknown'}
                         </span>
                       </td>
                       <td className="px-4 py-3">
@@ -127,6 +153,7 @@ const AccountOverview = ({ user, isLoaded }) => {
           )}
         </div>
       )}
+      */}
     </div>
   );
 };
