@@ -109,6 +109,22 @@ const ModelEdit = () => {
     }
   }, [user, loading, navigate]);
 
+  // Cleanup blob URLs on unmount
+  useEffect(() => {
+    return () => {
+      // Clean up primary image preview URL
+      if (primaryImagePreview && primaryImagePreview.startsWith('blob:')) {
+        URL.revokeObjectURL(primaryImagePreview);
+      }
+      // Clean up additional image preview URLs
+      additionalImages.forEach(img => {
+        if (img.preview && img.preview.startsWith('blob:')) {
+          URL.revokeObjectURL(img.preview);
+        }
+      });
+    };
+  }, [primaryImagePreview, additionalImages]);
+
   const handleSave = async (e) => {
     e.preventDefault();
     
@@ -152,14 +168,27 @@ const ModelEdit = () => {
         }
       }
       
-      // Remove primary image if marked for removal
-      if (removePrimaryImage && model?.image) {
-        await apiService.deleteModelImage(parseInt(id), model.image);
-      }
-      
-      // If there are new images to upload
+      // Handle primary image replacement
       if (primaryImageFile) {
-        await apiService.uploadModelImage(parseInt(id), primaryImageFile, '', true);
+        console.log('Uploading new primary image:', primaryImageFile.name);
+        // Remove the old primary image first if it exists
+        if (model?.image) {
+          console.log('Removing old primary image:', model.image);
+          const deleteResult = await apiService.deleteModelImage(parseInt(id), model.image);
+          if (!deleteResult) {
+            console.warn('Failed to delete old primary image, continuing with upload');
+          }
+        }
+        // Upload the new primary image
+        const uploadResult = await apiService.uploadModelImage(parseInt(id), primaryImageFile, '', true);
+        if (!uploadResult) {
+          throw new Error('Failed to upload new primary image');
+        }
+        console.log('Primary image uploaded successfully');
+      } else if (removePrimaryImage && model?.image) {
+        // Only remove if no new image is being uploaded
+        console.log('Removing primary image without replacement');
+        await apiService.deleteModelImage(parseInt(id), model.image);
       }
       if (additionalImages.length > 0) {
         const additionalFiles = additionalImages.map(img => img.file);
@@ -211,6 +240,10 @@ const ModelEdit = () => {
 
   const handleRemovePrimaryImage = () => {
     setRemovePrimaryImage(true);
+    // Clean up the preview URL if it's a blob URL
+    if (primaryImagePreview && primaryImagePreview.startsWith('blob:')) {
+      URL.revokeObjectURL(primaryImagePreview);
+    }
     setPrimaryImagePreview(null);
   };
 
@@ -566,7 +599,14 @@ const ModelEdit = () => {
                             });
                             return;
                           }
+                          // Clean up previous preview URL if it's a blob URL
+                          if (primaryImagePreview && primaryImagePreview.startsWith('blob:')) {
+                            URL.revokeObjectURL(primaryImagePreview);
+                          }
                           setPrimaryImageFile(file);
+                          // Create preview URL for the new image
+                          const previewUrl = URL.createObjectURL(file);
+                          setPrimaryImagePreview(previewUrl);
                           // If user uploads a new image, unmark removal
                           setRemovePrimaryImage(false);
                         }}

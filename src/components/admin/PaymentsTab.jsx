@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, Eye, RefreshCw } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { adminApiService } from '../../lib/api/admin_api';
 
@@ -92,6 +92,16 @@ const PaymentsTab = ({ isLoaded }) => {
     return `$${parseFloat(amount).toFixed(2)}`;
   };
 
+  const handleViewPayment = (payment) => {
+    // TODO: Implement payment details modal or navigation
+    console.log('View payment:', payment);
+    alert(`Payment Details:\nID: ${payment.payment_id || payment.id}\nUser: ${payment.user_email}\nAmount: ${formatAmount(payment.amount)}\nStatus: ${payment.status}`);
+  };
+
+  const handleRefresh = () => {
+    fetchPayments();
+  };
+
   const getPaymentType = (payment) => {
     // Determine payment type based on the data
     if (payment.order_type === 'subscription' || payment.payment_type === 'subscription') {
@@ -110,15 +120,29 @@ const PaymentsTab = ({ isLoaded }) => {
       <div className="glass-card rounded-xl overflow-hidden">
         <div className="p-4 border-b border-gray-100 flex justify-between items-center">
           <h2 className="font-semibold">All Payments</h2>
-          <div className="relative">
-            <Search className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search payments..."
-              value={searchTerm}
-              onChange={handleSearch}
-              className="pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary text-sm"
-            />
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleRefresh}
+              disabled={loading}
+              className={`p-2 rounded-md transition-colors ${
+                loading
+                  ? 'text-gray-400 cursor-not-allowed'
+                  : 'text-gray-600 hover:bg-gray-100 hover:text-metadite-primary'
+              }`}
+              title="Refresh payments"
+            >
+              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            </button>
+            <div className="relative">
+              <Search className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search payments..."
+                value={searchTerm}
+                onChange={handleSearch}
+                className="pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-metadite-primary focus:border-metadite-primary text-sm"
+              />
+            </div>
           </div>
         </div>
         
@@ -131,16 +155,16 @@ const PaymentsTab = ({ isLoaded }) => {
             <>
               <table className="min-w-full">
                 <thead>
-                  <tr className={`text-left text-gray-500 text-sm 
+                  <tr className={`text-left text-gray-500 text-xs 
                     ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}`}>
-                    <th className="px-6 py-3">Payment ID</th>
-                    <th className="px-6 py-3">User</th>
-                    <th className="px-6 py-3">Type</th>
-                    <th className="px-6 py-3">Amount</th>
-                    <th className="px-6 py-3">Method</th>
-                    <th className="px-6 py-3">Status</th>
-                    <th className="px-6 py-3">Date</th>
-                    <th className="px-6 py-3">Actions</th>
+                    <th className="px-4 py-2">Payment ID</th>
+                    <th className="px-4 py-2">User</th>
+                    <th className="px-4 py-2">Type</th>
+                    <th className="px-4 py-2">Amount</th>
+                    <th className="px-4 py-2">Method</th>
+                    <th className="px-4 py-2">Status</th>
+                    <th className="px-4 py-2">Date</th>
+                    <th className="px-4 py-2">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -155,33 +179,34 @@ const PaymentsTab = ({ isLoaded }) => {
                       <tr key={payment.id} className={`border-t border-gray-100 transition-colors 
                         ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}
                         >
-                        <td className="px-6 py-4 font-medium text-sm">
+                        <td className="px-4 py-2 font-medium text-xs">
                           {payment.payment_id || payment.id}
                         </td>
-                        <td className="px-6 py-4 font-medium">
+                        <td className="px-4 py-2 font-medium text-xs">
                           {payment.user_email || payment.user || 'N/A'}
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-4 py-2">
                           <span className="bg-metadite-primary/10 text-metadite-primary px-2 py-1 rounded-full text-xs font-medium">
                             {getPaymentType(payment)}
                           </span>
                         </td>
-                        <td className={`px-6 py-4 font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                        <td className={`px-4 py-2 font-medium text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
                           {formatAmount(payment.amount)}
                         </td>
-                        <td className={`px-6 py-4 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                        <td className={`px-4 py-2 text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
                           {payment.payment_method || 'Unknown'}
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-4 py-2">
                           <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(payment.status)}`}>
                             {payment.status?.replace('_', ' ').toUpperCase() || 'UNKNOWN'}
                           </span>
                         </td>
-                        <td className={`px-6 py-4 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                        <td className={`px-4 py-2 text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
                           {formatDate(payment.created_at || payment.payment_date)}
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-4 py-2">
                           <button 
+                            onClick={() => handleViewPayment(payment)}
                             className="text-blue-500 hover:text-blue-700 transition-colors"
                             title="View Details"
                           >
@@ -196,8 +221,8 @@ const PaymentsTab = ({ isLoaded }) => {
 
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="px-6 py-4 border-t border-gray-100 flex justify-between items-center">
-                  <div className="text-sm text-gray-500">
+                <div className="px-4 py-3 border-t border-gray-100 flex justify-between items-center">
+                  <div className="text-xs text-gray-500">
                     Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, totalPayments)} of {totalPayments} payments
                   </div>
                   <div className="flex space-x-2">
@@ -212,7 +237,7 @@ const PaymentsTab = ({ isLoaded }) => {
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </button>
-                    <span className="px-3 py-2 text-sm text-gray-600">
+                    <span className="px-3 py-2 text-xs text-gray-600">
                       Page {currentPage} of {totalPages}
                     </span>
                     <button

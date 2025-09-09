@@ -277,14 +277,20 @@ class ApiService {
   }
 
   // Get models filtered by category with pagination
-  async getModelsByCategory(category: string, skip = 0, limit = 50): Promise<PaginationResponse<ModelBasic>> {
+  async getModelsByCategory(category: string, skip = 0, limit = 50, region?: string): Promise<PaginationResponse<ModelBasic>> {
     try {
+      // Build query parameters - only include region if it's provided
+      let queryParams = `skip=${skip}&limit=${limit}`;
+      if (region && region.trim() !== '') {
+        queryParams = `region=${region}&${queryParams}`;
+      }
+      
       // Clear cache for category requests to ensure fresh data
-      const cacheKey = `${API_URL}/api/dolls/category/${encodeURIComponent(category)}?skip=${skip}&limit=${limit}`;
+      const cacheKey = `${API_URL}/api/dolls/category/${encodeURIComponent(category)}?${queryParams}`;
       cache.delete(cacheKey);
       
-      // Pass skip and limit as query parameters
-      const response = await this.request<PaginationResponse<any>>(`/api/dolls/category/${encodeURIComponent(category)}?skip=${skip}&limit=${limit}`);
+      // Pass skip, limit, and region as query parameters
+      const response = await this.request<PaginationResponse<any>>(`/api/dolls/category/${encodeURIComponent(category)}?${queryParams}`);
       const backendUrl = import.meta.env.VITE_API_BASE_URL;
 
       // Transform the API response to match our ModelBasic interface
@@ -381,6 +387,14 @@ class ApiService {
       formData.append('caption', caption);
       formData.append('is_primary', isPrimary.toString());
 
+      console.log('Uploading image:', {
+        dollId,
+        fileName: imageFile.name,
+        fileSize: imageFile.size,
+        isPrimary,
+        caption
+      });
+
       const response = await fetch(`${API_URL}/api/images/upload`, {
         method: 'POST',
         headers: {
@@ -390,14 +404,18 @@ class ApiService {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to upload image: ${response.status}`);
+        const errorText = await response.text();
+        console.error('Upload failed:', response.status, errorText);
+        throw new Error(`Failed to upload image: ${response.status} - ${errorText}`);
       }
 
+      const result = await response.json();
+      console.log('Upload successful:', result);
       toast.success('Image uploaded successfully');
       return true;
     } catch (error) {
+      console.error('Upload error:', error);
       toast.error('Failed to upload image');
-      console.error(error);
       return false;
     }
   }
@@ -682,6 +700,12 @@ class ApiService {
       const urlParts = imageUrl.split('/');
       const filename = urlParts[urlParts.length - 1];
 
+      console.log('Deleting image:', {
+        dollId,
+        imageUrl,
+        filename
+      });
+
       const response = await this.request(`/api/dolls/${dollId}/images/${filename}`, {
         method: 'DELETE',
         headers: {
@@ -690,9 +714,11 @@ class ApiService {
       });
 
       if (response) {
+        console.log('Image deleted successfully');
         toast.success('Image deleted successfully');
         return true;
       } else {
+        console.error('Delete request failed');
         toast.error('Failed to delete image');
         return false;
       }

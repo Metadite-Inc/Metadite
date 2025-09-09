@@ -135,22 +135,22 @@ const Admin = () => {
               {activeTab === 'models' && <ModelsTab isLoaded={isLoaded} refreshKey={modelsRefreshKey} />}
               
               {/* Videos Management */}
-              {activeTab === 'videos' && <VideosTab isLoaded={isLoaded} />}
+              {/* {activeTab === 'videos' && <VideosTab isLoaded={isLoaded} />} */}
               
               {/* Admins Management */}
               {activeTab === 'admins' && <AdminsTab isLoaded={isLoaded} />}
               
               {/* Moderators Management */}
-              {activeTab === 'moderators' && <ModeratorsTab isLoaded={isLoaded} />}
+              {/* {activeTab === 'moderators' && <ModeratorsTab isLoaded={isLoaded} />} */}
 
               {/* Subscriptions Management */}
-              {activeTab === 'subscriptions' && <SubscriptionsTab isLoaded={isLoaded} />}
+              {/* {activeTab === 'subscriptions' && <SubscriptionsTab isLoaded={isLoaded} />} */}
               
               {/* Payments Management */}
               {activeTab === 'payments' && <PaymentsTab isLoaded={isLoaded} />}
               
               {/* Flagged Messages */}
-              {activeTab === 'flagged' && <FlaggedMessagesTab isLoaded={isLoaded} />}
+              {/* {activeTab === 'flagged' && <FlaggedMessagesTab isLoaded={isLoaded} />} */}
               
               {/* VIP Images Management - Temporarily disabled */}
               {/* {activeTab === 'images' && <ImagesTab isLoaded={isLoaded} />} */}
